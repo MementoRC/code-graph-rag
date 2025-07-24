@@ -131,7 +131,7 @@ jobs:
       - name: Run unit tests only (fast)
         run: |
           echo "🧪 Running unit tests"
-          pixi run -e quality test-unit || echo "⚠️ Some unit tests failed"
+          pixi run -e quality test-unit-smoke || echo "⚠️ Some unit tests failed"
 
       - name: Generate test summary
         if: always()

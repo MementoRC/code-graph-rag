@@ -194,6 +194,10 @@ test-cov = { depends-on = ["install-pymgclient"], cmd = "pytest codebase_rag/tes
 test-unit = { depends-on = ["install-pymgclient"], cmd = "pytest codebase_rag/tests/test_*.py -v", env = { CLAUDECODE = "0" } }
 test-integration = { depends-on = ["install-pymgclient"], cmd = "pytest codebase_rag/tests/test_*_integration.py -v", env = { CLAUDECODE = "0" } }
 
+# Smoke testing (without pymgclient dependency) - for CI environments where pymgclient fails to build
+test-smoke = { cmd = "pytest codebase_rag/tests/test_main_smoke.py -v", env = { CLAUDECODE = "0" } }
+test-unit-smoke = { cmd = "pytest codebase_rag/tests/test_main_smoke.py -v", env = { CLAUDECODE = "0" } }
+
 # Quality Gates (CRITICAL - MUST PASS) - PREVENT CI FAILURES
 lint = "ruff check codebase_rag/ --select=F,E9"
 lint-fix = "ruff check --fix codebase_rag/"    # 🚨 ESSENTIAL: Auto-fix lint violations
