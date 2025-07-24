@@ -82,7 +82,7 @@ jobs:
           cache: true
 
       - name: Install dependencies (pixi)
-        run: pixi install --locked
+        run: pixi install -e ci-smoke
 
       - name: Install dev dependencies
         run: pixi run -e dev dev-setup
@@ -107,15 +107,15 @@ jobs:
               echo "marker=unit tests (fast, no external dependencies)" >> $GITHUB_OUTPUT
               ;;
             "integration") 
-              echo "test_cmd=pixi run -e ci test-integration" >> $GITHUB_OUTPUT
+              echo "test_cmd=pixi run -e ci-smoke test-integration" >> $GITHUB_OUTPUT
               echo "marker=integration tests (with Memgraph)" >> $GITHUB_OUTPUT
               ;;
             "e2e")
-              echo "test_cmd=pixi run -e ci test" >> $GITHUB_OUTPUT
+              echo "test_cmd=pixi run -e ci-smoke test" >> $GITHUB_OUTPUT
               echo "marker=end-to-end tests (full system)" >> $GITHUB_OUTPUT
               ;;
             *)
-              echo "test_cmd=pixi run -e ci test" >> $GITHUB_OUTPUT
+              echo "test_cmd=pixi run -e ci-smoke test" >> $GITHUB_OUTPUT
               echo "marker=all tests" >> $GITHUB_OUTPUT
               ;;
           esac
