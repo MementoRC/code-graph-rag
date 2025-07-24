@@ -180,7 +180,7 @@ jobs:
       - name: Run security scanning
         run: |
           echo "🔒 Running security analysis"
-          pixi run -e quality security-scan
+          pixi run -e security security-scan
 
       - name: Run vulnerability scanning (isolated environment)
         run: |

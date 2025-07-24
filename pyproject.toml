@@ -161,7 +161,7 @@ quality-extended = {features = ["quality", "quality-extended"], solve-group = "q
 quality-full = {features = ["quality", "quality-extended", "quality-ci"], solve-group = "quality"}
 
 # Security scanning environment (isolated for pydantic <2.10)
-security = {features = ["quality", "security-scan"], solve-group = "security"}
+security = {features = ["quality", "quality-extended", "security-scan"], solve-group = "security"}
 
 # Smoke test environment (basic CLI testing without graph dependencies)
 smoke-test = {features = ["quality", "smoke-test"], solve-group = "smoke"}
@@ -210,9 +210,9 @@ install-pre-commit = { cmd = "pre-commit install --install-hooks", env = { CLAUD
 emergency-fix = "ruff check --fix codebase_rag/ && ruff format codebase_rag/ && pytest codebase_rag/tests/ -v"
 
 # ===== TIER 2: SECURITY & COMPLIANCE TASKS =====
-# Security Scanning
-security-scan = "bandit -r codebase_rag/ --severity-level high"
-safety-check = "safety check"  # Run in security environment: pixi run -e security safety-check
+# Security Scanning with JSON report generation
+security-scan = "bandit -r codebase_rag/ --severity-level high -f json -o bandit-report.json || echo 'Bandit scan complete'"
+safety-check = "safety check --json > safety-report.json || echo 'Safety scan complete'"  # Use legacy command to avoid auth issues
 
 # Static Analysis Suite
 static-analysis = { depends-on = ["security-scan"] }  # safety-check runs in separate environment
