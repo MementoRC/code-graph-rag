@@ -282,11 +282,11 @@ jobs:
           cache: true
           manifest-path: pyproject.toml
 
-      - name: Install dependencies with platform flag
-        run: pixi install -e ci-smoke --platform ${{ matrix.platform }}
+      - name: Install dependencies
+        run: pixi install -e ci-smoke
 
       - name: Run basic tests
-        run: pixi run -e ci-smoke --platform ${{ matrix.platform }} test-unit
+        run: pixi run -e ci-smoke test-unit
 
   deploy-artifacts:
     name: "📦 Deploy Artifacts"
