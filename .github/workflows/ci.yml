@@ -107,10 +107,10 @@ jobs:
         ports:
           - 7687:7687
         options: >-
-          --health-cmd "mg_client --host 127.0.0.1 --port 7687"
+          --health-cmd "timeout 10s bash -c 'until echo > /dev/tcp/127.0.0.1/7687; do sleep 1; done'"
           --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+          --health-timeout 15s
+          --health-retries 10
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -207,10 +207,10 @@ jobs:
         ports:
           - 7687:7687
         options: >-
-          --health-cmd "mg_client --host 127.0.0.1 --port 7687"
+          --health-cmd "timeout 10s bash -c 'until echo > /dev/tcp/127.0.0.1/7687; do sleep 1; done'"
           --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+          --health-timeout 15s
+          --health-retries 10
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
