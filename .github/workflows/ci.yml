@@ -107,10 +107,11 @@ jobs:
         ports:
           - 7687:7687
         options: >-
-          --health-cmd "python3 -c 'import socket; s=socket.socket(); s.settimeout(1); s.connect((\"127.0.0.1\", 7687)); s.close()'"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 15
+          --health-cmd "test -f /tmp/mg_ready || (python3 -c \"import socket; s=socket.socket(); s.settimeout(3); s.connect(('127.0.0.1', 7687))\" && touch /tmp/mg_ready)"
+          --health-interval 15s
+          --health-timeout 10s
+          --health-retries 8
+          --health-start-period 30s
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -207,10 +208,11 @@ jobs:
         ports:
           - 7687:7687
         options: >-
-          --health-cmd "python3 -c 'import socket; s=socket.socket(); s.settimeout(1); s.connect((\"127.0.0.1\", 7687)); s.close()'"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 15
+          --health-cmd "test -f /tmp/mg_ready || (python3 -c \"import socket; s=socket.socket(); s.settimeout(3); s.connect(('127.0.0.1', 7687))\" && touch /tmp/mg_ready)"
+          --health-interval 15s
+          --health-timeout 10s
+          --health-retries 8
+          --health-start-period 30s
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
