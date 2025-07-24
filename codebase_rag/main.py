@@ -34,14 +34,14 @@ try:
     HAS_GRAPH_DEPENDENCIES = True
 except ImportError:
     # When mgclient or other graph dependencies are not available
-    GraphUpdater = None
-    MemgraphIngestor = None
-    load_parsers = None
-    CypherGenerator = None
-    create_rag_orchestrator = None
-    CodeRetriever = None
-    create_code_retrieval_tool = None
-    create_query_tool = None
+    GraphUpdater = None  # type: ignore[misc,assignment]
+    MemgraphIngestor = None  # type: ignore[misc,assignment]
+    load_parsers = None  # type: ignore[assignment]
+    CypherGenerator = None  # type: ignore[misc,assignment]
+    create_rag_orchestrator = None  # type: ignore[assignment]
+    CodeRetriever = None  # type: ignore[misc,assignment]
+    create_code_retrieval_tool = None  # type: ignore[assignment]
+    create_query_tool = None  # type: ignore[assignment]
     HAS_GRAPH_DEPENDENCIES = False
 from .tools.directory_lister import DirectoryLister, create_directory_lister_tool
 from .tools.document_analyzer import DocumentAnalyzer, create_document_analyzer_tool
@@ -886,14 +886,14 @@ def export(
     ),
 ) -> None:
     """Export the current knowledge graph to a file."""
-    
+
     # Check if graph dependencies are available
     if not HAS_GRAPH_DEPENDENCIES:
         console.print("[bold red]Error: Graph dependencies (mgclient) not available.[/bold red]")
         console.print("This command requires the full runtime environment with database connectivity.")
         console.print("Try installing with: pixi run -e runtime export ...")
         raise typer.Exit(1)
-    
+
     if not format_json:
         console.print(
             "[bold red]Error: Currently only JSON format is supported.[/bold red]"

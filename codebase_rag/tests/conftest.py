@@ -16,11 +16,11 @@ try:
     from codebase_rag.parser_loader import load_parsers
     from codebase_rag.services.graph_service import MemgraphIngestor
     HAS_GRAPH_DEPENDENCIES = True
-except ImportError as e:
+except ImportError:
     # When mgclient or other graph dependencies are not available
-    GraphUpdater = None
-    MemgraphIngestor = None
-    load_parsers = None
+    GraphUpdater = None  # type: ignore[misc,assignment]
+    MemgraphIngestor = None  # type: ignore[misc,assignment]
+    load_parsers = None  # type: ignore[assignment]
     HAS_GRAPH_DEPENDENCIES = False
 
 
