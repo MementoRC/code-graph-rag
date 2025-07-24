@@ -107,7 +107,7 @@ jobs:
         ports:
           - 7687:7687
         options: >-
-          --health-cmd "nc -z 127.0.0.1 7687 || exit 1"
+          --health-cmd "python3 -c 'import socket; s=socket.socket(); s.settimeout(1); s.connect((\"127.0.0.1\", 7687)); s.close()'"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 15
@@ -207,7 +207,7 @@ jobs:
         ports:
           - 7687:7687
         options: >-
-          --health-cmd "nc -z 127.0.0.1 7687 || exit 1"
+          --health-cmd "python3 -c 'import socket; s=socket.socket(); s.settimeout(1); s.connect((\"127.0.0.1\", 7687)); s.close()'"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 15
