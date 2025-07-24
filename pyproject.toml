@@ -144,6 +144,7 @@ python-dotenv = ">=1.1.0"
 typer = ">=0.12.5"
 rich = ">=13.7.1"
 loguru = ">=0.7.3"  # For logging
+google-genai = ">=1.27.0"  # conda-forge: 1.27.0 - For document analyzer imports
 
 # Tree-sitter language support (optional feature)
 # Note: tree-sitter language parsers are handled by [project.optional-dependencies]
