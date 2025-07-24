@@ -69,15 +69,15 @@ jobs:
           echo "$HOME/.pixi/bin" >> $GITHUB_PATH
 
       - name: Install dependencies
-        run: pixi install -e ci
+        run: pixi install -e ci-smoke
 
       - name: Run essential quality gates
         run: |
           echo "🚨 Running Zero-Tolerance Quality Gates"
-          pixi run -e ci quality
+          pixi run -e ci-smoke quality
 
       - name: Check code formatting
-        run: pixi run -e ci format-check
+        run: pixi run -e ci-smoke format-check
 
       - name: Generate quality report
         if: always()
@@ -85,12 +85,12 @@ jobs:
           echo "## 🚨 Quality Gates Report" >> $GITHUB_STEP_SUMMARY
           echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
-          if pixi run -e ci lint --quiet; then
+          if pixi run -e ci-smoke lint --quiet; then
             echo "| Lint (F,E9) | ✅ PASS |" >> $GITHUB_STEP_SUMMARY
           else
             echo "| Lint (F,E9) | ❌ FAIL |" >> $GITHUB_STEP_SUMMARY
           fi
-          if pixi run -e ci typecheck --quiet; then
+          if pixi run -e ci-smoke typecheck --quiet; then
             echo "| Type Check | ✅ PASS |" >> $GITHUB_STEP_SUMMARY
           else
             echo "| Type Check | ❌ FAIL |" >> $GITHUB_STEP_SUMMARY
