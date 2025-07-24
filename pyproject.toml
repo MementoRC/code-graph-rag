@@ -134,6 +134,17 @@ pydantic = ">=2.10"  # Override for runtime compatibility
 pydantic-settings = ">=2.0.0"  # Settings management (runtime version)
 pydantic-ai-slim = ">=0.2.14"  # AI framework
 
+# ===== BASIC TESTING FEATURES =====
+# Minimal dependencies for smoke tests without graph dependencies (compatible with runtime)
+[tool.pixi.feature.smoke-test.dependencies]
+pydantic = ">=2.10"  # Must match pydantic-ai-slim requirement
+pydantic-settings = ">=2.0.0"
+pydantic-ai-slim = ">=0.2.14"  # For tool definitions (no AI functionality)
+python-dotenv = ">=1.1.0"
+typer = ">=0.12.5"
+rich = ">=13.7.1"
+loguru = ">=0.7.3"  # For logging
+
 # Tree-sitter language support (optional feature)
 # Note: tree-sitter language parsers are handled by [project.optional-dependencies]
 # Only add conda-available parsers here if needed
@@ -151,6 +162,9 @@ quality-full = {features = ["quality", "quality-extended", "quality-ci"], solve-
 
 # Security scanning environment (isolated for pydantic <2.10)
 security = {features = ["quality", "security-scan"], solve-group = "security"}
+
+# Smoke test environment (basic CLI testing without graph dependencies)
+smoke-test = {features = ["quality", "smoke-test"], solve-group = "smoke"}
 
 # Development environment (runtime + basic quality)
 dev = {features = ["runtime", "quality", "quality-extended", "quality-ci", "dev-specialized"], solve-group = "dev"}
