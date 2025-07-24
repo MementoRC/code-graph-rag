@@ -15,6 +15,7 @@ try:
     from codebase_rag.graph_updater import GraphUpdater
     from codebase_rag.parser_loader import load_parsers
     from codebase_rag.services.graph_service import MemgraphIngestor
+
     HAS_GRAPH_DEPENDENCIES = True
 except ImportError:
     # When mgclient or other graph dependencies are not available

@@ -192,14 +192,19 @@ def add_grammar(
 
     # Add language-specific paths only if language_name is not None
     if language_name:
-        possible_paths.extend([
-            os.path.join(
-                grammar_path, language_name, "src", "node-types.json"
-            ),  # Nested by language name
-            os.path.join(
-                grammar_path, language_name.replace("-", "_"), "src", "node-types.json"
-            ),  # Underscore variant
-        ])
+        possible_paths.extend(
+            [
+                os.path.join(
+                    grammar_path, language_name, "src", "node-types.json"
+                ),  # Nested by language name
+                os.path.join(
+                    grammar_path,
+                    language_name.replace("-", "_"),
+                    "src",
+                    "node-types.json",
+                ),  # Underscore variant
+            ]
+        )
 
     node_types_path = None
     for path in possible_paths:

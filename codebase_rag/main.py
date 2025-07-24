@@ -31,6 +31,7 @@ try:
     from .services.llm import CypherGenerator, create_rag_orchestrator
     from .tools.code_retrieval import CodeRetriever, create_code_retrieval_tool
     from .tools.codebase_query import create_query_tool
+
     HAS_GRAPH_DEPENDENCIES = True
 except ImportError:
     # When mgclient or other graph dependencies are not available
@@ -820,8 +821,12 @@ def start(
 
     # Check if graph dependencies are available
     if not HAS_GRAPH_DEPENDENCIES:
-        console.print("[bold red]Error: Graph dependencies (mgclient) not available.[/bold red]")
-        console.print("This command requires the full runtime environment with database connectivity.")
+        console.print(
+            "[bold red]Error: Graph dependencies (mgclient) not available.[/bold red]"
+        )
+        console.print(
+            "This command requires the full runtime environment with database connectivity."
+        )
         console.print("Try installing with: pixi run -e runtime start ...")
         raise typer.Exit(1)
 
@@ -889,8 +894,12 @@ def export(
 
     # Check if graph dependencies are available
     if not HAS_GRAPH_DEPENDENCIES:
-        console.print("[bold red]Error: Graph dependencies (mgclient) not available.[/bold red]")
-        console.print("This command requires the full runtime environment with database connectivity.")
+        console.print(
+            "[bold red]Error: Graph dependencies (mgclient) not available.[/bold red]"
+        )
+        console.print(
+            "This command requires the full runtime environment with database connectivity."
+        )
         console.print("Try installing with: pixi run -e runtime export ...")
         raise typer.Exit(1)
 
@@ -980,8 +989,12 @@ def optimize(
 
     # Check if graph dependencies are available
     if not HAS_GRAPH_DEPENDENCIES:
-        console.print("[bold red]Error: Graph dependencies (mgclient) not available.[/bold red]")
-        console.print("This command requires the full runtime environment with database connectivity.")
+        console.print(
+            "[bold red]Error: Graph dependencies (mgclient) not available.[/bold red]"
+        )
+        console.print(
+            "This command requires the full runtime environment with database connectivity."
+        )
         console.print("Try installing with: pixi run -e runtime optimize ...")
         raise typer.Exit(1)
 
