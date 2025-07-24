@@ -106,12 +106,6 @@ jobs:
         image: memgraph/memgraph:latest
         ports:
           - 7687:7687
-        options: >-
-          --health-cmd "test -f /tmp/mg_ready || (python3 -c \"import socket; s=socket.socket(); s.settimeout(3); s.connect(('127.0.0.1', 7687))\" && touch /tmp/mg_ready)"
-          --health-interval 15s
-          --health-timeout 10s
-          --health-retries 8
-          --health-start-period 30s
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -125,6 +119,18 @@ jobs:
 
       - name: Install dependencies
         run: pixi install -e ci-smoke
+
+      - name: Wait for Memgraph to be ready
+        run: |
+          echo "⏳ Waiting for Memgraph to start..."
+          for i in {1..30}; do
+            if python3 -c "import socket; s=socket.socket(); s.settimeout(2); s.connect(('localhost', 7687)); s.close()" 2>/dev/null; then
+              echo "✅ Memgraph is ready!"
+              break
+            fi
+            echo "Attempt $i/30: Memgraph not ready, waiting 3 seconds..."
+            sleep 3
+          done
 
       - name: Run comprehensive tests
         run: |
@@ -207,12 +213,6 @@ jobs:
         image: memgraph/memgraph:latest
         ports:
           - 7687:7687
-        options: >-
-          --health-cmd "test -f /tmp/mg_ready || (python3 -c \"import socket; s=socket.socket(); s.settimeout(3); s.connect(('127.0.0.1', 7687))\" && touch /tmp/mg_ready)"
-          --health-interval 15s
-          --health-timeout 10s
-          --health-retries 8
-          --health-start-period 30s
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -226,6 +226,18 @@ jobs:
 
       - name: Install dependencies
         run: pixi install -e dev
+
+      - name: Wait for Memgraph to be ready
+        run: |
+          echo "⏳ Waiting for Memgraph to start..."
+          for i in {1..30}; do
+            if python3 -c "import socket; s=socket.socket(); s.settimeout(2); s.connect(('localhost', 7687)); s.close()" 2>/dev/null; then
+              echo "✅ Memgraph is ready!"
+              break
+            fi
+            echo "Attempt $i/30: Memgraph not ready, waiting 3 seconds..."
+            sleep 3
+          done
 
       - name: Run performance benchmarks
         run: |
