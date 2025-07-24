@@ -178,6 +178,9 @@ treesitter-full = {features = ["runtime", "treesitter-full"], solve-group = "run
 # CI environment (quality + CI reporting, no pydantic conflicts)
 ci = {features = ["quality", "quality-ci"], solve-group = "quality"}
 
+# CI with smoke tests (uses smoke solve-group for pydantic >=2.10 compatibility)
+ci-smoke = {features = ["quality", "smoke-test"], solve-group = "smoke"}
+
 [tool.pixi.tasks]
 # ===== TIER 1: CORE DEVELOPMENT TASKS (ESSENTIAL) =====
 # Installation & Setup

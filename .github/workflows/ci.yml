@@ -123,12 +123,12 @@ jobs:
           manifest-path: pyproject.toml
 
       - name: Install dependencies
-        run: pixi install -e ci
+        run: pixi install -e ci-smoke
 
       - name: Run comprehensive tests
         run: |
           echo "🧪 Running comprehensive test suite"
-          pixi run -e ci test-cov
+          pixi run -e ci-smoke test-cov
         env:
           MEMGRAPH_HOST: localhost
           MEMGRAPH_PORT: 7687
@@ -269,10 +269,10 @@ jobs:
           manifest-path: pyproject.toml
 
       - name: Install dependencies with platform flag
-        run: pixi install -e ci --platform ${{ matrix.platform }}
+        run: pixi install -e ci-smoke --platform ${{ matrix.platform }}
 
       - name: Run basic tests
-        run: pixi run -e ci --platform ${{ matrix.platform }} test-unit
+        run: pixi run -e ci-smoke --platform ${{ matrix.platform }} test-unit
 
   deploy-artifacts:
     name: "📦 Deploy Artifacts"
