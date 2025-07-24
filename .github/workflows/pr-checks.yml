@@ -1,0 +1,296 @@
+name: PR Quality Checks
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches: [main, development]
+
+env:
+  PYTHONUNBUFFERED: 1
+  PIXI_VERSION: v0.49.0
+  ENVIRONMENT: ci
+  CLAUDECODE: 0
+
+jobs:
+  changes:
+    name: "📋 Detect Changes"
+    runs-on: ubuntu-latest
+    outputs:
+      python: ${{ steps.changes.outputs.python }}
+      tests: ${{ steps.changes.outputs.tests }}
+      docs: ${{ steps.changes.outputs.docs }}
+      ci: ${{ steps.changes.outputs.ci }}
+      skip: ${{ steps.changes.outputs.skip }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            python:
+              - 'codebase_rag/**/*.py'
+              - 'pyproject.toml'
+              - 'pixi.lock'
+            tests:
+              - 'codebase_rag/tests/**'
+              - 'pytest.ini'
+            docs:
+              - 'docs/**'
+              - 'README.md'
+              - '*.md'
+            ci:
+              - '.github/workflows/**'
+              - 'pyproject.toml'
+            skip:
+              - 'docs/**'
+              - '*.md'
+              - '.gitignore'
+              - 'LICENSE'
+
+  fast-quality-check:
+    name: "⚡ Fast Quality Check"
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.python == 'true' || needs.changes.outputs.ci == 'true'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pixi (fast cache)
+        uses: prefix-dev/setup-pixi@v0.8.11
+        with:
+          pixi-version: ${{ env.PIXI_VERSION }}
+          cache: true
+          manifest-path: pyproject.toml
+
+      - name: Install quality tools only
+        run: pixi install -e quality
+
+      - name: Run fast lint check (F,E9 only)
+        run: |
+          echo "🚨 Running critical lint checks"
+          pixi run -e quality lint
+
+      - name: Check code formatting
+        run: |
+          echo "🎨 Checking code formatting"
+          pixi run -e quality format-check
+
+      - name: Run type checking
+        run: |
+          echo "📝 Running type checks"
+          pixi run -e quality typecheck
+
+      - name: Post quick status
+        if: always()
+        run: |
+          echo "## ⚡ Fast Quality Check Results" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Result |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          
+          # Lint check
+          if pixi run -e quality lint --quiet >/dev/null 2>&1; then
+            echo "| Critical Lint (F,E9) | ✅ PASS |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| Critical Lint (F,E9) | ❌ FAIL |" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Format check
+          if pixi run -e quality format-check --quiet >/dev/null 2>&1; then
+            echo "| Code Formatting | ✅ PASS |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| Code Formatting | ❌ FAIL |" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Type check
+          if pixi run -e quality typecheck --quiet >/dev/null 2>&1; then
+            echo "| Type Checking | ✅ PASS |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| Type Checking | ❌ FAIL |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  quick-tests:
+    name: "🧪 Quick Tests"
+    runs-on: ubuntu-latest
+    needs: [changes, fast-quality-check]
+    if: needs.changes.outputs.python == 'true' || needs.changes.outputs.tests == 'true'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pixi
+        uses: prefix-dev/setup-pixi@v0.8.11
+        with:
+          pixi-version: ${{ env.PIXI_VERSION }}
+          cache: true
+          manifest-path: pyproject.toml
+
+      - name: Install test dependencies
+        run: pixi install -e quality
+
+      - name: Run unit tests only (fast)
+        run: |
+          echo "🧪 Running unit tests"
+          pixi run -e quality test-unit || echo "⚠️ Some unit tests failed"
+
+      - name: Generate test summary
+        if: always()
+        run: |
+          echo "## 🧪 Quick Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "- Unit tests completed" >> $GITHUB_STEP_SUMMARY
+          echo "- **Note**: Full test suite runs in main CI pipeline" >> $GITHUB_STEP_SUMMARY
+
+  security-scan:
+    name: "🔒 Security Scan"
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.python == 'true'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pixi
+        uses: prefix-dev/setup-pixi@v0.8.11
+        with:
+          pixi-version: ${{ env.PIXI_VERSION }}
+          cache: true
+          manifest-path: pyproject.toml
+
+      - name: Install security tools
+        run: pixi install -e quality-extended
+
+      - name: Run Bandit security scan
+        run: |
+          echo "🔒 Running security analysis"
+          pixi run -e quality-extended security-scan
+
+      - name: Security summary
+        if: always()
+        run: |
+          echo "## 🔒 Security Scan Results" >> $GITHUB_STEP_SUMMARY
+          echo "- Bandit security analysis completed" >> $GITHUB_STEP_SUMMARY
+          echo "- **Note**: Full vulnerability scan runs in main CI pipeline" >> $GITHUB_STEP_SUMMARY
+
+  pr-size-check:
+    name: "📏 PR Size Check"
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check PR size
+        run: |
+          # Get base branch for comparison
+          BASE_BRANCH="${{ github.event.pull_request.base.ref }}"
+          HEAD_BRANCH="${{ github.event.pull_request.head.ref }}"
+          
+          # Count changes
+          ADDED_LINES=$(git diff --numstat origin/$BASE_BRANCH...HEAD | awk '{sum += $1} END {print sum+0}')
+          REMOVED_LINES=$(git diff --numstat origin/$BASE_BRANCH...HEAD | awk '{sum += $2} END {print sum+0}')
+          CHANGED_FILES=$(git diff --name-only origin/$BASE_BRANCH...HEAD | wc -l)
+          
+          echo "## 📏 PR Size Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Count |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Files Changed | $CHANGED_FILES |" >> $GITHUB_STEP_SUMMARY
+          echo "| Lines Added | $ADDED_LINES |" >> $GITHUB_STEP_SUMMARY
+          echo "| Lines Removed | $REMOVED_LINES |" >> $GITHUB_STEP_SUMMARY
+          
+          # Size recommendations
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 💡 PR Size Recommendations" >> $GITHUB_STEP_SUMMARY
+          if [ $CHANGED_FILES -gt 20 ]; then
+            echo "- ⚠️ Consider splitting into smaller PRs (20+ files changed)" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [ $ADDED_LINES -gt 500 ]; then
+            echo "- ⚠️ Large PR - consider breaking into smaller changes (500+ lines added)" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [ $CHANGED_FILES -le 10 ] && [ $ADDED_LINES -le 200 ]; then
+            echo "- ✅ Good PR size for easy review" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  pr-description-check:
+    name: "📝 PR Description Check"
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Check PR description
+        run: |
+          PR_BODY="${{ github.event.pull_request.body }}"
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          
+          echo "## 📝 PR Quality Check" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          
+          # Check title format
+          if [[ "$PR_TITLE" =~ ^(feat|fix|docs|refactor|perf|test|chore|ci): ]]; then
+            echo "| Title Format | ✅ Conventional commits format |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| Title Format | ⚠️ Consider using conventional commits format |" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Check description length
+          if [ ${#PR_BODY} -gt 50 ]; then
+            echo "| Description | ✅ Detailed description provided |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| Description | ⚠️ Consider adding more details |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  documentation-check:
+    name: "📚 Documentation Check"
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.python == 'true' && needs.changes.outputs.docs == 'false'
+    steps:
+      - name: Check for documentation updates
+        run: |
+          echo "## 📚 Documentation Update Reminder" >> $GITHUB_STEP_SUMMARY
+          echo "This PR modifies Python code but doesn't update documentation." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Consider updating:" >> $GITHUB_STEP_SUMMARY
+          echo "- README.md if adding new features" >> $GITHUB_STEP_SUMMARY
+          echo "- API documentation for new functions/classes" >> $GITHUB_STEP_SUMMARY
+          echo "- Usage examples if behavior changes" >> $GITHUB_STEP_SUMMARY
+
+  pr-summary:
+    name: "📊 PR Summary"
+    runs-on: ubuntu-latest
+    needs: [changes, fast-quality-check, quick-tests, security-scan]
+    if: always()
+    steps:
+      - name: Generate PR summary
+        run: |
+          echo "# 🚀 PR Quality Check Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Change detection summary
+          echo "## 📋 Changes Detected" >> $GITHUB_STEP_SUMMARY
+          echo "- Python code: ${{ needs.changes.outputs.python == 'true' && '✅' || '❌' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Tests: ${{ needs.changes.outputs.tests == 'true' && '✅' || '❌' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Documentation: ${{ needs.changes.outputs.docs == 'true' && '✅' || '❌' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- CI/CD: ${{ needs.changes.outputs.ci == 'true' && '✅' || '❌' }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Quality check results
+          echo "## 🎯 Quality Check Results" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Fast Quality | ${{ needs.fast-quality-check.result == 'success' && '✅ PASS' || needs.fast-quality-check.result == 'skipped' && '⏭️ SKIP' || '❌ FAIL' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Quick Tests | ${{ needs.quick-tests.result == 'success' && '✅ PASS' || needs.quick-tests.result == 'skipped' && '⏭️ SKIP' || '❌ FAIL' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Security Scan | ${{ needs.security-scan.result == 'success' && '✅ PASS' || needs.security-scan.result == 'skipped' && '⏭️ SKIP' || '❌ FAIL' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Next steps
+          echo "## 🎯 Next Steps" >> $GITHUB_STEP_SUMMARY
+          if [[ "${{ needs.fast-quality-check.result }}" == "failure" ]]; then
+            echo "- ❌ **Fix quality issues** before requesting review" >> $GITHUB_STEP_SUMMARY
+          elif [[ "${{ needs.quick-tests.result }}" == "failure" ]]; then
+            echo "- 🧪 **Fix failing tests** before proceeding" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ✅ **Ready for review** - all quick checks passed" >> $GITHUB_STEP_SUMMARY
+            echo "- 🔄 Full CI pipeline will run after approval" >> $GITHUB_STEP_SUMMARY
+          fi

@@ -237,7 +237,15 @@ add-language = "python -m codebase_rag.tools.language add-grammar"
 build-binary = "python build_binary.py"
 run-example = "python examples/graph_export_example.py"
 
+# ===== CI-SPECIFIC TASKS =====
+# Enhanced CI task variants
+diff-cover = "diff-cover coverage.xml --compare-branch=origin/main --html-report diff-coverage.html --json-report diff-coverage.json"
+safety-check-ci = "safety check --json --output safety-report.json"
+
+# Comprehensive quality validation
+quality-gate = { depends-on = ["test", "lint", "typecheck", "security-scan"] }
+
 # ===== LEGACY/SPECIALIZED TASKS =====
 # Keep existing specialized tasks
-benchmark = "pytest codebase_rag/tests/ -m benchmark --benchmark-only --benchmark-sort=mean"
+benchmark = "pytest codebase_rag/tests/ -m benchmark --benchmark-only --benchmark-sort=mean --benchmark-json=benchmark-results.json"
 test-coverage = "pytest codebase_rag/tests/ --cov=codebase_rag --cov-branch --cov-report=html --cov-report=xml --cov-report=json --cov-report=term-missing"
