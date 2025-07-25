@@ -1,4 +1,4 @@
-from typing import cast
+from typing import Union, cast
 
 from loguru import logger
 from pydantic_ai import Agent, Tool
@@ -41,6 +41,7 @@ class CypherGenerator:
     def __init__(self) -> None:
         try:
             model_settings = None
+            llm: Union[GeminiModel, OpenAIResponsesModel, OpenAIModel]
 
             # Get active cypher model and detect its provider
             cypher_model_id = settings.active_cypher_model
@@ -123,6 +124,7 @@ def create_rag_orchestrator(tools: list[Tool]) -> Agent:
     """Factory function to create the main RAG orchestrator agent."""
     try:
         model_settings = None
+        llm: Union[GeminiModel, OpenAIModel, OpenAIResponsesModel]
 
         # Get active orchestrator model and detect its provider
         orchestrator_model_id = settings.active_orchestrator_model

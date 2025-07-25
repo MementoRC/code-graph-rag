@@ -1,10 +1,17 @@
 """Smoke tests for main CLI functionality."""
 
+import re
 import subprocess
 import sys
 from pathlib import Path
 
 import pytest
+
+
+def strip_ansi_codes(text: str) -> str:
+    """Remove ANSI escape codes from text."""
+    ansi_escape = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
+    return ansi_escape.sub("", text)
 
 
 def test_help_command_works() -> None:
@@ -28,9 +35,12 @@ def test_help_command_works() -> None:
     # The command should exit successfully
     assert result.returncode == 0, f"Help command failed with: {result.stderr}"
 
+    # Strip ANSI codes for reliable text matching
+    clean_stdout = strip_ansi_codes(result.stdout)
+
     # Output should contain expected help text
-    assert "Usage:" in result.stdout or "usage:" in result.stdout.lower()
-    assert "--help" in result.stdout
+    assert "Usage:" in clean_stdout or "usage:" in clean_stdout.lower()
+    assert "--help" in clean_stdout
 
     # Should not have any error output for a simple help command
     assert result.stderr == "", f"Unexpected stderr: {result.stderr}"

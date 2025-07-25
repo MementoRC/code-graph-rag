@@ -1,7 +1,7 @@
 import asyncio
 import json
-import shlex
 import re
+import shlex
 import shutil
 import sys
 import uuid
@@ -23,11 +23,27 @@ from rich.table import Table
 from rich.text import Text
 
 from .config import detect_provider_from_model, settings
-from .graph_updater import GraphUpdater, MemgraphIngestor
-from .parser_loader import load_parsers
-from .services.llm import CypherGenerator, create_rag_orchestrator
-from .tools.code_retrieval import CodeRetriever, create_code_retrieval_tool
-from .tools.codebase_query import create_query_tool
+
+# Conditional imports for graph dependencies that may not be available
+try:
+    from .graph_updater import GraphUpdater, MemgraphIngestor
+    from .parser_loader import load_parsers
+    from .services.llm import CypherGenerator, create_rag_orchestrator
+    from .tools.code_retrieval import CodeRetriever, create_code_retrieval_tool
+    from .tools.codebase_query import create_query_tool
+
+    HAS_GRAPH_DEPENDENCIES = True
+except ImportError:
+    # When mgclient or other graph dependencies are not available
+    GraphUpdater = None  # type: ignore[misc,assignment]
+    MemgraphIngestor = None  # type: ignore[misc,assignment]
+    load_parsers = None  # type: ignore[assignment]
+    CypherGenerator = None  # type: ignore[misc,assignment]
+    create_rag_orchestrator = None  # type: ignore[assignment]
+    CodeRetriever = None  # type: ignore[misc,assignment]
+    create_code_retrieval_tool = None  # type: ignore[assignment]
+    create_query_tool = None  # type: ignore[assignment]
+    HAS_GRAPH_DEPENDENCIES = False
 from .tools.directory_lister import DirectoryLister, create_directory_lister_tool
 from .tools.document_analyzer import DocumentAnalyzer, create_document_analyzer_tool
 from .tools.file_editor import FileEditor, create_file_editor_tool
@@ -40,27 +56,60 @@ ORANGE_STYLE = Style.from_dict({"": "#ff8c00"})  # Orange color for input text
 confirm_edits_globally = True
 
 # Edit operation constants
-_EDIT_REQUEST_KEYWORDS = frozenset([
-    "modify", "update", "change", "edit", "fix", "refactor", "optimize",
-    "add", "remove", "delete", "create", "write", "implement", "replace"
-])
+_EDIT_REQUEST_KEYWORDS = frozenset(
+    [
+        "modify",
+        "update",
+        "change",
+        "edit",
+        "fix",
+        "refactor",
+        "optimize",
+        "add",
+        "remove",
+        "delete",
+        "create",
+        "write",
+        "implement",
+        "replace",
+    ]
+)
 
-_EDIT_TOOLS = frozenset([
-    "edit_file", "write_file", "file_editor", "file_writer", "create_file"
-])
+_EDIT_TOOLS = frozenset(
+    ["edit_file", "write_file", "file_editor", "file_writer", "create_file"]
+)
 
-_EDIT_INDICATORS = frozenset([
-    "modifying", "updating", "changing", "replacing", "adding to", "deleting from",
-    "created file", "editing", "writing to", "file has been", "successfully modified",
-    "successfully updated", "successfully created", "changes have been made",
-    "file modified", "file updated", "file created"
-])
+_EDIT_INDICATORS = frozenset(
+    [
+        "modifying",
+        "updating",
+        "changing",
+        "replacing",
+        "adding to",
+        "deleting from",
+        "created file",
+        "editing",
+        "writing to",
+        "file has been",
+        "successfully modified",
+        "successfully updated",
+        "successfully created",
+        "changes have been made",
+        "file modified",
+        "file updated",
+        "file created",
+    ]
+)
 
 # Pre-compile regex patterns
 _FILE_MODIFICATION_PATTERNS = [
-    re.compile(r'(modified|updated|created|edited):\s*[\w/\\.-]+\.(py|js|ts|java|cpp|c|h|go|rs)'),
-    re.compile(r'file\s+[\w/\\.-]+\.(py|js|ts|java|cpp|c|h|go|rs)\s+(modified|updated|created|edited)'),
-    re.compile(r'writing\s+to\s+[\w/\\.-]+\.(py|js|ts|java|cpp|c|h|go|rs)')
+    re.compile(
+        r"(modified|updated|created|edited):\s*[\w/\\.-]+\.(py|js|ts|java|cpp|c|h|go|rs)"
+    ),
+    re.compile(
+        r"file\s+[\w/\\.-]+\.(py|js|ts|java|cpp|c|h|go|rs)\s+(modified|updated|created|edited)"
+    ),
+    re.compile(r"writing\s+to\s+[\w/\\.-]+\.(py|js|ts|java|cpp|c|h|go|rs)"),
 ]
 
 
@@ -109,23 +158,28 @@ def get_session_context() -> str:
         return f"\n\n[SESSION CONTEXT - Previous conversation in this session]:\n{content}\n[END SESSION CONTEXT]\n\n"
     return ""
 
+
 def is_edit_operation_request(question: str) -> bool:
     """Check if the user's question/request would likely result in edit operations."""
     question_lower = question.lower()
     return any(keyword in question_lower for keyword in _EDIT_REQUEST_KEYWORDS)
 
 
-async def _handle_rejection(rag_agent: Any, message_history: list[Any], console: Console) -> Any:
+async def _handle_rejection(
+    rag_agent: Any, message_history: list[Any], console: Console
+) -> Any:
     """Handle user rejection of edits with agent acknowledgment."""
     rejection_message = "The user has rejected the changes that were made. Please acknowledge this and consider if any changes need to be reverted."
-    
+
     with console.status("[bold yellow]Processing rejection...[/bold yellow]"):
         rejection_response = await run_with_cancellation(
             console,
             rag_agent.run(rejection_message, message_history=message_history),
         )
-    
-    if not (isinstance(rejection_response, dict) and rejection_response.get("cancelled")):
+
+    if not (
+        isinstance(rejection_response, dict) and rejection_response.get("cancelled")
+    ):
         rejection_markdown = Markdown(rejection_response.output)
         console.print(
             Panel(
@@ -135,23 +189,27 @@ async def _handle_rejection(rag_agent: Any, message_history: list[Any], console:
             )
         )
         message_history.extend(rejection_response.new_messages())
-    
+
     return rejection_response
 
 
 def is_edit_operation_response(response_text: str) -> bool:
     """Enhanced check if the response contains edit operations that need confirmation."""
     response_lower = response_text.lower()
-    
+
     # Check for tool usage
     tool_usage = any(tool in response_lower for tool in _EDIT_TOOLS)
-    
+
     # Check for content indicators
-    content_indicators = any(indicator in response_lower for indicator in _EDIT_INDICATORS)
-    
+    content_indicators = any(
+        indicator in response_lower for indicator in _EDIT_INDICATORS
+    )
+
     # Check for regex patterns
-    pattern_match = any(pattern.search(response_lower) for pattern in _FILE_MODIFICATION_PATTERNS)
-    
+    pattern_match = any(
+        pattern.search(response_lower) for pattern in _FILE_MODIFICATION_PATTERNS
+    )
+
     return tool_usage or content_indicators or pattern_match
 
 
@@ -160,7 +218,7 @@ def _setup_common_initialization(repo_path: str) -> Path:
     # Logger initialization
     logger.remove()
     logger.add(sys.stdout, format="{time:YYYY-MM-DD HH:mm:ss.SSS} | {message}")
-    
+
     # Temporary directory cleanup
     project_root = Path(repo_path).resolve()
     tmp_dir = project_root / ".tmp"
@@ -170,11 +228,15 @@ def _setup_common_initialization(repo_path: str) -> Path:
         else:
             tmp_dir.unlink()
     tmp_dir.mkdir()
-    
+
     return project_root
 
 
-def _create_configuration_table(repo_path: str, title: str = "Graph-Code Initializing...", language: str | None = None) -> Table:
+def _create_configuration_table(
+    repo_path: str,
+    title: str = "Graph-Code Initializing...",
+    language: str | None = None,
+) -> Table:
     """Create and return a configuration table."""
     table = Table(title=f"[bold green]{title}[/bold green]")
     table.add_column("Configuration", style="cyan")
@@ -186,7 +248,9 @@ def _create_configuration_table(repo_path: str, title: str = "Graph-Code Initial
 
     orchestrator_model = settings.active_orchestrator_model
     orchestrator_provider = detect_provider_from_model(orchestrator_model)
-    table.add_row("Orchestrator Model", f"{orchestrator_model} ({orchestrator_provider})")
+    table.add_row(
+        "Orchestrator Model", f"{orchestrator_model} ({orchestrator_provider})"
+    )
 
     cypher_model = settings.active_cypher_model
     cypher_provider = detect_provider_from_model(cypher_model)
@@ -195,12 +259,14 @@ def _create_configuration_table(repo_path: str, title: str = "Graph-Code Initial
     # Show local endpoint if any model is using local provider
     if orchestrator_provider == "local" or cypher_provider == "local":
         table.add_row("Local Model Endpoint", str(settings.LOCAL_MODEL_ENDPOINT))
-    
+
     # Show edit confirmation status
-    confirmation_status = "Enabled" if confirm_edits_globally else "Disabled (YOLO Mode)"
+    confirmation_status = (
+        "Enabled" if confirm_edits_globally else "Disabled (YOLO Mode)"
+    )
     table.add_row("Edit Confirmation", confirmation_status)
     table.add_row("Target Repository", repo_path)
-    
+
     return table
 
 
@@ -324,15 +390,23 @@ Remember: Propose changes first, wait for my approval, then implement.
 
             # Check if confirmation is needed for edit operations
             if confirm_edits_globally and is_edit_operation_response(response.output):
-                console.print("\n[bold yellow]⚠️  This optimization has performed file modifications.[/bold yellow]")
-                
-                if not Confirm.ask("[bold cyan]Do you want to keep these optimizations?[/bold cyan]"):
-                    console.print("[bold red]❌ Optimizations rejected by user.[/bold red]")
+                console.print(
+                    "\n[bold yellow]⚠️  This optimization has performed file modifications.[/bold yellow]"
+                )
+
+                if not Confirm.ask(
+                    "[bold cyan]Do you want to keep these optimizations?[/bold cyan]"
+                ):
+                    console.print(
+                        "[bold red]❌ Optimizations rejected by user.[/bold red]"
+                    )
                     await _handle_rejection(rag_agent, message_history, console)
                     first_run = False
                     continue
                 else:
-                    console.print("[bold green]✅ Optimizations approved by user.[/bold green]")
+                    console.print(
+                        "[bold green]✅ Optimizations approved by user.[/bold green]"
+                    )
 
             # Log assistant response
             log_session_event(f"ASSISTANT: {response.output}")
@@ -532,8 +606,12 @@ async def run_chat_loop(
             # Check if this might be an edit operation and warn user upfront
             might_edit = is_edit_operation_request(question)
             if confirm_edits_globally and might_edit:
-                console.print("\n[bold yellow]⚠️  This request might result in file modifications.[/bold yellow]")
-                if not Confirm.ask("[bold cyan]Do you want to proceed with this request?[/bold cyan]"):
+                console.print(
+                    "\n[bold yellow]⚠️  This request might result in file modifications.[/bold yellow]"
+                )
+                if not Confirm.ask(
+                    "[bold cyan]Do you want to proceed with this request?[/bold cyan]"
+                ):
                     console.print("[bold red]❌ Request cancelled by user.[/bold red]")
                     continue
 
@@ -564,14 +642,20 @@ async def run_chat_loop(
 
             # Check if the response actually contains edit operations
             if confirm_edits_globally and is_edit_operation_response(response.output):
-                console.print("\n[bold yellow]⚠️  The assistant has performed file modifications.[/bold yellow]")
-                
-                if not Confirm.ask("[bold cyan]Do you want to keep these changes?[/bold cyan]"):
+                console.print(
+                    "\n[bold yellow]⚠️  The assistant has performed file modifications.[/bold yellow]"
+                )
+
+                if not Confirm.ask(
+                    "[bold cyan]Do you want to keep these changes?[/bold cyan]"
+                ):
                     console.print("[bold red]❌ User rejected the changes.[/bold red]")
                     await _handle_rejection(rag_agent, message_history, console)
                     continue
                 else:
-                    console.print("[bold green]✅ Changes accepted by user.[/bold green]")
+                    console.print(
+                        "[bold green]✅ Changes accepted by user.[/bold green]"
+                    )
 
             # Log assistant response
             log_session_event(f"ASSISTANT: {response.output}")
@@ -734,10 +818,21 @@ def start(
 ) -> None:
     """Starts the Codebase RAG CLI."""
     global confirm_edits_globally
-    
+
+    # Check if graph dependencies are available
+    if not HAS_GRAPH_DEPENDENCIES:
+        console.print(
+            "[bold red]Error: Graph dependencies (mgclient) not available.[/bold red]"
+        )
+        console.print(
+            "This command requires the full runtime environment with database connectivity."
+        )
+        console.print("Try installing with: pixi run -e runtime start ...")
+        raise typer.Exit(1)
+
     # Set confirmation mode based on flag
     confirm_edits_globally = not no_confirm
-    
+
     target_repo_path = repo_path or settings.TARGET_REPO_PATH
 
     # Validate output option usage
@@ -796,6 +891,18 @@ def export(
     ),
 ) -> None:
     """Export the current knowledge graph to a file."""
+
+    # Check if graph dependencies are available
+    if not HAS_GRAPH_DEPENDENCIES:
+        console.print(
+            "[bold red]Error: Graph dependencies (mgclient) not available.[/bold red]"
+        )
+        console.print(
+            "This command requires the full runtime environment with database connectivity."
+        )
+        console.print("Try installing with: pixi run -e runtime export ...")
+        raise typer.Exit(1)
+
     if not format_json:
         console.print(
             "[bold red]Error: Currently only JSON format is supported.[/bold red]"
@@ -836,9 +943,7 @@ async def main_optimize_async(
 
     # Display configuration with language included
     table = _create_configuration_table(
-        str(project_root), 
-        "Optimization Session Configuration", 
-        language
+        str(project_root), "Optimization Session Configuration", language
     )
     console.print(table)
 
@@ -851,6 +956,7 @@ async def main_optimize_async(
         await run_optimization_loop(
             rag_agent, [], project_root, language, reference_document
         )
+
 
 @app.command()
 def optimize(
@@ -880,10 +986,21 @@ def optimize(
 ) -> None:
     """Optimize a codebase for a specific programming language."""
     global confirm_edits_globally
-    
+
+    # Check if graph dependencies are available
+    if not HAS_GRAPH_DEPENDENCIES:
+        console.print(
+            "[bold red]Error: Graph dependencies (mgclient) not available.[/bold red]"
+        )
+        console.print(
+            "This command requires the full runtime environment with database connectivity."
+        )
+        console.print("Try installing with: pixi run -e runtime optimize ...")
+        raise typer.Exit(1)
+
     # Set confirmation mode based on flag
     confirm_edits_globally = not no_confirm
-    
+
     target_repo_path = repo_path or settings.TARGET_REPO_PATH
 
     try:
