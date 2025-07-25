@@ -299,6 +299,7 @@ jobs:
           pixi-version: ${{ env.PIXI_VERSION }}
           cache: false  # Disable cache since we modified pyproject.toml
           manifest-path: pyproject.toml
+          locked: false  # Skip automatic --locked install since we modified pyproject.toml
 
       - name: Install dependencies (without --locked for cross-platform resolution)
         run: pixi install -e ci-smoke
