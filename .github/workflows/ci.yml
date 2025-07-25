@@ -282,7 +282,8 @@ jobs:
           cache: true
           manifest-path: pyproject.toml
 
-      - name: Temporarily modify platform for CI
+      - name: Temporarily modify platform for CI (Unix)
+        if: runner.os != 'Windows'
         run: |
           # Backup original pyproject.toml
           cp pyproject.toml pyproject.toml.backup
@@ -290,18 +291,47 @@ jobs:
           sed -i 's/platforms = \["linux-64"\]/platforms = ["${{ matrix.platform }}"]/' pyproject.toml
           echo "Modified pyproject.toml for platform: ${{ matrix.platform }}"
 
+      - name: Temporarily modify platform for CI (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          # Backup original pyproject.toml
+          Copy-Item pyproject.toml pyproject.toml.backup
+          # Replace linux-64 with current matrix platform
+          (Get-Content pyproject.toml) -replace 'platforms = \["linux-64"\]', 'platforms = ["${{ matrix.platform }}"]' | Set-Content pyproject.toml
+          Write-Output "Modified pyproject.toml for platform: ${{ matrix.platform }}"
+
       - name: Install dependencies
         run: pixi install -e ci-smoke
 
-      - name: Run basic tests
+      - name: Run basic tests (Unix)
+        if: runner.os != 'Windows'
         run: pixi run -e ci-smoke test-unit-smoke || echo '⚠️ Some tests require pymgclient - this is expected'
 
-      - name: Restore original pyproject.toml
-        if: always()
+      - name: Run basic tests (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          pixi run -e ci-smoke test-unit-smoke
+          if ($LASTEXITCODE -ne 0) {
+            Write-Output '⚠️ Some tests require pymgclient - this is expected'
+          }
+
+      - name: Restore original pyproject.toml (Unix)
+        if: always() && runner.os != 'Windows'
         run: |
           # Restore original pyproject.toml
           mv pyproject.toml.backup pyproject.toml
           echo "Restored original pyproject.toml"
+
+      - name: Restore original pyproject.toml (Windows)
+        if: always() && runner.os == 'Windows'
+        run: |
+          # Restore original pyproject.toml
+          if (Test-Path pyproject.toml.backup) {
+            Move-Item pyproject.toml.backup pyproject.toml -Force
+            Write-Output "Restored original pyproject.toml"
+          } else {
+            Write-Output "Backup file not found, skipping restore"
+          }
 
   deploy-artifacts:
     name: "📦 Deploy Artifacts"
