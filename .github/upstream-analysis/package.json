@@ -4,16 +4,24 @@
   "description": "Upstream change detection and notification system",
   "main": "analyze-changes.js",
   "bin": {
-    "analyze-changes": "./analyze-changes.js"
+    "analyze-changes": "./analyze-changes.js",
+    "generate-template": "./generate-template.js"
   },
   "scripts": {
     "analyze": "node analyze-changes.js",
-    "test": "node test-analyze.js"
+    "generate": "node generate-template.js",
+    "session": "node generate-template.js session",
+    "test": "node test-analyze.js",
+    "test-templates": "node test-templates.js",
+    "test-all": "npm run test && npm run test-templates"
   },
   "dependencies": {
     "@octokit/rest": "^19.0.0",
     "@slack/webhook": "^6.1.0",
-    "js-yaml": "^4.1.0"
+    "commander": "^10.0.0",
+    "handlebars": "^4.7.0",
+    "js-yaml": "^4.1.0",
+    "simple-git": "^3.19.0"
   },
   "devDependencies": {
     "node-fetch": "^3.3.0"
