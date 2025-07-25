@@ -42,7 +42,7 @@ disallow_untyped_defs = true
 
 [tool.pixi.project]
 channels = ["conda-forge"]
-platforms = ["linux-64"]  # Optimized for local development - CI validates cross-platform with --platform flag
+platforms = ["linux-64"]  # Local development only - CI uses --platform flag for cross-platform validation
 
 [tool.pixi.dependencies]
 # Core runtime dependencies - pixi replaces pip entirely
@@ -240,7 +240,7 @@ clean = "rm -rf __pycache__ .pytest_cache .coverage htmlcov .ruff_cache dist bui
 
 # ===== PROJECT-SPECIFIC TASKS =====
 # Graph-Code specific tasks (require pymgclient)
-install-pymgclient = "bash -c 'pip install pymgclient --no-deps || echo \"WARNING: pymgclient failed to install - some functionality may be limited\"'"
+install-pymgclient = "bash -c 'CMAKE_C_FLAGS=\"-Wno-unused-value\" pip install pymgclient --no-deps || echo \"WARNING: pymgclient failed to install - some functionality may be limited\"'"
 serve = { depends-on = ["install-pymgclient"], cmd = "python -m codebase_rag.main start --repo-path ." }
 parse-repo = { depends-on = ["install-pymgclient"], cmd = "python -m codebase_rag.main start --repo-path . --update-graph --clean" }
 export-graph = { depends-on = ["install-pymgclient"], cmd = "python -m codebase_rag.main export -o graph_export.json" }

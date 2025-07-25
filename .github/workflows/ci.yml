@@ -283,10 +283,10 @@ jobs:
           manifest-path: pyproject.toml
 
       - name: Install dependencies
-        run: pixi install -e ci-smoke
+        run: pixi install -e ci-smoke --platform ${{ matrix.platform }}
 
       - name: Run basic tests
-        run: pixi run -e ci-smoke test-unit-smoke || echo '⚠️ Some tests require pymgclient - this is expected'
+        run: pixi run -e ci-smoke test-unit-smoke --platform ${{ matrix.platform }} || echo '⚠️ Some tests require pymgclient - this is expected'
 
   deploy-artifacts:
     name: "📦 Deploy Artifacts"
