@@ -1,6 +1,7 @@
+---
 name: Upstream Sync
 
-on:
+"on":
   schedule:
     # Run daily at midnight UTC
     - cron: '0 0 * * *'
@@ -16,164 +17,176 @@ on:
 jobs:
   sync-upstream:
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-        token: ${{ secrets.GITHUB_TOKEN }}
-    
-    - name: Configure Git
-      run: |
-        git config --global user.name 'github-actions[bot]'
-        git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-    
-    - name: Add upstream remote
-      run: |
-        echo "🔗 Adding upstream remote..."
-        git remote add upstream https://github.com/vitali87/code-graph-rag.git || true
-        git remote -v
-    
-    - name: Fetch upstream changes
-      id: fetch
-      run: |
-        echo "⬇️ Fetching upstream changes..."
-        
-        # Retry logic with exponential backoff
-        max_retries=3
-        retry_count=0
-        
-        while [ $retry_count -lt $max_retries ]; do
-          if git fetch upstream; then
-            echo "✅ Successfully fetched upstream changes"
-            break
-          else
-            retry_count=$((retry_count + 1))
-            if [ $retry_count -lt $max_retries ]; then
-              sleep_time=$((2 ** retry_count))
-              echo "❌ Fetch failed. Retrying in ${sleep_time} seconds... (attempt $retry_count/$max_retries)"
-              sleep $sleep_time
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email \
+            'github-actions[bot]@users.noreply.github.com'
+
+      - name: Add upstream remote
+        run: |
+          echo "🔗 Adding upstream remote..."
+          git remote add upstream \
+            https://github.com/vitali87/code-graph-rag.git || true
+          git remote -v
+
+      - name: Fetch upstream changes
+        id: fetch
+        run: |
+          echo "⬇️ Fetching upstream changes..."
+
+          # Retry logic with exponential backoff
+          max_retries=3
+          retry_count=0
+
+          while [ $retry_count -lt $max_retries ]; do
+            if git fetch upstream; then
+              echo "✅ Successfully fetched upstream changes"
+              break
             else
-              echo "❌ Failed to fetch upstream after $max_retries attempts"
-              exit 1
+              retry_count=$((retry_count + 1))
+              if [ $retry_count -lt $max_retries ]; then
+                sleep_time=$((2 ** retry_count))
+                echo "❌ Fetch failed. Retrying in ${sleep_time} seconds..."
+                echo "(attempt $retry_count/$max_retries)"
+                sleep $sleep_time
+              else
+                echo "❌ Failed to fetch upstream after $max_retries attempts"
+                exit 1
+              fi
+            fi
+          done
+
+          # Get latest upstream commit
+          upstream_commit=$(git rev-parse upstream/main)
+          echo "upstream_commit=$upstream_commit" >> $GITHUB_OUTPUT
+          echo "📍 Latest upstream commit: $upstream_commit"
+
+      - name: Check for changes
+        id: changes
+        run: |
+          echo "🔍 Checking for changes..."
+
+          # Get current upstream-mirror commit
+          git checkout upstream-mirror || {
+            echo "⚠️ upstream-mirror branch doesn't exist, will be created"
+            echo "needs_creation=true" >> $GITHUB_OUTPUT
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            exit 0
+          }
+
+          current_commit=$(git rev-parse HEAD)
+          upstream_commit="${{ steps.fetch.outputs.upstream_commit }}"
+
+          echo "📍 Current upstream-mirror commit: $current_commit"
+          echo "📍 Latest upstream commit: $upstream_commit"
+
+          force_sync="${{ inputs.force_sync }}"
+          if [ "$current_commit" != "$upstream_commit" ] || \
+             [ "$force_sync" = "true" ]; then
+            echo "✅ Changes detected or force sync requested"
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+
+            # Get commit count for summary
+            commit_count=$(git rev-list --count \
+              $current_commit..$upstream_commit 2>/dev/null || echo "unknown")
+            echo "commit_count=$commit_count" >> $GITHUB_OUTPUT
+          else
+            echo "ℹ️ No changes detected"
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Update upstream-mirror branch
+        if: steps.changes.outputs.has_changes == 'true'
+        run: |
+          echo "🔄 Updating upstream-mirror branch..."
+
+          # Handle branch creation or update
+          if [ "${{ steps.changes.outputs.needs_creation }}" = "true" ]; then
+            echo "🆕 Creating upstream-mirror branch"
+            git checkout -b upstream-mirror upstream/main
+          else
+            echo "♻️ Updating existing upstream-mirror branch"
+            # Check if we need to handle force pushes
+            if ! git merge-base --is-ancestor upstream/main HEAD; then
+              echo "⚠️ Force push detected upstream, resetting branch"
+              git reset --hard upstream/main
+            else
+              echo "📈 Fast-forward update possible"
+              git reset --hard upstream/main
             fi
           fi
-        done
-        
-        # Get latest upstream commit
-        upstream_commit=$(git rev-parse upstream/main)
-        echo "upstream_commit=$upstream_commit" >> $GITHUB_OUTPUT
-        echo "📍 Latest upstream commit: $upstream_commit"
-    
-    - name: Check for changes
-      id: changes
-      run: |
-        echo "🔍 Checking for changes..."
-        
-        # Get current upstream-mirror commit
-        git checkout upstream-mirror || {
-          echo "⚠️ upstream-mirror branch doesn't exist, will be created"
-          echo "needs_creation=true" >> $GITHUB_OUTPUT
-          echo "has_changes=true" >> $GITHUB_OUTPUT
-          exit 0
-        }
-        
-        current_commit=$(git rev-parse HEAD)
-        upstream_commit="${{ steps.fetch.outputs.upstream_commit }}"
-        
-        echo "📍 Current upstream-mirror commit: $current_commit"
-        echo "📍 Latest upstream commit: $upstream_commit"
-        
-        if [ "$current_commit" != "$upstream_commit" ] || [ "${{ inputs.force_sync }}" = "true" ]; then
-          echo "✅ Changes detected or force sync requested"
-          echo "has_changes=true" >> $GITHUB_OUTPUT
-          
-          # Get commit count for summary
-          commit_count=$(git rev-list --count $current_commit..$upstream_commit 2>/dev/null || echo "unknown")
-          echo "commit_count=$commit_count" >> $GITHUB_OUTPUT
-        else
-          echo "ℹ️ No changes detected"
-          echo "has_changes=false" >> $GITHUB_OUTPUT
-        fi
-    
-    - name: Update upstream-mirror branch
-      if: steps.changes.outputs.has_changes == 'true'
-      run: |
-        echo "🔄 Updating upstream-mirror branch..."
-        
-        # Handle branch creation or update
-        if [ "${{ steps.changes.outputs.needs_creation }}" = "true" ]; then
-          echo "🆕 Creating upstream-mirror branch"
-          git checkout -b upstream-mirror upstream/main
-        else
-          echo "♻️ Updating existing upstream-mirror branch"
-          # Check if we need to handle force pushes
-          if ! git merge-base --is-ancestor upstream/main HEAD; then
-            echo "⚠️ Force push detected upstream, resetting branch"
-            git reset --hard upstream/main
-          else
-            echo "📈 Fast-forward update possible"
-            git reset --hard upstream/main
-          fi
-        fi
-        
-        echo "✅ Branch updated successfully"
-        git log --oneline -5
-    
-    - name: Push changes
-      if: steps.changes.outputs.has_changes == 'true'
-      run: |
-        echo "⬆️ Pushing changes to origin..."
-        
-        # Retry logic for push
-        max_retries=3
-        retry_count=0
-        
-        while [ $retry_count -lt $max_retries ]; do
-          if git push origin upstream-mirror --force-with-lease; then
-            echo "✅ Successfully pushed changes"
-            break
-          else
-            retry_count=$((retry_count + 1))
-            if [ $retry_count -lt $max_retries ]; then
-              sleep_time=$((2 ** retry_count))
-              echo "❌ Push failed. Retrying in ${sleep_time} seconds... (attempt $retry_count/$max_retries)"
-              sleep $sleep_time
-              
-              # Re-fetch in case of concurrent updates
-              git fetch origin upstream-mirror || true
+
+          echo "✅ Branch updated successfully"
+          git log --oneline -5
+
+      - name: Push changes
+        if: steps.changes.outputs.has_changes == 'true'
+        run: |
+          echo "⬆️ Pushing changes to origin..."
+
+          # Retry logic for push
+          max_retries=3
+          retry_count=0
+
+          while [ $retry_count -lt $max_retries ]; do
+            if git push origin upstream-mirror --force-with-lease; then
+              echo "✅ Successfully pushed changes"
+              break
             else
-              echo "❌ Failed to push after $max_retries attempts"
-              exit 1
+              retry_count=$((retry_count + 1))
+              if [ $retry_count -lt $max_retries ]; then
+                sleep_time=$((2 ** retry_count))
+                echo "❌ Push failed. Retrying in ${sleep_time} seconds..."
+                echo "(attempt $retry_count/$max_retries)"
+                sleep $sleep_time
+
+                # Re-fetch in case of concurrent updates
+                git fetch origin upstream-mirror || true
+              else
+                echo "❌ Failed to push after $max_retries attempts"
+                exit 1
+              fi
             fi
-          fi
-        done
-    
-    - name: Create sync summary
-      if: steps.changes.outputs.has_changes == 'true'
-      run: |
-        echo "📊 Sync Summary" >> $GITHUB_STEP_SUMMARY
-        echo "===============" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "- **Status**: ✅ Successfully synced" >> $GITHUB_STEP_SUMMARY
-        echo "- **Commits synced**: ${{ steps.changes.outputs.commit_count }}" >> $GITHUB_STEP_SUMMARY
-        echo "- **Latest upstream commit**: \`${{ steps.fetch.outputs.upstream_commit }}\`" >> $GITHUB_STEP_SUMMARY
-        echo "- **Sync time**: $(date -u)" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### Recent upstream commits:" >> $GITHUB_STEP_SUMMARY
-        echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-        git log --oneline -10 upstream/main >> $GITHUB_STEP_SUMMARY
-        echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-    
-    - name: No changes summary
-      if: steps.changes.outputs.has_changes == 'false'
-      run: |
-        echo "📊 Sync Summary" >> $GITHUB_STEP_SUMMARY
-        echo "===============" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "- **Status**: ℹ️ No changes detected" >> $GITHUB_STEP_SUMMARY
-        echo "- **Current commit**: \`${{ steps.fetch.outputs.upstream_commit }}\`" >> $GITHUB_STEP_SUMMARY
-        echo "- **Check time**: $(date -u)" >> $GITHUB_STEP_SUMMARY
-        
-        echo "ℹ️ upstream-mirror is already up to date with upstream/main"
+          done
+
+      - name: Create sync summary
+        if: steps.changes.outputs.has_changes == 'true'
+        run: |
+          echo "📊 Sync Summary" >> $GITHUB_STEP_SUMMARY
+          echo "===============" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ✅ Successfully synced" >> $GITHUB_STEP_SUMMARY
+          commit_count="${{ steps.changes.outputs.commit_count }}"
+          echo "- **Commits synced**: $commit_count" >> $GITHUB_STEP_SUMMARY
+          upstream_commit="${{ steps.fetch.outputs.upstream_commit }}"
+          echo "- **Latest upstream commit**: \`$upstream_commit\`" \
+            >> $GITHUB_STEP_SUMMARY
+          echo "- **Sync time**: $(date -u)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Recent upstream commits:" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          git log --oneline -10 upstream/main >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+      - name: No changes summary
+        if: steps.changes.outputs.has_changes == 'false'
+        run: |
+          echo "📊 Sync Summary" >> $GITHUB_STEP_SUMMARY
+          echo "===============" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ℹ️ No changes detected" >> $GITHUB_STEP_SUMMARY
+          upstream_commit="${{ steps.fetch.outputs.upstream_commit }}"
+          echo "- **Current commit**: \`$upstream_commit\`" \
+            >> $GITHUB_STEP_SUMMARY
+          echo "- **Check time**: $(date -u)" >> $GITHUB_STEP_SUMMARY
+
+          echo "ℹ️ upstream-mirror is already up to date with upstream/main"

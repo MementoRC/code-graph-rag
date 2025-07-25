@@ -15,6 +15,9 @@
   <a href="https://github.com/vitali87/code-graph-rag/blob/main/LICENSE">
     <img src="https://img.shields.io/github/license/vitali87/code-graph-rag" alt="License" />
   </a>
+  <a href="https://github.com/MementoRC/code-graph-rag/actions/workflows/upstream-sync.yml">
+    <img src="https://github.com/MementoRC/code-graph-rag/workflows/Upstream%20Sync/badge.svg" alt="Upstream Sync" />
+  </a>
 </p>
 </div>
 
