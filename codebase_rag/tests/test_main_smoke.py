@@ -10,8 +10,8 @@ import pytest
 
 def strip_ansi_codes(text: str) -> str:
     """Remove ANSI escape codes from text."""
-    ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
-    return ansi_escape.sub('', text)
+    ansi_escape = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
+    return ansi_escape.sub("", text)
 
 
 def test_help_command_works() -> None:
@@ -37,7 +37,7 @@ def test_help_command_works() -> None:
 
     # Strip ANSI codes for reliable text matching
     clean_stdout = strip_ansi_codes(result.stdout)
-    
+
     # Output should contain expected help text
     assert "Usage:" in clean_stdout or "usage:" in clean_stdout.lower()
     assert "--help" in clean_stdout

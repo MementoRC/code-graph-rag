@@ -207,8 +207,8 @@ format-diff = "ruff format --diff codebase_rag/"
 typecheck = "mypy codebase_rag/"
 
 # Combined Quality Check - 🚨 MANDATORY BEFORE COMMIT
-quality = { depends-on = ["lint", "typecheck"] }   # Core quality without runtime tests
-quality-with-tests = { depends-on = ["test", "lint", "typecheck"] }   # Full quality with tests
+quality = { depends-on = ["lint", "format-check", "typecheck"] }   # Core quality without runtime tests
+quality-with-tests = { depends-on = ["test", "lint", "format-check", "typecheck"] }   # Full quality with tests
 
 # Pre-commit Integration - PREVENT CI FAILURES
 pre-commit = { cmd = "pre-commit run --all-files", env = { CLAUDECODE = "0" } }
@@ -265,7 +265,7 @@ diff-cover = "diff-cover coverage.xml --compare-branch=origin/main --html-report
 safety-check-ci = "safety check --json --output safety-report.json"
 
 # Comprehensive quality validation
-quality-gate = { depends-on = ["test", "lint", "typecheck", "security-scan"] }
+quality-gate = { depends-on = ["test", "lint", "format-check", "typecheck", "security-scan"] }
 
 # ===== LEGACY/SPECIALIZED TASKS =====
 # Keep existing specialized tasks
