@@ -282,11 +282,26 @@ jobs:
           cache: true
           manifest-path: pyproject.toml
 
+      - name: Temporarily modify platform for CI
+        run: |
+          # Backup original pyproject.toml
+          cp pyproject.toml pyproject.toml.backup
+          # Replace linux-64 with current matrix platform
+          sed -i 's/platforms = \["linux-64"\]/platforms = ["${{ matrix.platform }}"]/' pyproject.toml
+          echo "Modified pyproject.toml for platform: ${{ matrix.platform }}"
+
       - name: Install dependencies
-        run: pixi install -e ci-smoke --platform ${{ matrix.platform }}
+        run: pixi install -e ci-smoke
 
       - name: Run basic tests
-        run: pixi run -e ci-smoke test-unit-smoke --platform ${{ matrix.platform }} || echo '⚠️ Some tests require pymgclient - this is expected'
+        run: pixi run -e ci-smoke test-unit-smoke || echo '⚠️ Some tests require pymgclient - this is expected'
+
+      - name: Restore original pyproject.toml
+        if: always()
+        run: |
+          # Restore original pyproject.toml
+          mv pyproject.toml.backup pyproject.toml
+          echo "Restored original pyproject.toml"
 
   deploy-artifacts:
     name: "📦 Deploy Artifacts"
