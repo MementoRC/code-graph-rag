@@ -5,15 +5,18 @@
   "main": "analyze-changes.js",
   "bin": {
     "analyze-changes": "./analyze-changes.js",
-    "generate-template": "./generate-template.js"
+    "generate-template": "./generate-template.js",
+    "classify-changes": "./classify-changes.js"
   },
   "scripts": {
     "analyze": "node analyze-changes.js",
     "generate": "node generate-template.js",
     "session": "node generate-template.js session",
+    "classify": "node classify-changes.js",
     "test": "node test-analyze.js",
     "test-templates": "node test-templates.js",
-    "test-all": "npm run test && npm run test-templates"
+    "test-classification": "node test-classification.js",
+    "test-all": "npm run test && npm run test-templates && npm run test-classification"
   },
   "dependencies": {
     "@octokit/rest": "^19.0.0",
@@ -22,6 +25,10 @@
     "handlebars": "^4.7.0",
     "js-yaml": "^4.1.0",
     "simple-git": "^3.19.0"
+  },
+  "optionalDependencies": {
+    "natural": "^6.5.0",
+    "compromise": "^14.10.0"
   },
   "devDependencies": {
     "node-fetch": "^3.3.0"

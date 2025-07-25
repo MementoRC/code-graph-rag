@@ -21,11 +21,15 @@ try {
   console.warn('⚠️ @octokit/rest not installed, using git commands only');
 }
 
+// Import the classification system
+const { ChangeClassifier } = require('./classify-changes');
+
 class UpstreamAnalyzer {
   constructor() {
     this.config = null;
     this.octokit = null;
     this.repoPath = process.cwd();
+    this.classifier = null;
   }
 
   /**
@@ -57,6 +61,11 @@ class UpstreamAnalyzer {
     } else {
       console.log('ℹ️ GitHub API client not available (missing token or octokit)');
     }
+
+    // Initialize classification system
+    this.classifier = new ChangeClassifier();
+    await this.classifier.initialize();
+    console.log('✅ Classification system initialized');
   }
 
   /**
@@ -215,24 +224,53 @@ class UpstreamAnalyzer {
       return total + this.calculateFileSignificance(file);
     }, 0);
     
-    // Categorize commit
+    // Categorize commit (legacy method)
     const category = this.categorizeCommit(commit);
     
-    // Calculate total significance
-    const totalSignificance = Math.max(category.significance + fileSignificance, 1);
+    // Advanced classification using the classification system
+    let advancedClassification = null;
+    if (this.classifier) {
+      try {
+        advancedClassification = this.classifier.classifyCommit({
+          ...commit,
+          files
+        });
+      } catch (error) {
+        console.warn(`⚠️ Advanced classification failed for ${commit.hash}:`, error.message);
+      }
+    }
+    
+    // Use advanced classification if available, otherwise fall back to legacy
+    const finalCategory = advancedClassification ? advancedClassification.category : category.category;
+    const finalSignificance = advancedClassification ? 
+      Math.max(advancedClassification.confidence * 10 + fileSignificance, 1) :
+      Math.max(category.significance + fileSignificance, 1);
     
     return {
       ...commit,
       files,
-      category: category.category,
+      category: finalCategory,
       categoryColor: category.color,
-      significance: totalSignificance,
+      significance: finalSignificance,
       fileCount: files.length,
+      // Legacy analysis
       analysis: {
         hasSignificantKeywords: category.hasSignificantKeywords,
         hasLowSignificanceKeywords: category.hasLowSignificanceKeywords,
         fileSignificance,
         categorySignificance: category.significance
+      },
+      // Advanced classification results
+      classification: advancedClassification || {
+        category: finalCategory,
+        confidence: 0.5,
+        relevance: 0.5,
+        reasoning: ['Legacy classification used'],
+        metadata: {
+          hasFiles: files.length > 0,
+          fileCount: files.length,
+          fallback: true
+        }
       }
     };
   }
