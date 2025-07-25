@@ -2,10 +2,12 @@ import mimetypes
 import shutil
 import uuid
 from pathlib import Path
+from typing import Union
 
 from google import genai
 from google.genai import types
 from google.genai.errors import ClientError
+from google.auth import load_credentials_from_file
 from loguru import logger
 from pydantic_ai import Tool
 
@@ -29,6 +31,7 @@ class DocumentAnalyzer:
 
     def __init__(self, project_root: str) -> None:
         self.project_root = Path(project_root).resolve()
+        self.client: Union[genai.Client, _NotSupportedClient]
 
         # Initialize client based on the orchestrator model's provider
         # Note: Document analysis uses the orchestrator model since it's the main reasoning model
@@ -40,10 +43,13 @@ class DocumentAnalyzer:
                 self.client = genai.Client(api_key=settings.GEMINI_API_KEY)
             else:  # vertex provider
                 # For Vertex AI, use service account authentication
+                credentials, _ = load_credentials_from_file(
+                    settings.GCP_SERVICE_ACCOUNT_FILE
+                )
                 self.client = genai.Client(
                     project=settings.GCP_PROJECT_ID,
                     location=settings.GCP_REGION,
-                    credentials_path=settings.GCP_SERVICE_ACCOUNT_FILE,
+                    credentials=credentials,
                 )
         else:
             # Non-Gemini providers are not supported for document analysis yet.
@@ -100,6 +106,8 @@ class DocumentAnalyzer:
             ]
 
             # Call the model and get the response
+            if not hasattr(self.client, "models") or self.client.models is None:
+                raise RuntimeError("Client models not available")
             response = self.client.models.generate_content(
                 model=settings.GEMINI_MODEL_ID, contents=prompt_parts
             )
