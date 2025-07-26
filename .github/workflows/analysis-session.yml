@@ -185,6 +185,39 @@ jobs:
           cd .github/upstream-analysis
           npm ci
 
+      - name: Clean previous analysis reports
+        if: steps.changes.outputs.has_changes == 'true'
+        run: |
+          echo "🧹 Cleaning previous analysis reports..."
+          
+          # Archive existing analysis documents to keep history
+          if [ -d ".github/analysis-sessions" ]; then
+            # Create archive directory if it doesn't exist
+            mkdir -p .github/analysis-sessions/archive
+            
+            # Move existing analysis documents to archive
+            find .github/analysis-sessions -name "*.md" -not -path "*/archive/*" | while read -r file; do
+              if [ -f "$file" ]; then
+                filename=$(basename "$file")
+                timestamp=$(date -u '+%Y%m%d-%H%M%S')
+                archived_name="${timestamp}-${filename}"
+                echo "📦 Archiving: $filename → archive/$archived_name"
+                mv "$file" ".github/analysis-sessions/archive/$archived_name"
+              fi
+            done
+            
+            # Clean up any old JSON progress files (keep only last 5)
+            find .github/analysis-sessions -name "*-progress.json" -not -path "*/archive/*" | \
+              sort -r | tail -n +6 | while read -r file; do
+                if [ -f "$file" ]; then
+                  echo "🗑️ Removing old progress file: $(basename "$file")"
+                  rm "$file"
+                fi
+              done
+          fi
+          
+          echo "✅ Cleanup completed - ready for fresh analysis"
+
       - name: Generate analysis document
         if: steps.changes.outputs.has_changes == 'true'
         env:
@@ -296,10 +329,11 @@ jobs:
             echo "- **Since**: ${{ steps.changes.outputs.last_session_date }}" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "### 🎯 Next Steps" >> $GITHUB_STEP_SUMMARY
-            echo "1. Review the generated analysis document in the \`${{ steps.session-info.outputs.branch_name }}\` branch" >> $GITHUB_STEP_SUMMARY
-            echo "2. Schedule the analysis session with participants: ${{ steps.session-info.outputs.participants }}" >> $GITHUB_STEP_SUMMARY
-            echo "3. Use the interactive CLI tools during the session" >> $GITHUB_STEP_SUMMARY
-            echo "4. Complete post-session processing" >> $GITHUB_STEP_SUMMARY
+            echo "1. Review the generated analysis document: \`.github/analysis-sessions/latest-analysis.md\`" >> $GITHUB_STEP_SUMMARY
+            echo "2. Quick overview available at: \`.github/analysis-sessions/latest-summary.md\`" >> $GITHUB_STEP_SUMMARY
+            echo "3. Schedule the analysis session with participants: ${{ steps.session-info.outputs.participants }}" >> $GITHUB_STEP_SUMMARY
+            echo "4. Use interactive CLI: \`npm run session start .github/analysis-sessions/latest-analysis.md\`" >> $GITHUB_STEP_SUMMARY
+            echo "5. Complete post-session processing" >> $GITHUB_STEP_SUMMARY
           else
             echo "ℹ️ **No New Changes Detected**" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY

@@ -415,18 +415,18 @@ class TemplateGenerator {
       // Generate templates
       const outputs = {};
       
-      // Full analysis session
+      // Full analysis session - use consistent filename for latest
       outputs.fullAnalysis = await this.generateFromTemplate(
         'analysis-session',
         templateData,
-        `analysis-session-${branchDate}`
+        'latest-analysis'
       );
       
-      // Quick summary
+      // Quick summary - use consistent filename for latest
       outputs.quickSummary = await this.generateFromTemplate(
         'quick-summary',
         templateData,
-        `quick-summary-${branchDate}`
+        'latest-summary'
       );
       
       console.log('🎉 Session templates generated successfully!');
