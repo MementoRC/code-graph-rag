@@ -1,420 +1,177 @@
----
-name: Analysis Session Automation
+name: Upstream Analysis Session
 
 on:
   schedule:
-    # Weekly on Mondays at 09:00 UTC (adjust for team timezone)
+    # Weekly on Monday at 09:00 UTC (configurable in tools/analysis-session/config.yml)
     - cron: '0 9 * * 1'
   workflow_dispatch:
-    # Allow manual triggering for ad-hoc sessions
     inputs:
-      session_type:
-        description: 'Type of analysis session'
+      force_session:
+        description: 'Force session even if no significant changes'
         required: false
-        default: 'regular'
-        type: choice
-        options:
-          - regular
-          - ad-hoc
-          - urgent
-      participants:
-        description: 'Session participants (comma-separated emails)'
+        default: 'false'
+        type: boolean
+      lookback_days:
+        description: 'Days to look back for changes (default: 7)'
         required: false
-        default: ''
+        default: '7'
         type: string
-      focus_area:
-        description: 'Specific focus area for this session'
-        required: false
-        default: 'general'
-        type: string
-      duration_minutes:
-        description: 'Expected session duration in minutes'
-        required: false
-        default: '60'
-        type: string
-
-env:
-  NODE_VERSION: '18'
-  SESSION_BRANCH_PREFIX: 'analysis'
-  DEFAULT_PARTICIPANTS: 'team@example.com'  # Configure with actual team emails
 
 jobs:
   prepare-session:
-    name: "🎯 Prepare Analysis Session"
     runs-on: ubuntu-latest
-    
     outputs:
-      session_id: ${{ steps.session-info.outputs.session_id }}
-      session_date: ${{ steps.session-info.outputs.session_date }}
-      branch_name: ${{ steps.session-info.outputs.branch_name }}
-      participants: ${{ steps.session-info.outputs.participants }}
-      session_type: ${{ steps.session-info.outputs.session_type }}
-      focus_area: ${{ steps.session-info.outputs.focus_area }}
-      has_changes: ${{ steps.changes.outputs.has_changes }}
-      commit_count: ${{ steps.changes.outputs.commit_count }}
-      last_session_date: ${{ steps.changes.outputs.last_session_date }}
-
+      session_created: ${{ steps.prepare.outputs.session_created }}
+      session_branch: ${{ steps.prepare.outputs.session_branch }}
+      commit_count: ${{ steps.prepare.outputs.commit_count }}
+      has_significant_changes: ${{ steps.prepare.outputs.has_significant_changes }}
+    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
-
+      
       - name: Configure Git
         run: |
-          git config --global user.name 'analysis-bot[bot]'
-          git config --global user.email \
-            'analysis-bot[bot]@users.noreply.github.com'
-
-      - name: Generate session information
-        id: session-info
-        run: |
-          # Generate unique session ID
-          session_date=$(date -u '+%Y-%m-%d')
-          session_time=$(date -u '+%H%M')
-          session_id="session-${session_date}-${session_time}"
-          
-          # Determine session type
-          if [ "${{ github.event_name }}" = "schedule" ]; then
-            session_type="regular"
-          else
-            session_type="${{ inputs.session_type || 'ad-hoc' }}"
-          fi
-          
-          # Generate branch name
-          branch_name="${SESSION_BRANCH_PREFIX}/${session_date}-${session_type}"
-          
-          # Determine participants
-          if [ "${{ inputs.participants }}" != "" ]; then
-            participants="${{ inputs.participants }}"
-          else
-            participants="${DEFAULT_PARTICIPANTS}"
-          fi
-          
-          # Set focus area
-          focus_area="${{ inputs.focus_area || 'general' }}"
-          
-          echo "session_id=$session_id" >> $GITHUB_OUTPUT
-          echo "session_date=$session_date" >> $GITHUB_OUTPUT
-          echo "branch_name=$branch_name" >> $GITHUB_OUTPUT
-          echo "participants=$participants" >> $GITHUB_OUTPUT
-          echo "session_type=$session_type" >> $GITHUB_OUTPUT
-          echo "focus_area=$focus_area" >> $GITHUB_OUTPUT
-          
-          echo "🎯 Session Information:"
-          echo "- Session ID: $session_id"
-          echo "- Date: $session_date"
-          echo "- Type: $session_type"
-          echo "- Branch: $branch_name"
-          echo "- Focus: $focus_area"
-
-      - name: Add upstream remote
-        run: |
-          echo "🔗 Adding upstream remote..."
-          git remote add upstream \
-            https://github.com/vitali87/code-graph-rag.git || true
-          git fetch upstream
-
-      - name: Determine changes since last session
-        id: changes
-        run: |
-          echo "🔍 Analyzing changes since last session..."
-          
-          # Find last analysis session
-          last_analysis_branch=$(git branch -r --list "origin/analysis/*" | \
-            sort -V | tail -1 | sed 's/.*origin\///')
-          
-          if [ -n "$last_analysis_branch" ]; then
-            last_session_commit=$(git rev-parse "origin/$last_analysis_branch")
-            last_session_date=$(echo "$last_analysis_branch" | \
-              sed 's/analysis\/\([0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}\).*/\1/')
-            echo "📅 Last session: $last_session_date ($last_analysis_branch)"
-            echo "📍 Last session commit: $last_session_commit"
-            
-            # Compare with current upstream
-            current_upstream=$(git rev-parse upstream/main)
-            echo "📍 Current upstream: $current_upstream"
-            
-            if [ "$last_session_commit" != "$current_upstream" ]; then
-              commit_count=$(git rev-list --count \
-                $last_session_commit..upstream/main 2>/dev/null || echo "unknown")
-              echo "✅ Changes detected: $commit_count new commits"
-              echo "has_changes=true" >> $GITHUB_OUTPUT
-              echo "commit_count=$commit_count" >> $GITHUB_OUTPUT
-            else
-              echo "ℹ️ No changes since last session"
-              echo "has_changes=false" >> $GITHUB_OUTPUT
-              echo "commit_count=0" >> $GITHUB_OUTPUT
-            fi
-          else
-            echo "🆕 No previous analysis sessions found"
-            commit_count=$(git rev-list --count upstream/main)
-            echo "has_changes=true" >> $GITHUB_OUTPUT
-            echo "commit_count=$commit_count" >> $GITHUB_OUTPUT
-            last_session_date="never"
-          fi
-          
-          echo "last_session_date=$last_session_date" >> $GITHUB_OUTPUT
-
-      - name: Create analysis branch
-        if: steps.changes.outputs.has_changes == 'true'
-        run: |
-          echo "🌿 Creating analysis branch: ${{ steps.session-info.outputs.branch_name }}"
-          
-          # Create branch from latest upstream
-          git checkout -b "${{ steps.session-info.outputs.branch_name }}" upstream/main
-          
-          # Push the new branch
-          git push origin "${{ steps.session-info.outputs.branch_name }}"
-          
-          echo "✅ Analysis branch created and pushed"
-
-      - name: Setup Node.js for session tools
-        if: steps.changes.outputs.has_changes == 'true'
+          git config user.name "Analysis Session Bot"
+          git config user.email "analysis-session-bot@users.noreply.github.com"
+      
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version: '20'
           cache: 'npm'
-          cache-dependency-path: '.github/upstream-analysis/package.json'
-
-      - name: Install analysis dependencies
-        if: steps.changes.outputs.has_changes == 'true'
+          cache-dependency-path: tools/analysis-session/package.json
+      
+      - name: Install analysis session dependencies
         run: |
-          echo "📦 Installing analysis dependencies..."
-          cd .github/upstream-analysis
-          npm ci
-
-      - name: Clean previous analysis reports
-        if: steps.changes.outputs.has_changes == 'true'
+          cd tools/analysis-session
+          npm ci --production
+      
+      - name: Add upstream remote and fetch
         run: |
-          echo "🧹 Cleaning previous analysis reports..."
+          git remote add upstream https://github.com/vitali87/code-graph-rag.git || git remote set-url upstream https://github.com/vitali87/code-graph-rag.git
+          git fetch upstream
+          git fetch origin
+      
+      - name: Prepare analysis session
+        id: prepare
+        run: |
+          cd tools/analysis-session
+          FORCE_SESSION="${{ github.event.inputs.force_session || 'false' }}"
+          LOOKBACK_DAYS="${{ github.event.inputs.lookback_days || '7' }}"
           
-          # Archive existing analysis documents to keep history
-          if [ -d ".github/analysis-sessions" ]; then
-            # Create archive directory if it doesn't exist
-            mkdir -p .github/analysis-sessions/archive
-            
-            # Move existing analysis documents to archive
-            find .github/analysis-sessions -name "*.md" -not -path "*/archive/*" | while read -r file; do
-              if [ -f "$file" ]; then
-                filename=$(basename "$file")
-                timestamp=$(date -u '+%Y%m%d-%H%M%S')
-                archived_name="${timestamp}-${filename}"
-                echo "📦 Archiving: $filename → archive/$archived_name"
-                mv "$file" ".github/analysis-sessions/archive/$archived_name"
-              fi
-            done
-            
-            # Clean up any old JSON progress files (keep only last 5)
-            find .github/analysis-sessions -name "*-progress.json" -not -path "*/archive/*" | \
-              sort -r | tail -n +6 | while read -r file; do
-                if [ -f "$file" ]; then
-                  echo "🗑️ Removing old progress file: $(basename "$file")"
-                  rm "$file"
-                fi
-              done
-          fi
-          
-          echo "✅ Cleanup completed - ready for fresh analysis"
-
-      - name: Generate analysis document
-        if: steps.changes.outputs.has_changes == 'true'
+          # Run session preparation
+          node prepare-session.js \
+            --force="$FORCE_SESSION" \
+            --lookback-days="$LOOKBACK_DAYS" \
+            --github-token="${{ secrets.GITHUB_TOKEN }}" \
+            --repository="${{ github.repository }}"
         env:
-          SESSION_ID: ${{ steps.session-info.outputs.session_id }}
-          SESSION_DATE: ${{ steps.session-info.outputs.session_date }}
-          SESSION_TYPE: ${{ steps.session-info.outputs.session_type }}
-          FOCUS_AREA: ${{ steps.session-info.outputs.focus_area }}
-          PARTICIPANTS: ${{ steps.session-info.outputs.participants }}
-          COMMIT_COUNT: ${{ steps.changes.outputs.commit_count }}
-          LAST_SESSION_DATE: ${{ steps.changes.outputs.last_session_date }}
-        run: |
-          echo "📝 Generating pre-populated analysis document..."
-          cd .github/upstream-analysis
-          
-          # Generate the analysis session document
-          node generate-template.js session \
-            --session-id="$SESSION_ID" \
-            --session-date="$SESSION_DATE" \
-            --session-type="$SESSION_TYPE" \
-            --focus-area="$FOCUS_AREA" \
-            --participants="$PARTICIPANTS" \
-            --commit-count="$COMMIT_COUNT" \
-            --last-session="$LAST_SESSION_DATE" \
-            --output="../analysis-sessions/"
-          
-          echo "✅ Analysis document generated"
-
-      - name: Collect and visualize changes
-        if: steps.changes.outputs.has_changes == 'true'
-        run: |
-          echo "📊 Collecting and visualizing upstream changes..."
-          cd .github/upstream-analysis
-          
-          # Use existing analysis tools to generate change summary
-          if [ "${{ steps.changes.outputs.last_session_date }}" != "never" ]; then
-            # Get commit range from last session
-            last_commit=$(git rev-parse "origin/analysis/${{ steps.changes.outputs.last_session_date }}-*" 2>/dev/null | head -1 || echo "")
-            if [ -n "$last_commit" ]; then
-              from_ref="$last_commit"
-            else
-              from_ref="upstream/main~${{ steps.changes.outputs.commit_count }}"
-            fi
-          else
-            from_ref="upstream/main~${{ steps.changes.outputs.commit_count }}"
-          fi
-          
-          to_ref="upstream/main"
-          
-          echo "📍 Analyzing range: $from_ref → $to_ref"
-          
-          # Generate change analysis and classification
-          node analyze-changes.js "$from_ref" "$to_ref" --session-prep
-          
-          # Run classification on the changes
-          node classify-changes.js "$from_ref" "$to_ref" --session-format
-          
-          echo "✅ Change analysis completed"
-
-      - name: Commit session preparation artifacts
-        if: steps.changes.outputs.has_changes == 'true'
-        run: |
-          echo "💾 Committing session preparation artifacts..."
-          
-          # Switch to the analysis branch
-          git checkout "${{ steps.session-info.outputs.branch_name }}"
-          
-          # Add generated files
-          git add .github/analysis-sessions/ .github/upstream-analysis/
-          
-          # Check if there are changes to commit
-          if git diff --staged --quiet; then
-            echo "ℹ️ No new artifacts to commit"
-          else
-            git commit -m "feat: prepare analysis session ${{ steps.session-info.outputs.session_id }}
-
-            - Generated pre-populated analysis document
-            - Collected upstream changes since last session (${{ steps.changes.outputs.last_session_date }})
-            - Analyzed ${{ steps.changes.outputs.commit_count }} new commits
-            - Created change summaries and visualizations
-            - Session type: ${{ steps.session-info.outputs.session_type }}
-            - Focus area: ${{ steps.session-info.outputs.focus_area }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+      
+      - name: Upload session artifacts
+        if: steps.prepare.outputs.session_created == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: analysis-session-${{ steps.prepare.outputs.session_branch }}
+          path: |
+            tools/analysis-session/session-notes.md
+            tools/analysis-session/change-summary.json
+            tools/analysis-session/diff-report.html
+          retention-days: 30
+      
+      - name: Create session summary issue
+        if: steps.prepare.outputs.session_created == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
             
-            🤖 Generated with Analysis Session Automation
-            Co-Authored-By: analysis-bot[bot] <analysis-bot[bot]@users.noreply.github.com>"
+            // Read session summary
+            const sessionNotesPath = 'tools/analysis-session/session-notes.md';
+            let sessionNotes = '';
+            try {
+              sessionNotes = fs.readFileSync(sessionNotesPath, 'utf8');
+            } catch (error) {
+              sessionNotes = `Session notes not found. Check session preparation logs.`;
+            }
             
-            git push origin "${{ steps.session-info.outputs.branch_name }}"
-            echo "✅ Session artifacts committed and pushed"
-          fi
-
-      - name: Create session summary
-        if: always()
-        run: |
-          echo "📊 Analysis Session Preparation Summary" >> $GITHUB_STEP_SUMMARY
-          echo "=======================================" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          
-          if [ "${{ steps.changes.outputs.has_changes }}" = "true" ]; then
-            echo "✅ **Session Prepared Successfully**" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "### 📋 Session Details" >> $GITHUB_STEP_SUMMARY
-            echo "- **Session ID**: \`${{ steps.session-info.outputs.session_id }}\`" >> $GITHUB_STEP_SUMMARY
-            echo "- **Date**: ${{ steps.session-info.outputs.session_date }}" >> $GITHUB_STEP_SUMMARY
-            echo "- **Type**: ${{ steps.session-info.outputs.session_type }}" >> $GITHUB_STEP_SUMMARY
-            echo "- **Focus Area**: ${{ steps.session-info.outputs.focus_area }}" >> $GITHUB_STEP_SUMMARY
-            echo "- **Branch**: \`${{ steps.session-info.outputs.branch_name }}\`" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "### 📊 Changes Analysis" >> $GITHUB_STEP_SUMMARY
-            echo "- **New Commits**: ${{ steps.changes.outputs.commit_count }}" >> $GITHUB_STEP_SUMMARY
-            echo "- **Since**: ${{ steps.changes.outputs.last_session_date }}" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "### 🎯 Next Steps" >> $GITHUB_STEP_SUMMARY
-            echo "1. Review the generated analysis document: \`.github/analysis-sessions/latest-analysis.md\`" >> $GITHUB_STEP_SUMMARY
-            echo "2. Quick overview available at: \`.github/analysis-sessions/latest-summary.md\`" >> $GITHUB_STEP_SUMMARY
-            echo "3. Schedule the analysis session with participants: ${{ steps.session-info.outputs.participants }}" >> $GITHUB_STEP_SUMMARY
-            echo "4. Use interactive CLI: \`npm run session start .github/analysis-sessions/latest-analysis.md\`" >> $GITHUB_STEP_SUMMARY
-            echo "5. Complete post-session processing" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "ℹ️ **No New Changes Detected**" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "No upstream changes found since the last analysis session (${{ steps.changes.outputs.last_session_date }})." >> $GITHUB_STEP_SUMMARY
-            echo "The analysis session has been skipped." >> $GITHUB_STEP_SUMMARY
-          fi
-          
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "---" >> $GITHUB_STEP_SUMMARY
-          echo "*Session preparation completed at $(date -u)*" >> $GITHUB_STEP_SUMMARY
-
-  schedule-calendar-event:
-    name: "📅 Schedule Calendar Event"
+            const issueTitle = `🔍 Upstream Analysis Session - ${{ steps.prepare.outputs.session_branch }}`;
+            const issueBody = `# Upstream Analysis Session
+            
+            **Session Branch**: \`${{ steps.prepare.outputs.session_branch }}\`
+            **Commits Analyzed**: ${{ steps.prepare.outputs.commit_count }}
+            **Significant Changes**: ${{ steps.prepare.outputs.has_significant_changes }}
+            **Created**: ${new Date().toISOString()}
+            
+            ## Session Status
+            - [x] Session prepared automatically
+            - [ ] Team review required
+            - [ ] Manual analysis session scheduled
+            - [ ] Extraction candidates identified
+            - [ ] Session completed
+            
+            ## Quick Actions
+            - **Review Session Notes**: [Download Artifacts](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            - **Start Manual Session**: \`cd tools/analysis-session && npm run cli\`
+            - **View Changes**: \`git checkout ${{ steps.prepare.outputs.session_branch }}\`
+            
+            ## Automated Session Notes
+            
+            <details>
+            <summary>Click to expand automated analysis</summary>
+            
+            \`\`\`markdown
+            ${sessionNotes}
+            \`\`\`
+            
+            </details>
+            
+            ## Next Steps
+            1. Review the automated analysis above
+            2. Schedule manual team session if significant changes found
+            3. Use interactive CLI for detailed analysis
+            4. Create extraction issues for valuable features
+            5. Close this issue when session is complete
+            
+            ---
+            *This issue was created automatically by the Upstream Analysis Session workflow.*
+            `;
+            
+            const { data: issue } = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: issueTitle,
+              body: issueBody,
+              labels: ['upstream-analysis', 'analysis-session', 'automated']
+            });
+            
+            console.log(`Created session issue: ${issue.html_url}`);
+  
+  notify-team:
     runs-on: ubuntu-latest
     needs: prepare-session
-    if: needs.prepare-session.outputs.has_changes == 'true'
+    if: needs.prepare-session.outputs.session_created == 'true'
     
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: Schedule calendar event
-        env:
-          GOOGLE_CALENDAR_CREDENTIALS: ${{ secrets.GOOGLE_CALENDAR_CREDENTIALS }}
-          CALENDAR_ID: ${{ secrets.CALENDAR_ID }}
-          SESSION_ID: ${{ needs.prepare-session.outputs.session_id }}
-          SESSION_DATE: ${{ needs.prepare-session.outputs.session_date }}
-          SESSION_TYPE: ${{ needs.prepare-session.outputs.session_type }}
-          PARTICIPANTS: ${{ needs.prepare-session.outputs.participants }}
-          FOCUS_AREA: ${{ needs.prepare-session.outputs.focus_area }}
-          DURATION: ${{ inputs.duration_minutes || '60' }}
+      - name: Notify team of session creation
         run: |
-          echo "📅 Creating calendar event for analysis session..."
-          
-          # Note: Calendar integration implementation would go here
-          # For now, we'll create a placeholder that logs the event details
-          echo "📋 Calendar Event Details:"
-          echo "- Title: Upstream Analysis Session ($SESSION_TYPE)"
-          echo "- Date: $SESSION_DATE"
-          echo "- Duration: ${DURATION} minutes"
-          echo "- Participants: $PARTICIPANTS"
-          echo "- Focus: $FOCUS_AREA"
-          echo "- Session ID: $SESSION_ID"
-          
-          # TODO: Implement actual Google Calendar API integration
-          # This would require:
-          # 1. Google Calendar API credentials
-          # 2. Calendar ID
-          # 3. Node.js script to create the event
-          
-          echo "⚠️ Calendar integration not yet implemented"
-          echo "📝 Manual calendar event creation required"
-
-  notify-team:
-    name: "📢 Notify Team"
-    runs-on: ubuntu-latest
-    needs: [prepare-session, schedule-calendar-event]
-    if: needs.prepare-session.outputs.has_changes == 'true'
-    
-    steps:
-      - name: Create notification summary
-        run: |
-          echo "📢 Sending session notification..."
-          
-          # Note: Team notification implementation would go here
-          # This could integrate with:
-          # - Slack webhooks
-          # - Email notifications
-          # - Microsoft Teams
-          # - GitHub Issues
-          
-          echo "📋 Notification Details:"
-          echo "- Recipients: ${{ needs.prepare-session.outputs.participants }}"
-          echo "- Session: ${{ needs.prepare-session.outputs.session_id }}"
-          echo "- Branch: ${{ needs.prepare-session.outputs.branch_name }}"
-          echo "- Changes: ${{ needs.prepare-session.outputs.commit_count }} commits"
-          
-          echo "⚠️ Team notification not yet implemented"
+          echo "📅 Analysis session prepared: ${{ needs.prepare-session.outputs.session_branch }}"
+          echo "📊 Changes analyzed: ${{ needs.prepare-session.outputs.commit_count }} commits"
+          echo "🎯 Significant changes: ${{ needs.prepare-session.outputs.has_significant_changes }}"
+          echo ""
+          echo "🔗 Session artifacts available in workflow run"
+          echo "🔗 Session issue created for team coordination"
+          echo ""
+          echo "⚡ To start interactive session:"
+          echo "   git checkout ${{ needs.prepare-session.outputs.session_branch }}"
+          echo "   cd tools/analysis-session"
+          echo "   npm run cli"
+          echo ""
+          echo "⚠️ Team notification integrations (Slack, email) not yet implemented"
           echo "📝 Manual team notification required"
