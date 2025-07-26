@@ -6,13 +6,17 @@
   "bin": {
     "analyze-changes": "./analyze-changes.js",
     "generate-template": "./generate-template.js",
-    "classify-changes": "./classify-changes.js"
+    "classify-changes": "./classify-changes.js",
+    "session-cli": "./session-cli.js",
+    "post-session": "./post-session.js"
   },
   "scripts": {
     "analyze": "node analyze-changes.js",
     "generate": "node generate-template.js",
-    "session": "node generate-template.js session",
+    "generate-session": "node generate-template.js session",
     "classify": "node classify-changes.js",
+    "session": "node session-cli.js",
+    "post-session": "node post-session.js",
     "test": "node test-analyze.js",
     "test-templates": "node test-templates.js",
     "test-classification": "node test-classification.js",
@@ -21,8 +25,10 @@
   "dependencies": {
     "@octokit/rest": "^19.0.0",
     "@slack/webhook": "^6.1.0",
+    "chalk": "^4.1.2",
     "commander": "^10.0.0",
     "handlebars": "^4.7.0",
+    "inquirer": "^8.2.5",
     "js-yaml": "^4.1.0",
     "simple-git": "^3.19.0"
   },
