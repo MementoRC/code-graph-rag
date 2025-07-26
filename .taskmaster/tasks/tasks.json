@@ -1,0 +1,496 @@
+{
+  "master": {
+    "tasks": [
+      {
+        "id": 1,
+        "title": "Implement Branch Architecture and Initial Sync",
+        "description": "Set up the required branch structure and implement the initial synchronization with the upstream repository.",
+        "status": "done",
+        "dependencies": [],
+        "priority": "high",
+        "details": "Create the branch architecture as specified in the PRD:\n1. Create `upstream-mirror` branch to track vitali87/code-graph-rag main branch\n2. Set up branch protection rules to prevent direct commits\n3. Configure upstream remote using `git remote add upstream https://github.com/vitali87/code-graph-rag.git`\n4. Perform initial sync using `git fetch upstream && git checkout -b upstream-mirror && git reset --hard upstream/main`\n5. Create branch naming conventions for analysis branches (`analysis/YYYY-MM-DD`) and feature branches (`feature/extracted-*`)\n6. Document the branch structure in README.md\n\nTechnologies to use:\n- Git 2.40+ for improved sparse checkout features\n- GitHub branch protection rules API v4\n- GitHub CLI 2.30+ for automation scripts",
+        "testStrategy": "1. Verify upstream-mirror branch contains identical content to vitali87/main\n2. Test branch protection rules by attempting direct commits (should fail)\n3. Validate branch naming conventions with sample branches\n4. Ensure README documentation is clear and comprehensive\n5. Test manual sync process before automation",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Upstream Remote Configuration",
+            "description": "Successfully added upstream remote pointing to https://github.com/vitali87/code-graph-rag.git",
+            "status": "done",
+            "dependencies": [],
+            "details": "",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Branch Architecture Setup",
+            "description": "Created upstream-mirror branch that mirrors upstream/main branch",
+            "status": "done",
+            "dependencies": [],
+            "details": "",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "Initial Sync",
+            "description": "Performed initial sync with upstream repository, fetched all branches and tags",
+            "status": "done",
+            "dependencies": [],
+            "details": "",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "Branch Documentation",
+            "description": "Added comprehensive documentation in README.md covering branch structure, naming conventions, synchronization process, protection requirements, and manual sync commands",
+            "status": "done",
+            "dependencies": [],
+            "details": "",
+            "testStrategy": ""
+          },
+          {
+            "id": 5,
+            "title": "Validation Testing",
+            "description": "Verified branch switching, upstream remote configuration, and naming conventions work correctly",
+            "status": "done",
+            "dependencies": [],
+            "details": "",
+            "testStrategy": ""
+          },
+          {
+            "id": 6,
+            "title": "Set up branch protection rules",
+            "description": "Configure branch protection rules to prevent direct commits to the upstream-mirror branch",
+            "status": "done",
+            "dependencies": [],
+            "details": "",
+            "testStrategy": ""
+          },
+          {
+            "id": 7,
+            "title": "Prepare for Task 2 handoff",
+            "description": "Document current implementation details and prepare necessary information for Task 2 (Daily Sync GitHub Action development)",
+            "status": "done",
+            "dependencies": [],
+            "details": "",
+            "testStrategy": ""
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "title": "Develop Daily Sync GitHub Action",
+        "description": "Create a GitHub Action workflow that automatically syncs the upstream repository to the upstream-mirror branch on a daily basis.",
+        "status": "done",
+        "dependencies": [
+          1
+        ],
+        "priority": "high",
+        "details": "Implement a GitHub Actions workflow with the following features:\n1. Schedule daily runs using cron syntax (`0 0 * * *` for midnight UTC)\n2. Use GitHub's `actions/checkout@v4` with fetch-depth=0 for full history\n3. Configure Git user identity for automated commits\n4. Fetch from upstream repository and update upstream-mirror branch\n5. Handle force pushes with detection and appropriate reset using `merge-base` checks\n6. Implement retry logic with exponential backoff for both fetch and push operations\n7. Add detailed logging with status emojis and progress indicators\n8. Create status badges for README\n9. Support manual trigger with `workflow_dispatch` and `force_sync` parameter\n10. Generate rich GitHub Actions summaries showing sync results and commit details\n\nWorkflow file: `.github/workflows/upstream-sync.yml`\n\nTechnologies:\n- GitHub Actions (latest)\n- actions/checkout@v4\n- Git operations for remote management and branch updates\n- Force-with-lease pushing for safety\n- GitHub Actions summaries for detailed reporting",
+        "testStrategy": "1. Manually trigger workflow to verify initial functionality\n2. Test with simulated upstream changes\n3. Verify handling of edge cases (force pushes, conflicts, etc.)\n4. Monitor execution time and optimize if necessary\n5. Validate logs contain sufficient debugging information\n6. Test retry mechanism with exponential backoff\n7. Verify status badge functionality in README\n8. Test manual trigger with and without force_sync parameter\n9. Validate YAML syntax with yamllint",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create GitHub Actions workflow file",
+            "description": "Create `.github/workflows/upstream-sync.yml` with daily scheduling and manual trigger support",
+            "status": "done",
+            "dependencies": [],
+            "details": "",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Implement core sync functionality",
+            "description": "Add Git operations for upstream remote management, branch creation, and updates",
+            "status": "done",
+            "dependencies": [],
+            "details": "",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "Add force push detection and handling",
+            "description": "Implement intelligent handling of upstream force pushes using `merge-base` checks",
+            "status": "done",
+            "dependencies": [],
+            "details": "",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "Implement retry logic",
+            "description": "Add exponential backoff retry mechanism for both fetch and push operations (3 attempts max)",
+            "status": "done",
+            "dependencies": [],
+            "details": "",
+            "testStrategy": ""
+          },
+          {
+            "id": 5,
+            "title": "Add comprehensive logging",
+            "description": "Implement detailed step-by-step logging with status emojis and progress indicators",
+            "status": "done",
+            "dependencies": [],
+            "details": "",
+            "testStrategy": ""
+          },
+          {
+            "id": 6,
+            "title": "Create status summaries",
+            "description": "Generate rich GitHub Actions summaries showing sync results and commit details",
+            "status": "done",
+            "dependencies": [],
+            "details": "",
+            "testStrategy": ""
+          },
+          {
+            "id": 7,
+            "title": "Add status badge to README",
+            "description": "Create and add workflow status badge to README.md",
+            "status": "done",
+            "dependencies": [],
+            "details": "",
+            "testStrategy": ""
+          },
+          {
+            "id": 8,
+            "title": "Validate YAML syntax",
+            "description": "Ensure workflow file passes yamllint validation and is properly formatted",
+            "status": "done",
+            "dependencies": [],
+            "details": "",
+            "testStrategy": ""
+          },
+          {
+            "id": 9,
+            "title": "Final testing and verification",
+            "description": "Perform final validation of all implemented features and prepare for Task 3 integration",
+            "status": "done",
+            "dependencies": [],
+            "details": "",
+            "testStrategy": ""
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Create Change Detection and Notification System",
+        "description": "Implement a system to detect significant changes in the upstream repository and notify the team through appropriate channels.",
+        "status": "done",
+        "dependencies": [
+          2
+        ],
+        "priority": "high",
+        "details": "Build a change detection system that:\n1. Runs after successful sync in the GitHub Action\n2. Analyzes commits between last sync and current sync\n3. Categorizes changes using regex patterns and commit message analysis\n4. Determines significance based on configurable rules (file patterns, keywords)\n5. Sends notifications through multiple channels:\n   - GitHub Issues for tracking\n   - Slack notifications using webhook API\n   - Email digests for weekly summaries\n6. Includes links to diffs and affected files\n7. Provides summary statistics (commits count, files changed, etc.)\n\nImplementation:\n- Use GitHub Actions outputs between jobs\n- Create a Node.js script (v18+) for change analysis\n- Use @octokit/rest v19+ for GitHub API interactions\n- Use @slack/webhook v6+ for Slack notifications\n- Store configuration in `.github/upstream-analysis/config.yml`\n\nAdd filtering capabilities to reduce noise from non-significant changes.",
+        "testStrategy": "1. Create test fixtures with various commit patterns\n2. Verify correct categorization of different change types\n3. Test notification delivery to all configured channels\n4. Validate filtering logic with edge cases\n5. Ensure proper handling of large change sets\n6. Test customization of notification content\n7. Verify links in notifications work correctly",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Comprehensive Analysis Engine",
+            "description": "Created `analyze-changes.js` Node.js script with full commit analysis capabilities, implemented intelligent significance scoring based on files changed and commit messages, added configurable categorization system (feature, security, bugfix, refactor, etc.), and built smart filtering to reduce notification noise from low-significance changes.",
+            "status": "done",
+            "dependencies": [],
+            "details": "",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Multi-Channel Notification System",
+            "description": "Implemented GitHub Issues integration with automatic issue creation for significant changes, Slack webhook notifications with rich formatting and categorized summaries, email notification support (configurable, framework in place), and threshold-based delivery to prevent notification spam.",
+            "status": "done",
+            "dependencies": [],
+            "details": "",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "Configuration System",
+            "description": "Created comprehensive `config.yml` with all significance rules and thresholds, configurable file patterns for detecting significant changes, keyword-based categorization with weights and visual indicators, and flexible notification channel settings with per-channel thresholds.",
+            "status": "done",
+            "dependencies": [],
+            "details": "",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "GitHub Actions Integration",
+            "description": "Added `analyze-changes` job to upstream-sync workflow, intelligent commit range detection with checkpoint system, job outputs for downstream workflow integration, Node.js environment setup with dependency caching, and analysis checkpoint storage for incremental processing.",
+            "status": "done",
+            "dependencies": [],
+            "details": "",
+            "testStrategy": ""
+          },
+          {
+            "id": 5,
+            "title": "Intelligence Features",
+            "description": "Implemented smart commit categorization using regex patterns and keywords, file significance analysis based on extensions and paths, statistical analysis with commit counts and change summaries, change level classification (minor, moderate, major, critical), and top significant commits identification and ranking.",
+            "status": "done",
+            "dependencies": [],
+            "details": "",
+            "testStrategy": ""
+          },
+          {
+            "id": 6,
+            "title": "Comprehensive Testing",
+            "description": "Created `test-analyze.js` with mock data validation, tests for categorization accuracy, significance scoring, and summary generation, mock analyzer class for isolated testing without git dependencies, and JSON output support for CI/CD integration.",
+            "status": "done",
+            "dependencies": [],
+            "details": "",
+            "testStrategy": ""
+          },
+          {
+            "id": 7,
+            "title": "Complete Documentation",
+            "description": "Created detailed README.md with usage examples and configuration guides, troubleshooting section with common issues and solutions, performance optimization notes and security considerations, and development guide with file structure and contribution guidelines.",
+            "status": "done",
+            "dependencies": [],
+            "details": "",
+            "testStrategy": ""
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Develop Analysis Documentation Templates",
+        "description": "Create standardized templates for documenting upstream analysis sessions, ensuring consistency and completeness.",
+        "status": "done",
+        "dependencies": [
+          1
+        ],
+        "priority": "medium",
+        "details": "Design and implement documentation templates for analysis sessions:\n1. Create markdown templates for analysis sessions with sections:\n   - Session metadata (date, participants, upstream version)\n   - Change summary (statistics and high-level overview)\n   - Detailed analysis by category (features, bugs, refactors, docs)\n   - Impact assessment on local codebase\n   - Extraction candidates with priority ratings\n   - Action items and assignments\n2. Implement template generation script that:\n   - Creates new analysis branch with correct naming\n   - Pre-populates template with upstream changes\n   - Adds links to relevant commits and files\n   - Generates initial categorization\n3. Store templates in `.github/upstream-analysis/templates/`\n4. Create examples and documentation for template usage\n\nTechnologies:\n- Handlebars.js v4.7+ for template rendering\n- Commander.js v10+ for CLI interface\n- Simple-git v3.19+ for Git operations\n- Marked v5+ for markdown processing",
+        "testStrategy": "1. Verify template generation with sample data\n2. Test usability with team members\n3. Validate completeness of template sections\n4. Ensure generated documentation is readable and useful\n5. Test template customization options\n6. Verify links and references in generated documents",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Comprehensive Template System",
+            "description": "Created structured templates directory with `analysis-session.md` and `quick-summary.md` templates",
+            "status": "done",
+            "dependencies": [],
+            "details": "- Implemented Handlebars-based templating with dynamic data population from upstream analysis\n- Built comprehensive full-session template covering all analysis aspects (metadata, impact assessment, decisions, action items)\n- Created condensed quick-summary template for rapid reviews and status updates",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Template Generation Engine",
+            "description": "Developed `generate-template.js` Node.js script with full template generation capabilities",
+            "status": "done",
+            "dependencies": [],
+            "details": "- Integrated with existing upstream analyzer for automatic data population\n- Added intelligent data enhancement with repository URLs, impact assessments, and extraction candidates\n- Implemented automatic categorization and significance-based prioritization",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "CLI Interface and Management",
+            "description": "Built Commander.js-based CLI with `generate-template session` command",
+            "status": "done",
+            "dependencies": [],
+            "details": "- Added support for analysis branch creation and team metadata\n- Implemented template listing and management commands\n- Included comprehensive options for customization (lead analyst, participants, duration, dates)",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "Template Structure and Content",
+            "description": "Implemented comprehensive template structure with all required sections",
+            "status": "done",
+            "dependencies": [],
+            "details": "- Session Metadata: Date, participants, duration, upstream version tracking\n- Change Summary: Statistics, category breakdown, significance scoring with visual indicators\n- Detailed Analysis: Per-category analysis with impact assessment and key commits\n- Impact Assessment: Structured high/medium/low impact areas for local codebase\n- Extraction Candidates: Prioritized recommendations with effort estimation and risk analysis\n- Decision Log: Immediate actions, deferred decisions, rejected extractions with rationale\n- Action Items: Categorized tasks (development, research, testing, documentation) with assignments\n- Quality Gates: Success criteria and completion tracking\n- Follow-up Scheduling: Milestone planning and review dates",
+            "testStrategy": ""
+          },
+          {
+            "id": 5,
+            "title": "Documentation and Examples",
+            "description": "Created comprehensive documentation and example templates",
+            "status": "done",
+            "dependencies": [],
+            "details": "- Created comprehensive `TEMPLATES.md` documentation with usage guidelines and best practices\n- Built realistic `example-session.md` demonstrating complete analysis workflow\n- Included troubleshooting guide and customization instructions\n- Added integration documentation with broader upstream analysis workflow",
+            "testStrategy": ""
+          },
+          {
+            "id": 6,
+            "title": "Testing and Validation",
+            "description": "Implemented comprehensive testing for template system",
+            "status": "done",
+            "dependencies": [],
+            "details": "- Implemented `test-templates.js` with comprehensive test suite for template generation\n- Created MockTemplateGenerator for isolated testing without git dependencies\n- Added validation for template content, variable replacement, and file generation\n- Included CLI interface testing and content rendering validation",
+            "testStrategy": ""
+          },
+          {
+            "id": 7,
+            "title": "Integration Features",
+            "description": "Added advanced integration features to enhance template functionality",
+            "status": "done",
+            "dependencies": [],
+            "details": "- Handlebars helpers for date formatting, capitalization, and conditional logic\n- Automatic repository URL detection and link generation\n- Smart extraction candidate generation based on significance scores\n- Placeholder sections for manual completion during analysis sessions\n- Quality checklist integration with session objectives tracking",
+            "testStrategy": ""
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Implement Analysis Session Automation",
+        "description": "Create automation tools to schedule, prepare, and facilitate upstream analysis sessions.",
+        "details": "Build a comprehensive system for managing analysis sessions:\n1. Create a scheduling system using GitHub Actions:\n   - Weekly trigger for regular sessions\n   - Manual trigger for ad-hoc sessions\n   - Integration with team calendars (Google Calendar API)\n2. Develop session preparation automation:\n   - Create analysis branch with correct naming\n   - Generate pre-populated analysis document\n   - Collect relevant upstream changes since last session\n   - Prepare diff summaries and visualizations\n3. Build session facilitation tools:\n   - Interactive CLI for navigating changes during session\n   - Collaborative editing of analysis document\n   - Recording of decisions and action items\n4. Implement post-session processing:\n   - Finalize documentation\n   - Create GitHub issues for extraction candidates\n   - Update dashboard with session results\n\nTechnologies:\n- GitHub Actions for scheduling\n- Node.js v18+ for automation scripts\n- Inquirer.js v9+ for interactive CLI\n- Google Calendar API v3 for calendar integration\n- Diff2html v3+ for diff visualization",
+        "testStrategy": "1. Test scheduling system with various triggers\n2. Verify preparation automation generates correct artifacts\n3. Conduct mock analysis sessions to test facilitation tools\n4. Validate post-session processing creates appropriate issues\n5. Test integration with team calendars\n6. Measure time efficiency improvements over manual process",
+        "priority": "medium",
+        "dependencies": [
+          3,
+          4
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 6,
+        "title": "Build Static Analysis Dashboard",
+        "description": "Create an initial static dashboard for visualizing upstream activity and analysis status.",
+        "details": "Develop a static dashboard using GitHub Pages:\n1. Design dashboard layout with sections:\n   - Upstream activity overview (commit frequency, contributors)\n   - Recent changes summary (categorized by type)\n   - Analysis session history and findings\n   - Extraction candidates and implementation status\n   - Team participation metrics\n2. Implement data collection scripts:\n   - Extract Git history and statistics\n   - Parse analysis documentation\n   - Collect GitHub issues and PRs related to extractions\n3. Generate static HTML/CSS/JS using a static site generator\n4. Set up GitHub Pages for hosting\n5. Configure automatic rebuilding on new data\n\nTechnologies:\n- 11ty (Eleventy) v2.0+ as static site generator\n- Chart.js v4+ for data visualization\n- GitHub Pages for hosting\n- GitHub Actions for automatic rebuilding\n- Tailwind CSS v3.3+ for styling\n- Alpine.js v3.12+ for interactivity",
+        "testStrategy": "1. Verify dashboard displays all required information\n2. Test with various data scenarios (empty, small, large datasets)\n3. Validate mobile responsiveness\n4. Check accessibility compliance (WCAG 2.1 AA)\n5. Test automatic rebuilding on new data\n6. Verify links and navigation work correctly\n7. Test dashboard performance with large datasets",
+        "priority": "medium",
+        "dependencies": [
+          3,
+          4
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 7,
+        "title": "Implement Automated Change Classification",
+        "description": "Develop a system to automatically classify upstream changes by type and relevance to the local codebase.",
+        "status": "done",
+        "dependencies": [
+          3
+        ],
+        "priority": "medium",
+        "details": "Create an automated classification system:\n1. Implement classification algorithms:\n   - Rule-based classification using file patterns and keywords\n   - Commit message analysis using NLP techniques\n   - Optional NLP enhancement with Natural.js and Compromise\n2. Define classification categories:\n   - Feature additions\n   - Bug fixes\n   - Security updates\n   - Performance improvements\n   - Refactoring\n   - Documentation\n   - Build/CI changes\n   - Test changes\n   - Breaking changes\n3. Implement relevance scoring:\n   - File overlap with local codebase (40% weight)\n   - Impact on core functionality (30% weight)\n   - Alignment with local roadmap (30% weight)\n4. Create training data from manual classifications\n5. Build feedback mechanism to improve classification\n\nTechnologies:\n- Node.js v18+ for processing\n- Natural v6.5+ for NLP processing\n- Compromise v14+ for text analysis\n- GitHub API v4 for data access",
+        "testStrategy": "1. Create test dataset with known classifications\n2. Measure classification accuracy against manual classification (target 70%+ success threshold)\n3. Test with various commit types and patterns\n4. Validate relevance scoring against team assessments\n5. Measure performance and optimize for large datasets\n6. Test feedback mechanism improves accuracy over time\n7. Verify integration with existing analysis workflow\n8. Test graceful degradation when optional dependencies are unavailable",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Comprehensive Classification Engine",
+            "description": "Created `classify-changes.js` with multi-algorithm rule-based classification system. Implemented intelligent categorization for 9 change types (feature, bugfix, security, performance, refactor, documentation, build, test, breaking). Added configurable pattern matching with keywords, file patterns, and negative keyword filtering. Built confidence assessment system with threshold-based decision making.",
+            "status": "done",
+            "dependencies": [],
+            "details": "",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Advanced Relevance Scoring System",
+            "description": "Implemented multi-factor relevance scoring with 3 weighted components: File overlap analysis (40% weight) - extension and directory relevance to local codebase; Functionality impact assessment (30% weight) - core keyword matches and component analysis; Roadmap alignment scoring (30% weight) - strategic priority alignment and development focus. Created intelligent local codebase overlap analysis with core directory mapping.",
+            "status": "done",
+            "dependencies": [],
+            "details": "",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "Optional NLP Enhancement",
+            "description": "Integrated Natural.js v6.5+ for advanced text processing with graceful degradation. Added Compromise v14+ for entity recognition and advanced NLP features. Implemented stemming, tokenization, and sentiment analysis capabilities. Created Jaccard similarity scoring for semantic keyword matching.",
+            "status": "done",
+            "dependencies": [],
+            "details": "",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "Configuration and Training System",
+            "description": "Created comprehensive `classification-config.yml` with detailed rule definitions. Built configurable classification rules with weights, confidence thresholds, and pattern matching. Added relevance scoring configuration with local codebase-specific parameters. Implemented advanced settings for NLP analysis and performance optimization.",
+            "status": "done",
+            "dependencies": [],
+            "details": "",
+            "testStrategy": ""
+          },
+          {
+            "id": 5,
+            "title": "Learning and Feedback Mechanism",
+            "description": "Created robust feedback system for manual classification corrections. Built training data system with 15 realistic examples covering all categories. Implemented accuracy tracking with category-specific metrics. Added continuous learning capabilities for threshold adjustment and pattern updates.",
+            "status": "done",
+            "dependencies": [],
+            "details": "",
+            "testStrategy": ""
+          },
+          {
+            "id": 6,
+            "title": "Integration with Analysis Workflow",
+            "description": "Enhanced existing `analyze-changes.js` with seamless classification integration. Added backward compatibility with legacy categorization system. Created automatic fallback mechanism when classification fails. Enhanced analysis results with detailed classification metadata.",
+            "status": "done",
+            "dependencies": [],
+            "details": "",
+            "testStrategy": ""
+          },
+          {
+            "id": 7,
+            "title": "Comprehensive Testing Framework",
+            "description": "Built extensive test suite `test-classification.js` with 5 test categories: Basic classification accuracy testing, Relevance scoring validation, Edge case robustness testing, Batch processing performance validation, Feedback mechanism verification. Created accuracy targets with 70%+ success threshold. Added performance benchmarking with processing time metrics.",
+            "status": "done",
+            "dependencies": [],
+            "details": "",
+            "testStrategy": ""
+          },
+          {
+            "id": 8,
+            "title": "Complete Documentation System",
+            "description": "Created detailed `CLASSIFICATION.md` with usage guidelines and API reference. Added troubleshooting guide with common issues and solutions. Included configuration examples and customization instructions. Documented integration points with existing analysis and notification systems.",
+            "status": "done",
+            "dependencies": [],
+            "details": "",
+            "testStrategy": ""
+          }
+        ]
+      },
+      {
+        "id": 8,
+        "title": "Develop Feature Extraction Workflow",
+        "description": "Create a standardized process for extracting and implementing valuable features from upstream changes.",
+        "details": "Implement a comprehensive feature extraction workflow:\n1. Design extraction decision framework:\n   - Value assessment criteria\n   - Implementation effort estimation\n   - Compatibility evaluation\n   - Priority determination\n2. Create extraction documentation template\n3. Implement extraction branch automation:\n   - Create feature/extracted-* branch\n   - Generate implementation plan\n   - Link to upstream source\n   - Set up testing framework\n4. Develop implementation guidelines:\n   - Code quality standards\n   - Testing requirements\n   - Documentation expectations\n5. Create PR template for extracted features\n\nTechnologies:\n- GitHub API v4 for branch and PR creation\n- Node.js v18+ for automation scripts\n- Jest v29+ for test scaffolding\n- ESLint v8.40+ for code quality checks\n- Husky v8.0+ for pre-commit hooks",
+        "testStrategy": "1. Test extraction decision framework with sample features\n2. Verify branch automation creates correct structure\n3. Validate implementation guidelines with team review\n4. Test PR template completeness\n5. Conduct end-to-end extraction process test\n6. Verify traceability back to upstream source",
+        "priority": "medium",
+        "dependencies": [
+          5
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 9,
+        "title": "Implement Dynamic Analysis Dashboard",
+        "description": "Enhance the static dashboard with dynamic features, real-time updates, and advanced visualizations.",
+        "details": "Upgrade the dashboard with dynamic capabilities:\n1. Convert static dashboard to dynamic web application:\n   - Implement client-side data fetching\n   - Add interactive filtering and sorting\n   - Create user preferences and settings\n2. Add real-time updates using GitHub webhooks\n3. Implement advanced visualizations:\n   - Commit network graph\n   - Change heatmap by file/directory\n   - Time-series analysis of upstream activity\n   - Team participation metrics\n4. Add user authentication for personalized views\n5. Implement data caching for performance\n\nTechnologies:\n- React v18+ for frontend framework\n- Next.js v13+ for SSR and API routes\n- Vercel for hosting (alternative to GitHub Pages)\n- D3.js v7+ for advanced visualizations\n- SWR v2+ for data fetching\n- GitHub webhook API for real-time updates\n- NextAuth.js v4+ for authentication",
+        "testStrategy": "1. Test dashboard functionality across browsers\n2. Verify real-time updates with simulated webhook events\n3. Validate advanced visualizations with various data scenarios\n4. Test authentication and personalization features\n5. Measure performance metrics and optimize as needed\n6. Conduct usability testing with team members\n7. Verify mobile and tablet responsiveness",
+        "priority": "low",
+        "dependencies": [
+          6,
+          7
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 10,
+        "title": "Create Team Training and Documentation",
+        "description": "Develop comprehensive training materials and documentation to ensure team adoption of the upstream analysis process.",
+        "details": "Create training and documentation resources:\n1. Develop written documentation:\n   - System architecture overview\n   - User guides for each component\n   - Process workflows with diagrams\n   - Troubleshooting guides\n   - FAQ section\n2. Create video tutorials:\n   - System overview\n   - Conducting analysis sessions\n   - Using the dashboard\n   - Extracting features\n3. Develop hands-on training exercises\n4. Create onboarding checklist for new team members\n5. Implement documentation website using GitHub Pages\n\nTechnologies:\n- Docusaurus v2.4+ for documentation site\n- Mermaid.js v10+ for diagrams\n- Loom for screen recordings\n- GitHub Pages for hosting\n- Markdown for content\n- Playwright v1.35+ for automated demos",
+        "testStrategy": "1. Review documentation for clarity and completeness\n2. Conduct user testing with team members\n3. Verify all components are documented\n4. Test documentation site functionality\n5. Validate onboarding process with new team member\n6. Collect feedback and iterate on materials\n7. Test search functionality in documentation",
+        "priority": "medium",
+        "dependencies": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "status": "pending",
+        "subtasks": []
+      }
+    ],
+    "metadata": {
+      "created": "2025-07-25T15:08:38.933Z",
+      "updated": "2025-07-25T22:22:35.304Z",
+      "description": "Tasks for master context"
+    }
+  }
+}
