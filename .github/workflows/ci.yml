@@ -464,3 +464,62 @@ jobs:
           echo "- **📚 Documentation** checks run for any docs changes" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "✅ **This saves compute resources and speeds up your workflow!**" >> $GITHUB_STEP_SUMMARY
+
+      - name: Update PR description with CI analysis
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Get current PR description
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number
+            });
+            
+            // Build CI analysis section
+            const pythonChanges = '${{ needs.changes.outputs.python }}' === 'true';
+            const testChanges = '${{ needs.changes.outputs.tests }}' === 'true';
+            const docsChanges = '${{ needs.changes.outputs.docs }}' === 'true';
+            const ciChanges = '${{ needs.changes.outputs.ci }}' === 'true';
+            
+            const ciAnalysis = `
+            
+            ---
+            
+            ## 🔍 CI Pipeline Analysis
+            
+            ### 📁 Change Detection
+            | Type | Detected | Checks |
+            |------|----------|--------|
+            | 🐍 Python Code | ${pythonChanges ? '✅ Yes' : '❌ No'} | ${pythonChanges ? 'Testing, Performance, Cross-Platform' : 'Skipped'} |
+            | 🧪 Tests | ${testChanges ? '✅ Yes' : '❌ No'} | ${testChanges ? 'Testing suite' : 'Skipped'} |
+            | 📚 Docs | ${docsChanges ? '✅ Yes' : '❌ No'} | ${docsChanges ? 'Documentation checks' : 'Skipped'} |
+            | 🔧 CI/CD | ${ciChanges ? '✅ Yes' : '❌ No'} | ${ciChanges ? 'Quality gates, Security' : 'Skipped'} |
+            
+            ### ⚙️ Why Are Some Checks Skipped?
+            Our CI system uses **intelligent path filtering** to only run relevant checks:
+            - 🧪 **Testing** only runs when Python code or tests change
+            - ⚡ **Performance** only runs when Python code changes  
+            - 🌍 **Cross-platform** only runs when Python code changes
+            - 🔒 **Security** runs for Python or CI changes
+            
+            ✅ **This saves compute resources and speeds up your workflow!**
+            
+            *🤖 This analysis is automatically updated on each push*`;
+            
+            // Remove existing CI analysis if present
+            let newBody = pr.body || '';
+            const ciSectionRegex = /---\s*\n\s*## 🔍 CI Pipeline Analysis[\s\S]*?(?=\n\n(?:##|$)|$)/;
+            newBody = newBody.replace(ciSectionRegex, '');
+            
+            // Add new CI analysis
+            newBody = newBody.trim() + ciAnalysis;
+            
+            // Update PR description
+            await github.rest.pulls.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+              body: newBody
+            });
