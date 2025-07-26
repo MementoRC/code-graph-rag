@@ -160,12 +160,17 @@ class TemplateGenerator {
     // Enhanced data structure
     const enhancedData = {
       // Session metadata
-      sessionDate: now.toISOString().split('T')[0],
+      sessionId: options.sessionId || `session-${now.toISOString().split('T')[0]}-${now.getHours()}${now.getMinutes()}`,
+      sessionDate: options.sessionDate || now.toISOString().split('T')[0],
       branchDate,
       sessionTime: now.toTimeString().split(' ')[0],
+      sessionType: options.sessionType || 'regular',
+      focusArea: options.focusArea || 'general',
       leadAnalyst: options.leadAnalyst || 'TBD',
       participants: options.participants || ['TBD'],
       sessionDuration: options.duration || 'TBD',
+      lastSessionDate: options.lastSessionDate || 'never',
+      commitCount: options.commitCount || summary.totalCommits,
       
       // Repository info
       repoUrl,
@@ -462,17 +467,36 @@ async function setupCLI() {
     .option('-l, --lead <name>', 'Lead analyst name')
     .option('-p, --participants <names>', 'Comma-separated participant names')
     .option('--duration <time>', 'Session duration')
+    .option('--session-id <id>', 'Unique session identifier')
+    .option('--session-date <date>', 'Session date (YYYY-MM-DD)')
+    .option('--session-type <type>', 'Session type (regular, ad-hoc, urgent)')
+    .option('--focus-area <area>', 'Session focus area')
+    .option('--commit-count <count>', 'Number of commits being analyzed')
+    .option('--last-session <date>', 'Date of last analysis session')
+    .option('--output <dir>', 'Output directory for generated documents')
     .option('--json', 'Output JSON result')
     .action(async (fromRef, toRef, options) => {
       const generator = new TemplateGenerator();
       await generator.initialize();
       
+      // Override output directory if specified
+      if (options.output) {
+        generator.outputDir = path.resolve(options.output);
+        await fs.mkdir(generator.outputDir, { recursive: true });
+      }
+      
       const sessionOptions = {
         createBranch: options.branch,
-        branchDate: options.date,
+        branchDate: options.date || options.sessionDate,
         leadAnalyst: options.lead,
         participants: options.participants ? options.participants.split(',') : undefined,
-        duration: options.duration
+        duration: options.duration,
+        sessionId: options.sessionId,
+        sessionDate: options.sessionDate,
+        sessionType: options.sessionType,
+        focusArea: options.focusArea,
+        commitCount: options.commitCount ? parseInt(options.commitCount) : undefined,
+        lastSessionDate: options.lastSession
       };
       
       const result = await generator.generateSession(fromRef, toRef, sessionOptions);

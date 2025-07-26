@@ -2,10 +2,14 @@
 
 ## 📋 Session Metadata
 
+- **Session ID**: `{{sessionId}}`
 - **Date**: {{sessionDate}}
+- **Type**: {{sessionType}}
+- **Focus Area**: {{focusArea}}
 - **Analysis Branch**: `analysis/{{branchDate}}`
 - **Upstream Version**: {{upstreamCommit}}
 - **Previous Analysis**: {{previousCommit}}
+- **Since Last Session**: {{lastSessionDate}} ({{commitCount}} commits)
 - **Lead Analyst**: {{leadAnalyst}}
 - **Participants**: {{#each participants}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}
 - **Duration**: {{sessionDuration}}
