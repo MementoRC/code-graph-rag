@@ -1,0 +1,87 @@
+# Feature Extraction Decision Framework Configuration
+
+# --- Scoring Weights (percentages, must sum to 100) ---
+weights:
+  innovation: 25
+  performance: 20
+  code_quality: 15
+  user_experience: 15
+  security: 10
+  tech_debt: 10
+  strategic_alignment: 5
+
+# --- Effort Cost Mapping (for ROI calculation) ---
+effort_cost:
+  XS: 1
+  S: 2
+  M: 3
+  L: 5
+  XL: 8
+
+# --- Priority Thresholds ---
+priority_thresholds:
+  high:
+    min_value: 8
+    max_effort: S
+  medium:
+    min_value: 5
+    max_value: 7
+    effort: M
+  low:
+    effort: [L, XL]
+  rejected:
+    max_value: 4
+
+# --- ROI Thresholds ---
+roi_thresholds:
+  min_acceptable: 1.5   # Minimum ROI for extraction
+  preferred: 3.0        # Target ROI for high-priority
+
+# --- Compatibility Matrix Options ---
+compatibility_ratings: [Low, Medium, High]
+
+# --- Team-Specific Customization ---
+custom_criteria:
+  - name: "Compliance Requirement"
+    weight: 5
+    description: "Does this feature help meet regulatory or compliance needs?"
+
+# --- Integration with Classification System ---
+classification_mapping:
+  core:
+    min_value: 8
+    compatibility: [High, Medium]
+  optional:
+    min_value: 5
+    max_value: 7
+    compatibility: [High, Medium, Low]
+  experimental:
+    min_value: 0
+    max_value: 4
+    compatibility: [Any]
+
+# --- TaskMaster AI Integration ---
+taskmaster_ai:
+  enabled: true
+  pass_fields:
+    - priority
+    - effort
+    - compatibility
+    - roi
+
+# --- GitHub Workflow Automation ---
+github_automation:
+  enabled: true
+  label_mapping:
+    High: "extraction/high-priority"
+    Medium: "extraction/medium-priority"
+    Low: "extraction/low-priority"
+    Rejected: "extraction/rejected"
+  auto_issue: true
+  auto_prio_sort: true
+
+# --- Example: Integration with Existing Classification System ---
+integration_points:
+  - change_classification
+  - taskmaster_ai
+  - github_workflow
