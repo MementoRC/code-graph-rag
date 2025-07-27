@@ -516,14 +516,78 @@
         "id": 8,
         "title": "Develop Feature Extraction Workflow",
         "description": "Create a standardized process for extracting and implementing valuable features from upstream changes.",
-        "details": "Implement a comprehensive feature extraction workflow:\n1. Design extraction decision framework:\n   - Value assessment criteria\n   - Implementation effort estimation\n   - Compatibility evaluation\n   - Priority determination\n2. Create extraction documentation template\n3. Implement extraction branch automation:\n   - Create feature/extracted-* branch\n   - Generate implementation plan\n   - Link to upstream source\n   - Set up testing framework\n4. Develop implementation guidelines:\n   - Code quality standards\n   - Testing requirements\n   - Documentation expectations\n5. Create PR template for extracted features\n\nTechnologies:\n- GitHub API v4 for branch and PR creation\n- Node.js v18+ for automation scripts\n- Jest v29+ for test scaffolding\n- ESLint v8.40+ for code quality checks\n- Husky v8.0+ for pre-commit hooks",
-        "testStrategy": "1. Test extraction decision framework with sample features\n2. Verify branch automation creates correct structure\n3. Validate implementation guidelines with team review\n4. Test PR template completeness\n5. Conduct end-to-end extraction process test\n6. Verify traceability back to upstream source",
-        "priority": "medium",
+        "status": "in-progress",
         "dependencies": [
           5
         ],
-        "status": "pending",
-        "subtasks": []
+        "priority": "medium",
+        "details": "Implement a comprehensive feature extraction workflow:\n1. Design extraction decision framework:\n   - Value assessment criteria\n   - Implementation effort estimation\n   - Compatibility evaluation\n   - Priority determination\n2. Create extraction documentation template\n3. Implement extraction branch automation:\n   - Create feature/extracted-* branch\n   - Generate implementation plan\n   - Link to upstream source\n   - Set up testing framework\n4. Develop implementation guidelines:\n   - Code quality standards\n   - Testing requirements\n   - Documentation expectations\n5. Create PR template for extracted features\n6. Implement traceability and audit system\n7. Conduct end-to-end workflow testing\n\nTechnologies:\n- GitHub API v4 for branch and PR creation\n- Node.js v18+ for automation scripts\n- Jest v29+ for test scaffolding\n- ESLint v8.40+ for code quality checks\n- Husky v8.0+ for pre-commit hooks",
+        "testStrategy": "1. Test extraction decision framework with sample features\n2. Verify branch automation creates correct structure\n3. Validate implementation guidelines with team review\n4. Test PR template completeness\n5. Conduct end-to-end extraction process test\n6. Verify traceability back to upstream source",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Feature Extraction Decision Framework",
+            "description": "Design and implement a framework for assessing and deciding on feature extraction.",
+            "status": "completed",
+            "dependencies": [],
+            "details": "Implemented comprehensive decision framework with value assessment criteria, implementation effort estimation, compatibility evaluation, and priority determination.",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Create Extraction Documentation Template",
+            "description": "Develop standardized templates for documenting extracted features.",
+            "status": "completed",
+            "dependencies": [],
+            "details": "Created extraction documentation templates that integrate with the decision framework.",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "Implement Extraction Branch Automation",
+            "description": "Develop automation for creating and configuring feature extraction branches.",
+            "status": "completed",
+            "dependencies": [],
+            "details": "Delivered ExtractionBranchAutomation class (scripts/extraction_branch_automation.js) with:\n- GitHub branch creation with standardized naming (feature/extracted-{name})\n- Integration with decision framework and template generation systems\n- Automated testing scaffolding with Jest configuration\n- Implementation plan generation based on assessment scores\n- Branch metadata system for traceability to upstream sources\n- Git commit automation with extraction metadata\n- Support for both local and remote branch operations\n- Full workflow automation from assessment to branch setup\n- Branch naming standardization with sanitization\n- Testing scaffolding generation with unit/integration test templates\n- Implementation plan with phases based on effort scores (XS/S/M/L)",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "Develop Implementation Guidelines",
+            "description": "Create comprehensive guidelines for implementing extracted features.",
+            "status": "done",
+            "dependencies": [],
+            "details": "Develop detailed implementation guidelines covering:\n- Code quality standards and best practices\n- Testing requirements and coverage thresholds\n- Documentation expectations and formats\n- Integration approaches with existing codebase\n- Performance considerations\n- Security requirements\n- Accessibility standards\n- Build upon the existing automation infrastructure",
+            "testStrategy": ""
+          },
+          {
+            "id": 5,
+            "title": "Create PR Template for Extracted Features",
+            "description": "Design and implement a standardized PR template for extracted features.",
+            "status": "pending",
+            "dependencies": [],
+            "details": "Create a comprehensive PR template that includes:\n- Feature description and upstream source\n- Implementation details and approach\n- Testing methodology and results\n- Documentation updates\n- Migration considerations\n- Compatibility notes\n- Integration with the existing extraction workflow",
+            "testStrategy": ""
+          },
+          {
+            "id": 6,
+            "title": "Implement Traceability and Audit System",
+            "description": "Develop a system to track and audit extracted features back to their upstream sources.",
+            "status": "pending",
+            "dependencies": [],
+            "details": "Implement a comprehensive traceability system that:\n- Extends the branch metadata foundation\n- Provides full audit trail for extracted features\n- Enables tracking of feature evolution over time\n- Supports reporting and analytics on extraction process\n- Integrates with existing automation components",
+            "testStrategy": ""
+          },
+          {
+            "id": 7,
+            "title": "End-to-End Workflow Testing",
+            "description": "Conduct comprehensive testing of the entire feature extraction workflow.",
+            "status": "pending",
+            "dependencies": [],
+            "details": "Perform end-to-end testing of the complete workflow:\n- Test with various feature types and complexities\n- Validate integration between all components\n- Verify traceability and metadata preservation\n- Test edge cases and error handling\n- Document workflow performance and optimization opportunities",
+            "testStrategy": ""
+          }
+        ]
       },
       {
         "id": 9,
@@ -562,7 +626,7 @@
     ],
     "metadata": {
       "created": "2025-07-25T15:08:38.933Z",
-      "updated": "2025-07-26T15:31:19.839Z",
+      "updated": "2025-07-27T16:43:16.923Z",
       "description": "Tasks for master context"
     }
   }
