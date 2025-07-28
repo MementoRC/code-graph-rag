@@ -1,0 +1,140 @@
+/**
+ * CSS files with the .module.css suffix will be treated as CSS modules
+ * and scoped locally.
+ */
+
+.heroBanner {
+  padding: 4rem 0;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.buttons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.dashboardLink {
+  margin-top: 1.5rem;
+}
+
+.quickStats {
+  padding: 4rem 0;
+  background-color: var(--ifm-color-emphasis-100);
+}
+
+.quickStats h3 {
+  font-size: 3rem;
+  font-weight: 700;
+  color: var(--ifm-color-primary);
+  margin: 0;
+}
+
+.quickStats p {
+  font-size: 1.1rem;
+  color: var(--ifm-color-emphasis-700);
+  margin: 0;
+}
+
+.gettingStarted {
+  padding: 4rem 0;
+}
+
+.gettingStarted .card {
+  height: 100%;
+  border: 1px solid var(--ifm-color-emphasis-300);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.gettingStarted .card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.gettingStarted .card__header h3 {
+  margin-bottom: 0;
+  font-size: 1.3rem;
+}
+
+.gettingStarted .card__body ul {
+  padding-left: 1.2rem;
+  margin-bottom: 1rem;
+}
+
+.gettingStarted .card__body li {
+  margin-bottom: 0.3rem;
+  color: var(--ifm-color-emphasis-700);
+}
+
+.popularResources {
+  padding: 4rem 0;
+  background-color: var(--ifm-color-emphasis-100);
+}
+
+.popularResources .card {
+  height: 100%;
+  border: 1px solid var(--ifm-color-emphasis-300);
+  margin-bottom: 1.5rem;
+  transition: transform 0.2s ease-in-out;
+}
+
+.popularResources .card:hover {
+  transform: translateY(-1px);
+}
+
+.popularResources .card__header h4 {
+  margin-bottom: 0;
+  font-size: 1.2rem;
+}
+
+.popularResources .card__body a {
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.popularResources .card__body a:hover {
+  text-decoration: underline;
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 768px) {
+  .heroBanner {
+    padding: 2rem 0;
+  }
+  
+  .buttons {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .quickStats h3 {
+    font-size: 2rem;
+  }
+  
+  .quickStats,
+  .gettingStarted,
+  .popularResources {
+    padding: 2rem 0;
+  }
+}
+
+/* Dark mode adjustments */
+[data-theme='dark'] .quickStats {
+  background-color: var(--ifm-color-emphasis-200);
+}
+
+[data-theme='dark'] .popularResources {
+  background-color: var(--ifm-color-emphasis-200);
+}
+
+[data-theme='dark'] .gettingStarted .card,
+[data-theme='dark'] .popularResources .card {
+  border-color: var(--ifm-color-emphasis-400);
+  background-color: var(--ifm-background-color);
+}

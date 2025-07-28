@@ -1,0 +1,71 @@
+{
+  "name": "upstream-analysis-docs",
+  "version": "1.0.0",
+  "description": "Comprehensive documentation and training materials for the upstream analysis system",
+  "scripts": {
+    "start": "docusaurus start",
+    "build": "docusaurus build",
+    "swizzle": "docusaurus swizzle",
+    "deploy": "docusaurus deploy",
+    "clear": "docusaurus clear",
+    "serve": "docusaurus serve",
+    "write-translations": "docusaurus write-translations",
+    "write-heading-ids": "docusaurus write-heading-ids",
+    "typecheck": "tsc",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "format": "prettier --write \"**/*.{js,jsx,ts,tsx,md,mdx}\"",
+    "test": "jest",
+    "build-diagrams": "mmdc -i docs/diagrams -o static/img/diagrams",
+    "dev": "concurrently \"npm run start\" \"npm run build-diagrams -- --watch\""
+  },
+  "dependencies": {
+    "@docusaurus/core": "^3.1.0",
+    "@docusaurus/preset-classic": "^3.1.0",
+    "@docusaurus/module-type-aliases": "^3.1.0",
+    "@docusaurus/theme-mermaid": "^3.1.0",
+    "@mdx-js/react": "^3.0.0",
+    "clsx": "^2.0.0",
+    "prism-react-renderer": "^2.3.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
+  },
+  "devDependencies": {
+    "@docusaurus/tsconfig": "^3.1.0",
+    "@types/node": "^20.11.0",
+    "@types/react": "^18.2.48",
+    "@types/react-dom": "^18.2.18",
+    "@typescript-eslint/eslint-plugin": "^6.19.0",
+    "@typescript-eslint/parser": "^6.19.0",
+    "concurrently": "^8.2.2",
+    "eslint": "^8.56.0",
+    "eslint-plugin-react": "^7.33.2",
+    "jest": "^29.7.0",
+    "prettier": "^3.2.4",
+    "typescript": "^5.3.3",
+    "@mermaid-js/mermaid-cli": "^10.6.1"
+  },
+  "engines": {
+    "node": ">=18.0"
+  },
+  "browserslist": {
+    "production": [
+      ">0.5%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "keywords": [
+    "documentation",
+    "training",
+    "upstream-analysis",
+    "docusaurus",
+    "team-onboarding"
+  ],
+  "author": "Upstream Analysis Team",
+  "license": "MIT"
+}
