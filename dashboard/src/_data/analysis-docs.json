@@ -1,0 +1,31 @@
+{
+  "lastUpdated": "2025-07-28T14:46:06.457Z",
+  "sessions": [],
+  "extractions": [
+    {
+      "filename": "TRACEABILITY.md",
+      "title": "Traceability and Audit System",
+      "status": "unknown",
+      "priority": "medium",
+      "upstreamSource": "",
+      "estimatedEffort": ""
+    },
+    {
+      "filename": "decision-framework.md",
+      "title": "Feature Extraction Decision Framework",
+      "status": "unknown",
+      "priority": "medium",
+      "upstreamSource": "",
+      "estimatedEffort": ""
+    },
+    {
+      "filename": "implementation-guidelines.md",
+      "title": "Feature Extraction Implementation Guidelines",
+      "status": "unknown",
+      "priority": "medium",
+      "upstreamSource": "",
+      "estimatedEffort": ""
+    }
+  ],
+  "templates": []
+}

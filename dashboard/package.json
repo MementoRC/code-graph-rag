@@ -1,0 +1,55 @@
+{
+  "name": "upstream-analysis-dashboard",
+  "version": "1.0.0",
+  "description": "Static dashboard for visualizing upstream activity and analysis status",
+  "type": "module",
+  "main": "src/data/index.js",
+  "scripts": {
+    "build": "eleventy",
+    "serve": "eleventy --serve",
+    "dev": "eleventy --serve --watch",
+    "clean": "rm -rf _site",
+    "build:data": "node src/data/collect-data.js",
+    "build:full": "npm run build:data && npm run build",
+    "deploy": "gh-pages -d _site",
+    "test": "jest",
+    "lint": "eslint src/**/*.js",
+    "format": "prettier --write src/**/*.{js,md,json}"
+  },
+  "dependencies": {
+    "@11ty/eleventy": "^2.0.1",
+    "@11ty/eleventy-plugin-syntaxhighlight": "^5.0.0",
+    "@octokit/rest": "^20.0.2",
+    "chart.js": "^4.4.0",
+    "alpinejs": "^3.13.3",
+    "tailwindcss": "^3.3.6",
+    "autoprefixer": "^10.4.16",
+    "postcss": "^8.4.32",
+    "postcss-cli": "^11.0.0",
+    "simple-git": "^3.20.0",
+    "js-yaml": "^4.1.0",
+    "date-fns": "^2.30.0",
+    "gray-matter": "^4.0.3",
+    "markdown-it": "^13.0.2"
+  },
+  "devDependencies": {
+    "gh-pages": "^6.1.0",
+    "jest": "^29.7.0",
+    "eslint": "^8.55.0",
+    "prettier": "^3.1.0",
+    "@types/node": "^20.10.0",
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "dashboard",
+    "upstream-analysis",
+    "eleventy",
+    "static-site",
+    "github-pages"
+  ],
+  "author": "Upstream Analysis Team",
+  "license": "MIT"
+}
