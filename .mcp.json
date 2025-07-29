@@ -7,6 +7,10 @@
         "@modelcontextprotocol/server-sequential-thinking"
       ]
     },
+    "Ref": {
+      "type": "http",
+      "url": "https://api.ref.tools/mcp?apiKey=ref-022f87527fcdf3c9437f"
+    },
     "task-master-ai": {
       "type": "stdio",
       "command": "npx",
@@ -21,7 +25,7 @@
       "args": [
         "run",
         "--manifest-path",
-        "/home/memento/ClaudeCode/Servers/git/development",
+        "/home/memento/ClaudeCode/Servers/git/worktrees/feat-llm-compliance",
         "mcp-server-git",
         "--repository",
         "/home/memento/ClaudeCode/Servers/code-graph-rag/worktrees/feat-upstream-analysis-strategy"
