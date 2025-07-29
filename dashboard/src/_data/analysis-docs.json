@@ -1,31 +1,74 @@
 {
-  "lastUpdated": "2025-07-28T14:46:06.457Z",
-  "sessions": [],
-  "extractions": [
+  "lastUpdated": "2025-07-28T21:38:22.000Z",
+  "sessions": [
     {
-      "filename": "TRACEABILITY.md",
-      "title": "Traceability and Audit System",
-      "status": "unknown",
-      "priority": "medium",
-      "upstreamSource": "",
-      "estimatedEffort": ""
+      "filename": "2025-07-25-weekly-analysis.md",
+      "date": "2025-07-25",
+      "title": "Weekly Upstream Analysis - July 25, 2025",
+      "summary": "Reviewed recent commits, identified 3 potential extractions",
+      "participants": [
+        "Alice Developer",
+        "Bob Maintainer"
+      ],
+      "decisions": [
+        "Implement new graph optimization algorithm",
+        "Extract enhanced query interface",
+        "Skip complex configuration changes for now"
+      ],
+      "actionItems": [
+        "Alice: Create extraction branch for graph optimization",
+        "Bob: Research query interface compatibility",
+        "Team: Schedule follow-up session for next week"
+      ]
     },
     {
-      "filename": "decision-framework.md",
-      "title": "Feature Extraction Decision Framework",
-      "status": "unknown",
-      "priority": "medium",
-      "upstreamSource": "",
-      "estimatedEffort": ""
-    },
-    {
-      "filename": "implementation-guidelines.md",
-      "title": "Feature Extraction Implementation Guidelines",
-      "status": "unknown",
-      "priority": "medium",
-      "upstreamSource": "",
-      "estimatedEffort": ""
+      "filename": "2025-07-20-emergency-review.md",
+      "date": "2025-07-20",
+      "title": "Emergency Security Update Review",
+      "summary": "Urgent review of security-related upstream changes",
+      "participants": [
+        "Bob Maintainer",
+        "Diana Engineer"
+      ],
+      "decisions": [
+        "Extract security patches immediately",
+        "Update dependency versions"
+      ],
+      "actionItems": [
+        "Diana: Apply security patches",
+        "Bob: Test updated dependencies"
+      ]
     }
   ],
-  "templates": []
+  "extractions": [
+    {
+      "filename": "graph-optimization-v2.md",
+      "title": "Graph Optimization Algorithm v2",
+      "status": "in-progress",
+      "priority": "high",
+      "upstreamSource": "commit abc123def456",
+      "estimatedEffort": "3-5 days"
+    },
+    {
+      "filename": "query-interface-enhancement.md",
+      "title": "Enhanced Query Interface",
+      "status": "planned",
+      "priority": "medium",
+      "upstreamSource": "PR #456",
+      "estimatedEffort": "1-2 weeks"
+    },
+    {
+      "filename": "memory-optimization.md",
+      "title": "Memory Usage Optimization",
+      "status": "completed",
+      "priority": "high",
+      "upstreamSource": "commits def789ghi012",
+      "estimatedEffort": "1 week"
+    }
+  ],
+  "templates": [
+    "analysis-session.md",
+    "extraction-candidate.md",
+    "quick-summary.md"
+  ]
 }

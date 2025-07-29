@@ -1,0 +1,126 @@
+{
+  "lastUpdated": "2025-07-28T21:38:22.000Z",
+  "commits": {
+    "total": 67,
+    "byDate": {
+      "2025-06-29": 4,
+      "2025-06-30": 3,
+      "2025-07-01": 1,
+      "2025-07-02": 2,
+      "2025-07-03": 3,
+      "2025-07-04": 4,
+      "2025-07-05": 3,
+      "2025-07-06": 1,
+      "2025-07-07": 3,
+      "2025-07-08": 4,
+      "2025-07-09": 2,
+      "2025-07-10": 0,
+      "2025-07-11": 0,
+      "2025-07-12": 3,
+      "2025-07-13": 0,
+      "2025-07-14": 1,
+      "2025-07-15": 1,
+      "2025-07-16": 3,
+      "2025-07-17": 0,
+      "2025-07-18": 0,
+      "2025-07-19": 4,
+      "2025-07-20": 0,
+      "2025-07-21": 4,
+      "2025-07-22": 2,
+      "2025-07-23": 3,
+      "2025-07-24": 1,
+      "2025-07-25": 0,
+      "2025-07-26": 4,
+      "2025-07-27": 4,
+      "2025-07-28": 3
+    },
+    "byAuthor": {
+      "vitali87": 25,
+      "upstream-contributor-1": 18,
+      "upstream-contributor-2": 12,
+      "community-dev": 8,
+      "bot-user": 4
+    },
+    "recent": [
+      {
+        "sha": "abc123def456",
+        "message": "Optimize graph traversal performance",
+        "author": "vitali87",
+        "date": "2025-07-27T21:38:22.000Z",
+        "url": "https://github.com/vitali87/code-graph-rag/commit/abc123def456"
+      },
+      {
+        "sha": "def456ghi789",
+        "message": "Add support for new query types",
+        "author": "upstream-contributor-1",
+        "date": "2025-07-26T21:38:22.000Z",
+        "url": "https://github.com/vitali87/code-graph-rag/commit/def456ghi789"
+      },
+      {
+        "sha": "ghi789jkl012",
+        "message": "Fix memory leak in graph construction",
+        "author": "vitali87",
+        "date": "2025-07-25T21:38:22.000Z",
+        "url": "https://github.com/vitali87/code-graph-rag/commit/ghi789jkl012"
+      },
+      {
+        "sha": "jkl012mno345",
+        "message": "Update documentation for new features",
+        "author": "upstream-contributor-2",
+        "date": "2025-07-24T21:38:22.000Z",
+        "url": "https://github.com/vitali87/code-graph-rag/commit/jkl012mno345"
+      },
+      {
+        "sha": "mno345pqr678",
+        "message": "Add unit tests for optimization module",
+        "author": "community-dev",
+        "date": "2025-07-23T21:38:22.000Z",
+        "url": "https://github.com/vitali87/code-graph-rag/commit/mno345pqr678"
+      }
+    ]
+  },
+  "contributors": [
+    {
+      "login": "vitali87",
+      "contributions": 45,
+      "avatarUrl": "https://github.com/vitali87.png",
+      "profileUrl": "https://github.com/vitali87"
+    },
+    {
+      "login": "upstream-contributor-1",
+      "contributions": 23,
+      "avatarUrl": "https://github.com/upstream-contributor-1.png",
+      "profileUrl": "https://github.com/upstream-contributor-1"
+    },
+    {
+      "login": "upstream-contributor-2",
+      "contributions": 18,
+      "avatarUrl": "https://github.com/upstream-contributor-2.png",
+      "profileUrl": "https://github.com/upstream-contributor-2"
+    },
+    {
+      "login": "community-dev",
+      "contributions": 12,
+      "avatarUrl": "https://github.com/community-dev.png",
+      "profileUrl": "https://github.com/community-dev"
+    }
+  ],
+  "releases": [
+    {
+      "name": "v2.1.0 - Performance Improvements",
+      "tagName": "v2.1.0",
+      "publishedAt": "2025-07-18T21:38:22.000Z",
+      "url": "https://github.com/vitali87/code-graph-rag/releases/tag/v2.1.0",
+      "prerelease": false,
+      "draft": false
+    },
+    {
+      "name": "v2.0.3 - Bug Fixes",
+      "tagName": "v2.0.3",
+      "publishedAt": "2025-07-03T21:38:22.000Z",
+      "url": "https://github.com/vitali87/code-graph-rag/releases/tag/v2.0.3",
+      "prerelease": false,
+      "draft": false
+    }
+  ]
+}

@@ -17,10 +17,12 @@ export default function(eleventyConfig) {
   });
 
   eleventyConfig.addFilter("limit", (arr, limit) => {
+    if (!arr || !Array.isArray(arr)) return [];
     return arr.slice(0, limit);
   });
 
   eleventyConfig.addFilter("sortBy", (arr, prop) => {
+    if (!arr || !Array.isArray(arr)) return [];
     return [...arr].sort((a, b) => {
       if (a[prop] < b[prop]) return -1;
       if (a[prop] > b[prop]) return 1;
@@ -29,10 +31,12 @@ export default function(eleventyConfig) {
   });
 
   eleventyConfig.addFilter("reverse", (arr) => {
+    if (!arr || !Array.isArray(arr)) return [];
     return [...arr].reverse();
   });
 
   eleventyConfig.addFilter("groupBy", (arr, prop) => {
+    if (!arr || !Array.isArray(arr)) return {};
     return arr.reduce((groups, item) => {
       const group = item[prop];
       if (!groups[group]) {
@@ -41,6 +45,19 @@ export default function(eleventyConfig) {
       groups[group].push(item);
       return groups;
     }, {});
+  });
+
+  eleventyConfig.addFilter("dump", (obj) => {
+    return JSON.stringify(obj);
+  });
+
+  eleventyConfig.addFilter("default", (value, fallback) => {
+    return value || fallback;
+  });
+
+  // Create a global collections object to make data available in templates
+  eleventyConfig.addCollection("all", function(collectionApi) {
+    return collectionApi.getAllSorted();
   });
 
   // Add shortcodes
@@ -67,6 +84,9 @@ export default function(eleventyConfig) {
     `;
   });
 
+  // Ignore includes directory from being processed as templates
+  eleventyConfig.ignores.add("src/_includes/**");
+
   // Configure directories
   return {
     dir: {
@@ -85,4 +105,4 @@ export default function(eleventyConfig) {
     markdownTemplateEngine: "njk",
     htmlTemplateEngine: "njk"
   };
-}
+};

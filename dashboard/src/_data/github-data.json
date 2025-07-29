@@ -1,0 +1,66 @@
+{
+  "lastUpdated": "2025-07-28T21:38:22.000Z",
+  "repository": {
+    "name": "MementoRC/code-graph-rag",
+    "description": "Enhanced code graph RAG with upstream analysis",
+    "stars": 42,
+    "forks": 8,
+    "openIssues": 15,
+    "defaultBranch": "main",
+    "createdAt": "2024-01-15T10:30:00Z",
+    "updatedAt": "2025-07-28T21:38:22.000Z",
+    "language": "Python",
+    "size": 1024
+  },
+  "upstream": {
+    "name": "vitali87/code-graph-rag",
+    "description": "Original code graph RAG implementation",
+    "stars": 156,
+    "forks": 23,
+    "updatedAt": "2025-07-26T21:38:22.000Z",
+    "language": "Python"
+  },
+  "extractions": {
+    "issues": 8,
+    "pullRequests": 3,
+    "completed": 5,
+    "inProgress": 3,
+    "recentActivity": [
+      {
+        "title": "Extract: Graph Optimization Algorithm v2",
+        "state": "open",
+        "createdAt": "2025-07-25T21:38:22.000Z",
+        "updatedAt": "2025-07-27T21:38:22.000Z",
+        "url": "https://github.com/MementoRC/code-graph-rag/issues/42",
+        "labels": [
+          "upstream-extraction",
+          "enhancement",
+          "high-priority"
+        ]
+      },
+      {
+        "title": "Extract: Enhanced Query Interface",
+        "state": "open",
+        "createdAt": "2025-07-23T21:38:22.000Z",
+        "updatedAt": "2025-07-26T21:38:22.000Z",
+        "url": "https://github.com/MementoRC/code-graph-rag/issues/41",
+        "labels": [
+          "upstream-extraction",
+          "feature"
+        ]
+      },
+      {
+        "title": "Completed: Memory Usage Optimization",
+        "state": "closed",
+        "createdAt": "2025-07-14T21:38:22.000Z",
+        "updatedAt": "2025-07-21T21:38:22.000Z",
+        "url": "https://github.com/MementoRC/code-graph-rag/issues/38",
+        "labels": [
+          "upstream-extraction",
+          "optimization",
+          "completed"
+        ]
+      }
+    ]
+  }
+}

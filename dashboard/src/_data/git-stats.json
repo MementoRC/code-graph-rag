@@ -1,0 +1,435 @@
+{
+  "lastUpdated": "2025-07-28T21:38:22.000Z",
+  "repository": {
+    "status": "feat-upstream-analysis-strategy",
+    "ahead": 0,
+    "behind": 0,
+    "modified": 2,
+    "created": 1,
+    "deleted": 0
+  },
+  "commits": {
+    "total": 45,
+    "last7Days": 8,
+    "last30Days": 25,
+    "byDate": {
+      "2025-06-30": [
+        {
+          "hash": "abc280skqs1v",
+          "message": "test: optimize database queries",
+          "author_name": "Alice Developer",
+          "date": "2025-06-30T21:38:22.000Z"
+        }
+      ],
+      "2025-07-01": [
+        {
+          "hash": "abc270mqfwrl",
+          "message": "feat: optimize database queries",
+          "author_name": "Bob Maintainer",
+          "date": "2025-07-01T21:38:22.000Z"
+        },
+        {
+          "hash": "abc2715v8b5u",
+          "message": "feat: fix memory leak in parser",
+          "author_name": "Alice Developer",
+          "date": "2025-07-01T21:38:22.000Z"
+        }
+      ],
+      "2025-07-02": [
+        {
+          "hash": "abc2603hcrk6",
+          "message": "docs: improve graph traversal algorithm",
+          "author_name": "Alice Developer",
+          "date": "2025-07-02T21:38:22.000Z"
+        },
+        {
+          "hash": "abc2613q15cx",
+          "message": "test: fix memory leak in parser",
+          "author_name": "Charlie Contributor",
+          "date": "2025-07-02T21:38:22.000Z"
+        }
+      ],
+      "2025-07-04": [
+        {
+          "hash": "abc240ylrq94",
+          "message": "refactor: fix edge case bug",
+          "author_name": "Alice Developer",
+          "date": "2025-07-04T21:38:22.000Z"
+        },
+        {
+          "hash": "abc241nmnvit",
+          "message": "feat: update documentation",
+          "author_name": "Charlie Contributor",
+          "date": "2025-07-04T21:38:22.000Z"
+        }
+      ],
+      "2025-07-05": [
+        {
+          "hash": "abc230xvkp7o",
+          "message": "test: update documentation",
+          "author_name": "Alice Developer",
+          "date": "2025-07-05T21:38:22.000Z"
+        },
+        {
+          "hash": "abc231vd527f",
+          "message": "feat: optimize database queries",
+          "author_name": "Alice Developer",
+          "date": "2025-07-05T21:38:22.000Z"
+        },
+        {
+          "hash": "abc232uo1f4v",
+          "message": "test: improve graph traversal algorithm",
+          "author_name": "Alice Developer",
+          "date": "2025-07-05T21:38:22.000Z"
+        }
+      ],
+      "2025-07-06": [
+        {
+          "hash": "abc220bpva81",
+          "message": "fix: optimize database queries",
+          "author_name": "Charlie Contributor",
+          "date": "2025-07-06T21:38:22.000Z"
+        },
+        {
+          "hash": "abc221zeghym",
+          "message": "chore: fix edge case bug",
+          "author_name": "Alice Developer",
+          "date": "2025-07-06T21:38:22.000Z"
+        }
+      ],
+      "2025-07-07": [
+        {
+          "hash": "abc210pgnrci",
+          "message": "refactor: improve performance",
+          "author_name": "Diana Engineer",
+          "date": "2025-07-07T21:38:22.000Z"
+        },
+        {
+          "hash": "abc211ydyhy2",
+          "message": "feat: improve graph traversal algorithm",
+          "author_name": "Charlie Contributor",
+          "date": "2025-07-07T21:38:22.000Z"
+        }
+      ],
+      "2025-07-08": [
+        {
+          "hash": "abc200kvhcts",
+          "message": "docs: enhance error handling",
+          "author_name": "Charlie Contributor",
+          "date": "2025-07-08T21:38:22.000Z"
+        },
+        {
+          "hash": "abc201rq3wch",
+          "message": "docs: improve graph traversal algorithm",
+          "author_name": "Alice Developer",
+          "date": "2025-07-08T21:38:22.000Z"
+        },
+        {
+          "hash": "abc2020x4wnt",
+          "message": "chore: add new query interface",
+          "author_name": "Bob Maintainer",
+          "date": "2025-07-08T21:38:22.000Z"
+        }
+      ],
+      "2025-07-09": [
+        {
+          "hash": "abc190e64htg",
+          "message": "test: update documentation",
+          "author_name": "Alice Developer",
+          "date": "2025-07-09T21:38:22.000Z"
+        },
+        {
+          "hash": "abc191nqu8pl",
+          "message": "feat: fix memory leak in parser",
+          "author_name": "Bob Maintainer",
+          "date": "2025-07-09T21:38:22.000Z"
+        },
+        {
+          "hash": "abc19211dd9c",
+          "message": "test: improve graph traversal algorithm",
+          "author_name": "Alice Developer",
+          "date": "2025-07-09T21:38:22.000Z"
+        }
+      ],
+      "2025-07-10": [
+        {
+          "hash": "abc180z88bi2",
+          "message": "refactor: fix memory leak in parser",
+          "author_name": "Charlie Contributor",
+          "date": "2025-07-10T21:38:22.000Z"
+        },
+        {
+          "hash": "abc181a2fmym",
+          "message": "fix: update documentation",
+          "author_name": "Bob Maintainer",
+          "date": "2025-07-10T21:38:22.000Z"
+        }
+      ],
+      "2025-07-11": [
+        {
+          "hash": "abc170vr9vc1",
+          "message": "test: improve performance",
+          "author_name": "Charlie Contributor",
+          "date": "2025-07-11T21:38:22.000Z"
+        }
+      ],
+      "2025-07-12": [
+        {
+          "hash": "abc1605creg9",
+          "message": "fix: improve graph traversal algorithm",
+          "author_name": "Bob Maintainer",
+          "date": "2025-07-12T21:38:22.000Z"
+        },
+        {
+          "hash": "abc161x850jw",
+          "message": "refactor: fix edge case bug",
+          "author_name": "Alice Developer",
+          "date": "2025-07-12T21:38:22.000Z"
+        },
+        {
+          "hash": "abc162ie2fub",
+          "message": "refactor: improve graph traversal algorithm",
+          "author_name": "Alice Developer",
+          "date": "2025-07-12T21:38:22.000Z"
+        }
+      ],
+      "2025-07-13": [
+        {
+          "hash": "abc150v4v6ww",
+          "message": "docs: enhance error handling",
+          "author_name": "Charlie Contributor",
+          "date": "2025-07-13T21:38:22.000Z"
+        }
+      ],
+      "2025-07-14": [
+        {
+          "hash": "abc1406bvj1k",
+          "message": "feat: fix edge case bug",
+          "author_name": "Bob Maintainer",
+          "date": "2025-07-14T21:38:22.000Z"
+        }
+      ],
+      "2025-07-15": [
+        {
+          "hash": "abc130pkgiil",
+          "message": "feat: fix edge case bug",
+          "author_name": "Bob Maintainer",
+          "date": "2025-07-15T21:38:22.000Z"
+        }
+      ],
+      "2025-07-17": [
+        {
+          "hash": "abc110iwj1il",
+          "message": "feat: fix memory leak in parser",
+          "author_name": "Alice Developer",
+          "date": "2025-07-17T21:38:22.000Z"
+        }
+      ],
+      "2025-07-18": [
+        {
+          "hash": "abc100b2w31f",
+          "message": "test: fix edge case bug",
+          "author_name": "Diana Engineer",
+          "date": "2025-07-18T21:38:22.000Z"
+        },
+        {
+          "hash": "abc101w8ekkl",
+          "message": "docs: add unit tests",
+          "author_name": "Alice Developer",
+          "date": "2025-07-18T21:38:22.000Z"
+        }
+      ],
+      "2025-07-19": [
+        {
+          "hash": "abc90622apm",
+          "message": "test: update documentation",
+          "author_name": "Diana Engineer",
+          "date": "2025-07-19T21:38:22.000Z"
+        },
+        {
+          "hash": "abc91qvtnhx",
+          "message": "chore: improve graph traversal algorithm",
+          "author_name": "Bob Maintainer",
+          "date": "2025-07-19T21:38:22.000Z"
+        },
+        {
+          "hash": "abc92x9j46b",
+          "message": "fix: fix memory leak in parser",
+          "author_name": "Bob Maintainer",
+          "date": "2025-07-19T21:38:22.000Z"
+        }
+      ],
+      "2025-07-20": [
+        {
+          "hash": "abc80itvqog",
+          "message": "docs: enhance error handling",
+          "author_name": "Bob Maintainer",
+          "date": "2025-07-20T21:38:22.000Z"
+        },
+        {
+          "hash": "abc81d1fjs3",
+          "message": "feat: improve performance",
+          "author_name": "Charlie Contributor",
+          "date": "2025-07-20T21:38:22.000Z"
+        },
+        {
+          "hash": "abc82dyqnpc",
+          "message": "fix: optimize database queries",
+          "author_name": "Charlie Contributor",
+          "date": "2025-07-20T21:38:22.000Z"
+        }
+      ],
+      "2025-07-21": [
+        {
+          "hash": "abc70ozw5rf",
+          "message": "chore: update documentation",
+          "author_name": "Alice Developer",
+          "date": "2025-07-21T21:38:22.000Z"
+        },
+        {
+          "hash": "abc710gb2wz",
+          "message": "test: update documentation",
+          "author_name": "Bob Maintainer",
+          "date": "2025-07-21T21:38:22.000Z"
+        },
+        {
+          "hash": "abc72o8dmok",
+          "message": "refactor: optimize database queries",
+          "author_name": "Bob Maintainer",
+          "date": "2025-07-21T21:38:22.000Z"
+        }
+      ],
+      "2025-07-23": [
+        {
+          "hash": "abc50t4rc8y",
+          "message": "docs: fix edge case bug",
+          "author_name": "Charlie Contributor",
+          "date": "2025-07-23T21:38:22.000Z"
+        },
+        {
+          "hash": "abc5119oazv",
+          "message": "fix: fix edge case bug",
+          "author_name": "Alice Developer",
+          "date": "2025-07-23T21:38:22.000Z"
+        },
+        {
+          "hash": "abc52kjvysr",
+          "message": "feat: enhance error handling",
+          "author_name": "Alice Developer",
+          "date": "2025-07-23T21:38:22.000Z"
+        }
+      ],
+      "2025-07-24": [
+        {
+          "hash": "abc409phkk2",
+          "message": "chore: improve graph traversal algorithm",
+          "author_name": "Bob Maintainer",
+          "date": "2025-07-24T21:38:22.000Z"
+        },
+        {
+          "hash": "abc412gvfl8",
+          "message": "feat: refactor code structure",
+          "author_name": "Bob Maintainer",
+          "date": "2025-07-24T21:38:22.000Z"
+        },
+        {
+          "hash": "abc42cg7io7",
+          "message": "test: optimize database queries",
+          "author_name": "Bob Maintainer",
+          "date": "2025-07-24T21:38:22.000Z"
+        }
+      ],
+      "2025-07-25": [
+        {
+          "hash": "abc30gbz6lb",
+          "message": "test: optimize database queries",
+          "author_name": "Alice Developer",
+          "date": "2025-07-25T21:38:22.000Z"
+        },
+        {
+          "hash": "abc31vi2w80",
+          "message": "feat: refactor code structure",
+          "author_name": "Diana Engineer",
+          "date": "2025-07-25T21:38:22.000Z"
+        }
+      ],
+      "2025-07-27": [
+        {
+          "hash": "abc10ey47bf",
+          "message": "chore: fix edge case bug",
+          "author_name": "Alice Developer",
+          "date": "2025-07-27T21:38:22.000Z"
+        },
+        {
+          "hash": "abc11qpe7jt",
+          "message": "fix: optimize database queries",
+          "author_name": "Bob Maintainer",
+          "date": "2025-07-27T21:38:22.000Z"
+        },
+        {
+          "hash": "abc129z2vyk",
+          "message": "docs: add unit tests",
+          "author_name": "Alice Developer",
+          "date": "2025-07-27T21:38:22.000Z"
+        }
+      ],
+      "2025-07-28": [
+        {
+          "hash": "abc00ky26l6",
+          "message": "refactor: add new query interface",
+          "author_name": "Bob Maintainer",
+          "date": "2025-07-28T21:38:22.000Z"
+        }
+      ]
+    },
+    "byAuthor": {
+      "Alice Developer": 15,
+      "Bob Maintainer": 12,
+      "Charlie Contributor": 8,
+      "Diana Engineer": 10
+    },
+    "byType": {
+      "feature": 12,
+      "fix": 8,
+      "docs": 5,
+      "refactor": 7,
+      "test": 6,
+      "other": 7
+    }
+  },
+  "branches": {
+    "all": [
+      {
+        "name": "main",
+        "current": false
+      },
+      {
+        "name": "feat-upstream-analysis-strategy",
+        "current": true
+      },
+      {
+        "name": "upstream-mirror",
+        "current": false
+      },
+      {
+        "name": "feature/dashboard-setup",
+        "current": false
+      }
+    ],
+    "total": 4
+  },
+  "remotes": [
+    {
+      "name": "origin",
+      "refs": {
+        "fetch": "https://github.com/MementoRC/code-graph-rag.git"
+      }
+    },
+    {
+      "name": "upstream",
+      "refs": {
+        "fetch": "https://github.com/vitali87/code-graph-rag.git"
+      }
+    }
+  ]
+}
