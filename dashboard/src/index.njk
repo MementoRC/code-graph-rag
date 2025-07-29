@@ -1,8 +1,64 @@
 ---
 layout: base.njk
-title: Dashboard Overview
-description: Visualizing upstream activity and analysis status
+title: Dynamic Dashboard Overview
+description: Real-time visualization of upstream activity and analysis status
 ---
+
+<!-- Dynamic Controls Panel -->
+<div class="bg-white border-b border-gray-200 mb-6 p-4 rounded-lg shadow-sm">
+    <div class="flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center space-x-4">
+            <h2 class="text-lg font-semibold text-gray-900">Filters & Controls</h2>
+            
+            <!-- Date Range Filter -->
+            <select id="dateRangePicker" class="form-select text-sm border-gray-300 rounded-md">
+                <option value="1d">Last 24 hours</option>
+                <option value="7d">Last 7 days</option>
+                <option value="30d" selected>Last 30 days</option>
+                <option value="90d">Last 90 days</option>
+                <option value="all">All time</option>
+            </select>
+            
+            <!-- Author Filter -->
+            <select id="authorFilter" class="form-select text-sm border-gray-300 rounded-md">
+                <option value="all">All authors</option>
+                <option value="vitali87">vitali87</option>
+                <option value="upstream-contributor-1">Contributor 1</option>
+                <option value="upstream-contributor-2">Contributor 2</option>
+            </select>
+            
+            <!-- Change Type Filter -->
+            <select id="changeTypeFilter" class="form-select text-sm border-gray-300 rounded-md">
+                <option value="all">All changes</option>
+                <option value="feature">Features</option>
+                <option value="fix">Bug fixes</option>
+                <option value="docs">Documentation</option>
+                <option value="refactor">Refactoring</option>
+            </select>
+        </div>
+        
+        <div class="flex items-center space-x-4">
+            <!-- Search -->
+            <input 
+                type="text" 
+                id="dashboardSearch" 
+                placeholder="Search commits, issues..." 
+                class="form-input text-sm border-gray-300 rounded-md w-64"
+            >
+            
+            <!-- Theme Toggle -->
+            <button id="themeToggle" class="btn btn-secondary text-sm">
+                🌙 Dark Mode
+            </button>
+            
+            <!-- Real-time Status -->
+            <div class="flex items-center text-sm text-gray-500">
+                <div class="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse status-indicator"></div>
+                <span class="last-updated">Live</span>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- Key Metrics Overview -->
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -105,6 +161,35 @@ description: Visualizing upstream activity and analysis status
         </div>
         <div class="h-64">
             <canvas id="changeTypesChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Advanced Visualizations -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+    <!-- Commit Network Graph -->
+    <div class="card">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-900">Commit Network</h3>
+            <button class="btn btn-secondary text-xs" onclick="window.dynamicDashboard?.initCommitNetworkGraph()">
+                🔄 Refresh
+            </button>
+        </div>
+        <div id="commitNetworkGraph" class="h-64 bg-gray-50 rounded-lg flex items-center justify-center">
+            <div class="text-gray-500">Loading network visualization...</div>
+        </div>
+    </div>
+
+    <!-- Change Heatmap -->
+    <div class="card">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-900">File Change Heatmap</h3>
+            <button class="btn btn-secondary text-xs" onclick="window.dynamicDashboard?.initChangeHeatmap()">
+                🔄 Refresh
+            </button>
+        </div>
+        <div id="changeHeatmap" class="h-64 bg-gray-50 rounded-lg flex items-center justify-center">
+            <div class="text-gray-500">Loading heatmap visualization...</div>
         </div>
     </div>
 </div>
