@@ -84,8 +84,9 @@ export default function(eleventyConfig) {
     `;
   });
 
-  // Ignore includes directory from being processed as templates
-  eleventyConfig.ignores.add("src/_includes/**");
+  // Don't ignore includes directory - it contains layouts
+  
+  // Data files in _data directory are automatically available
 
   // Configure directories
   return {
