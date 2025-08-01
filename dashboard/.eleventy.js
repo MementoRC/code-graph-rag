@@ -93,7 +93,7 @@ export default function(eleventyConfig) {
     dir: {
       input: "src",
       output: "_site",
-      includes: "_includes",
+      includes: "_layouts",
       layouts: "_layouts",
       data: "_data"
     },
