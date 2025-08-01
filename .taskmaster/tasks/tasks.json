@@ -620,13 +620,13 @@
           7,
           8
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       }
     ],
     "metadata": {
       "created": "2025-07-25T15:08:38.933Z",
-      "updated": "2025-07-31T01:15:46.558Z",
+      "updated": "2025-07-31T22:57:48.611Z",
       "description": "Tasks for master context"
     }
   }
