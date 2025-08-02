@@ -7,10 +7,6 @@
         "@modelcontextprotocol/server-sequential-thinking"
       ]
     },
-    "Ref": {
-      "type": "http",
-      "url": "https://api.ref.tools/mcp?apiKey=ref-022f87527fcdf3c9437f"
-    },
     "task-master-ai": {
       "type": "stdio",
       "command": "npx",

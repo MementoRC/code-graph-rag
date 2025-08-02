@@ -1,16 +1,10 @@
 {
-  "lastUpdated": "2025-07-30T13:52:34.323Z",
+  "lastUpdated": "2025-08-01T15:35:31.655Z",
   "collections": {
     "gitStats": "success",
     "analysisDocs": "success",
     "githubData": "success",
     "upstreamActivity": "success"
-  },
-  "stats": {
-    "totalCommits": 45,
-    "analysisSessionsCount": 1,
-    "extractionsInProgress": 3,
-    "upstreamCommitsLastMonth": 20
   },
   "errors": []
 }

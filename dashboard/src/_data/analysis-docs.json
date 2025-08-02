@@ -1,20 +1,31 @@
 {
-  "lastUpdated": "2025-07-30T13:52:34.318Z",
-  "sessions": [
+  "lastUpdated": "2025-08-01T15:35:31.641Z",
+  "sessions": [],
+  "extractions": [
     {
-      "name": "sample-analysis-session-2025-07-30.md",
-      "path": "docs/upstream-analysis/sessions/sample-session.md",
-      "lastModified": "2025-07-30T13:52:34.321Z",
-      "wordCount": 1250,
-      "participants": [
-        "Alice",
-        "Bob",
-        "Carol"
-      ],
-      "decisions": 3,
-      "actionItems": 5
+      "filename": "TRACEABILITY.md",
+      "title": "Traceability and Audit System",
+      "status": "unknown",
+      "priority": "medium",
+      "upstreamSource": "",
+      "estimatedEffort": ""
+    },
+    {
+      "filename": "decision-framework.md",
+      "title": "Feature Extraction Decision Framework",
+      "status": "unknown",
+      "priority": "medium",
+      "upstreamSource": "",
+      "estimatedEffort": ""
+    },
+    {
+      "filename": "implementation-guidelines.md",
+      "title": "Feature Extraction Implementation Guidelines",
+      "status": "unknown",
+      "priority": "medium",
+      "upstreamSource": "",
+      "estimatedEffort": ""
     }
   ],
-  "templates": [],
-  "extractions": []
+  "templates": []
 }
