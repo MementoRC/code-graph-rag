@@ -63,7 +63,7 @@ jobs:
             cp -r src/_data _site/
             # Create a functional dashboard page
             cat > _site/index.html << 'HTMLEOF'
-<\!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -154,4 +154,3 @@ HTMLEOF
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-EOF < /dev/null
