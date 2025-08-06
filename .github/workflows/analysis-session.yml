@@ -1,0 +1,177 @@
+name: Upstream Analysis Session
+
+on:
+  schedule:
+    # Weekly on Monday at 09:00 UTC (configurable in tools/analysis-session/config.yml)
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+    inputs:
+      force_session:
+        description: 'Force session even if no significant changes'
+        required: false
+        default: 'false'
+        type: boolean
+      lookback_days:
+        description: 'Days to look back for changes (default: 7)'
+        required: false
+        default: '7'
+        type: string
+
+jobs:
+  prepare-session:
+    runs-on: ubuntu-latest
+    outputs:
+      session_created: ${{ steps.prepare.outputs.session_created }}
+      session_branch: ${{ steps.prepare.outputs.session_branch }}
+      commit_count: ${{ steps.prepare.outputs.commit_count }}
+      has_significant_changes: ${{ steps.prepare.outputs.has_significant_changes }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Configure Git
+        run: |
+          git config user.name "Analysis Session Bot"
+          git config user.email "analysis-session-bot@users.noreply.github.com"
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: tools/analysis-session/package.json
+      
+      - name: Install analysis session dependencies
+        run: |
+          cd tools/analysis-session
+          npm ci --production
+      
+      - name: Add upstream remote and fetch
+        run: |
+          git remote add upstream https://github.com/vitali87/code-graph-rag.git || git remote set-url upstream https://github.com/vitali87/code-graph-rag.git
+          git fetch upstream
+          git fetch origin
+      
+      - name: Prepare analysis session
+        id: prepare
+        run: |
+          cd tools/analysis-session
+          FORCE_SESSION="${{ github.event.inputs.force_session || 'false' }}"
+          LOOKBACK_DAYS="${{ github.event.inputs.lookback_days || '7' }}"
+          
+          # Run session preparation
+          node prepare-session.js \
+            --force="$FORCE_SESSION" \
+            --lookback-days="$LOOKBACK_DAYS" \
+            --github-token="${{ secrets.GITHUB_TOKEN }}" \
+            --repository="${{ github.repository }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+      
+      - name: Upload session artifacts
+        if: steps.prepare.outputs.session_created == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: analysis-session-${{ steps.prepare.outputs.session_branch }}
+          path: |
+            tools/analysis-session/session-notes.md
+            tools/analysis-session/change-summary.json
+            tools/analysis-session/diff-report.html
+          retention-days: 30
+      
+      - name: Create session summary issue
+        if: steps.prepare.outputs.session_created == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            
+            // Read session summary
+            const sessionNotesPath = 'tools/analysis-session/session-notes.md';
+            let sessionNotes = '';
+            try {
+              sessionNotes = fs.readFileSync(sessionNotesPath, 'utf8');
+            } catch (error) {
+              sessionNotes = `Session notes not found. Check session preparation logs.`;
+            }
+            
+            const issueTitle = `🔍 Upstream Analysis Session - ${{ steps.prepare.outputs.session_branch }}`;
+            const issueBody = `# Upstream Analysis Session
+            
+            **Session Branch**: \`${{ steps.prepare.outputs.session_branch }}\`
+            **Commits Analyzed**: ${{ steps.prepare.outputs.commit_count }}
+            **Significant Changes**: ${{ steps.prepare.outputs.has_significant_changes }}
+            **Created**: ${new Date().toISOString()}
+            
+            ## Session Status
+            - [x] Session prepared automatically
+            - [ ] Team review required
+            - [ ] Manual analysis session scheduled
+            - [ ] Extraction candidates identified
+            - [ ] Session completed
+            
+            ## Quick Actions
+            - **Review Session Notes**: [Download Artifacts](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            - **Start Manual Session**: \`cd tools/analysis-session && npm run cli\`
+            - **View Changes**: \`git checkout ${{ steps.prepare.outputs.session_branch }}\`
+            
+            ## Automated Session Notes
+            
+            <details>
+            <summary>Click to expand automated analysis</summary>
+            
+            \`\`\`markdown
+            ${sessionNotes}
+            \`\`\`
+            
+            </details>
+            
+            ## Next Steps
+            1. Review the automated analysis above
+            2. Schedule manual team session if significant changes found
+            3. Use interactive CLI for detailed analysis
+            4. Create extraction issues for valuable features
+            5. Close this issue when session is complete
+            
+            ---
+            *This issue was created automatically by the Upstream Analysis Session workflow.*
+            `;
+            
+            const { data: issue } = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: issueTitle,
+              body: issueBody,
+              labels: ['upstream-analysis', 'analysis-session', 'automated']
+            });
+            
+            console.log(`Created session issue: ${issue.html_url}`);
+  
+  notify-team:
+    runs-on: ubuntu-latest
+    needs: prepare-session
+    if: needs.prepare-session.outputs.session_created == 'true'
+    
+    steps:
+      - name: Notify team of session creation
+        run: |
+          echo "📅 Analysis session prepared: ${{ needs.prepare-session.outputs.session_branch }}"
+          echo "📊 Changes analyzed: ${{ needs.prepare-session.outputs.commit_count }} commits"
+          echo "🎯 Significant changes: ${{ needs.prepare-session.outputs.has_significant_changes }}"
+          echo ""
+          echo "🔗 Session artifacts available in workflow run"
+          echo "🔗 Session issue created for team coordination"
+          echo ""
+          echo "⚡ To start interactive session:"
+          echo "   git checkout ${{ needs.prepare-session.outputs.session_branch }}"
+          echo "   cd tools/analysis-session"
+          echo "   npm run cli"
+          echo ""
+          echo "⚠️ Team notification integrations (Slack, email) not yet implemented"
+          echo "📝 Manual team notification required"

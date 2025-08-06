@@ -1,0 +1,44 @@
+{
+  "name": "analysis-session-automation",
+  "version": "1.0.0",
+  "description": "Automated tools for upstream analysis sessions",
+  "type": "module",
+  "main": "session-cli.js",
+  "bin": {
+    "analysis-session": "./session-cli.js"
+  },
+  "scripts": {
+    "prepare": "node prepare-session.js",
+    "schedule": "node schedule-session.js",
+    "cli": "node session-cli.js",
+    "finalize": "node finalize-session.js",
+    "install-deps": "npm install",
+    "test": "echo 'Tests not yet implemented'"
+  },
+  "dependencies": {
+    "@octokit/rest": "^20.0.2",
+    "commander": "^11.1.0",
+    "inquirer": "^9.2.12",
+    "chalk": "^5.3.0",
+    "ora": "^7.0.1",
+    "diff2html": "^3.4.47",
+    "js-yaml": "^4.1.0",
+    "date-fns": "^2.30.0",
+    "simple-git": "^3.20.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "@types/node": "^20.10.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "upstream-analysis",
+    "automation",
+    "github",
+    "analysis-session"
+  ],
+  "author": "Upstream Analysis Team",
+  "license": "MIT"
+}

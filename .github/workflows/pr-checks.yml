@@ -51,7 +51,9 @@ jobs:
     name: "⚡ Fast Quality Check"
     runs-on: ubuntu-latest
     needs: changes
-    if: needs.changes.outputs.python == 'true' || needs.changes.outputs.ci == 'true'
+    if: >
+      needs.changes.outputs.python == 'true' ||
+      needs.changes.outputs.ci == 'true'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -87,21 +89,20 @@ jobs:
           echo "## ⚡ Fast Quality Check Results" >> $GITHUB_STEP_SUMMARY
           echo "| Check | Result |" >> $GITHUB_STEP_SUMMARY
           echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
-          
           # Lint check
           if pixi run -e quality lint --quiet >/dev/null 2>&1; then
             echo "| Critical Lint (F,E9) | ✅ PASS |" >> $GITHUB_STEP_SUMMARY
           else
             echo "| Critical Lint (F,E9) | ❌ FAIL |" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           # Format check
           if pixi run -e quality format-check --quiet >/dev/null 2>&1; then
             echo "| Code Formatting | ✅ PASS |" >> $GITHUB_STEP_SUMMARY
           else
             echo "| Code Formatting | ❌ FAIL |" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           # Type check
           if pixi run -e quality typecheck --quiet >/dev/null 2>&1; then
             echo "| Type Checking | ✅ PASS |" >> $GITHUB_STEP_SUMMARY
@@ -113,7 +114,9 @@ jobs:
     name: "🧪 Quick Tests"
     runs-on: ubuntu-latest
     needs: [changes, fast-quality-check]
-    if: needs.changes.outputs.python == 'true' || needs.changes.outputs.tests == 'true'
+    if: >
+      needs.changes.outputs.python == 'true' ||
+      needs.changes.outputs.tests == 'true'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -131,14 +134,16 @@ jobs:
       - name: Run unit tests only (fast)
         run: |
           echo "🧪 Running unit tests"
-          pixi run -e quality test-unit-smoke || echo "⚠️ Some unit tests failed"
+          pixi run -e quality test-unit-smoke ||
+            echo "⚠️ Some unit tests failed"
 
       - name: Generate test summary
         if: always()
         run: |
           echo "## 🧪 Quick Test Results" >> $GITHUB_STEP_SUMMARY
           echo "- Unit tests completed" >> $GITHUB_STEP_SUMMARY
-          echo "- **Note**: Full test suite runs in main CI pipeline" >> $GITHUB_STEP_SUMMARY
+          echo "- **Note**: Full test suite runs in main CI pipeline" |
+            >> $GITHUB_STEP_SUMMARY
 
   security-scan:
     name: "🔒 Security Scan"
@@ -186,19 +191,19 @@ jobs:
           # Get base branch for comparison
           BASE_BRANCH="${{ github.event.pull_request.base.ref }}"
           HEAD_BRANCH="${{ github.event.pull_request.head.ref }}"
-          
+
           # Count changes
           ADDED_LINES=$(git diff --numstat origin/$BASE_BRANCH...HEAD | awk '{sum += $1} END {print sum+0}')
           REMOVED_LINES=$(git diff --numstat origin/$BASE_BRANCH...HEAD | awk '{sum += $2} END {print sum+0}')
           CHANGED_FILES=$(git diff --name-only origin/$BASE_BRANCH...HEAD | wc -l)
-          
+
           echo "## 📏 PR Size Analysis" >> $GITHUB_STEP_SUMMARY
           echo "| Metric | Count |" >> $GITHUB_STEP_SUMMARY
           echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
           echo "| Files Changed | $CHANGED_FILES |" >> $GITHUB_STEP_SUMMARY
           echo "| Lines Added | $ADDED_LINES |" >> $GITHUB_STEP_SUMMARY
           echo "| Lines Removed | $REMOVED_LINES |" >> $GITHUB_STEP_SUMMARY
-          
+
           # Size recommendations
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 💡 PR Size Recommendations" >> $GITHUB_STEP_SUMMARY
@@ -219,20 +224,21 @@ jobs:
     steps:
       - name: Check PR description
         run: |
-          PR_BODY="${{ github.event.pull_request.body }}"
-          PR_TITLE="${{ github.event.pull_request.title }}"
-          
+          # Use jq to safely extract PR data from GitHub event
+          PR_BODY=$(jq -r '.pull_request.body // ""' "$GITHUB_EVENT_PATH")
+          PR_TITLE=$(jq -r '.pull_request.title // ""' "$GITHUB_EVENT_PATH")
+
           echo "## 📝 PR Quality Check" >> $GITHUB_STEP_SUMMARY
           echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
-          
+
           # Check title format
           if [[ "$PR_TITLE" =~ ^(feat|fix|docs|refactor|perf|test|chore|ci): ]]; then
             echo "| Title Format | ✅ Conventional commits format |" >> $GITHUB_STEP_SUMMARY
           else
             echo "| Title Format | ⚠️ Consider using conventional commits format |" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           # Check description length
           if [ ${#PR_BODY} -gt 50 ]; then
             echo "| Description | ✅ Detailed description provided |" >> $GITHUB_STEP_SUMMARY
@@ -266,7 +272,7 @@ jobs:
         run: |
           echo "# 🚀 PR Quality Check Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           # Change detection summary
           echo "## 📋 Changes Detected" >> $GITHUB_STEP_SUMMARY
           echo "- Python code: ${{ needs.changes.outputs.python == 'true' && '✅' || '❌' }}" >> $GITHUB_STEP_SUMMARY
@@ -274,7 +280,7 @@ jobs:
           echo "- Documentation: ${{ needs.changes.outputs.docs == 'true' && '✅' || '❌' }}" >> $GITHUB_STEP_SUMMARY
           echo "- CI/CD: ${{ needs.changes.outputs.ci == 'true' && '✅' || '❌' }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           # Quality check results
           echo "## 🎯 Quality Check Results" >> $GITHUB_STEP_SUMMARY
           echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
@@ -283,7 +289,7 @@ jobs:
           echo "| Quick Tests | ${{ needs.quick-tests.result == 'success' && '✅ PASS' || needs.quick-tests.result == 'skipped' && '⏭️ SKIP' || '❌ FAIL' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Security Scan | ${{ needs.security-scan.result == 'success' && '✅ PASS' || needs.security-scan.result == 'skipped' && '⏭️ SKIP' || '❌ FAIL' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           # Next steps
           echo "## 🎯 Next Steps" >> $GITHUB_STEP_SUMMARY
           if [[ "${{ needs.fast-quality-check.result }}" == "failure" ]]; then

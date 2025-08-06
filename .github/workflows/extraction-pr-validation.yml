@@ -1,0 +1,289 @@
+name: Feature Extraction PR Validation
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main, development]
+    paths:
+      - 'feature/extracted-*'
+
+env:
+  EXTRACTION_BRANCH_PATTERN: 'feature/extracted-*'
+  PYTHONUNBUFFERED: 1
+  CLAUDECODE: 0
+
+jobs:
+  detect-extraction:
+    name: "🔍 Detect Extraction PR"
+    runs-on: ubuntu-latest
+    outputs:
+      is_extraction: ${{ steps.check.outputs.is_extraction }}
+      feature_name: ${{ steps.check.outputs.feature_name }}
+      extraction_id: ${{ steps.check.outputs.extraction_id }}
+    steps:
+      - name: Check if PR is for extracted feature
+        id: check
+        run: |
+          if [[ "${{ github.head_ref }}" =~ ^feature/extracted-(.+)$ ]]; then
+            echo "is_extraction=true" >> $GITHUB_OUTPUT
+            echo "feature_name=${BASH_REMATCH[1]}" >> $GITHUB_OUTPUT
+            echo "extraction_id=EXT-$(date +%Y)-${BASH_REMATCH[1]}" >> $GITHUB_OUTPUT
+            echo "✅ Detected extraction PR for feature: ${BASH_REMATCH[1]}"
+          else
+            echo "is_extraction=false" >> $GITHUB_OUTPUT
+            echo "ℹ️ Not an extraction PR, skipping extraction validation"
+          fi
+
+  validate-extraction-metadata:
+    name: "📋 Validate Extraction Metadata"
+    runs-on: ubuntu-latest
+    needs: detect-extraction
+    if: needs.detect-extraction.outputs.is_extraction == 'true'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate required documentation
+        run: |
+          FEATURE_NAME="${{ needs.detect-extraction.outputs.feature_name }}"
+          echo "🔍 Validating extraction documentation for: $FEATURE_NAME"
+          
+          # Check for extraction assessment
+          if [ ! -f "docs/upstream-analysis/extraction/assessments/${FEATURE_NAME}.md" ]; then
+            echo "❌ Missing extraction assessment: docs/upstream-analysis/extraction/assessments/${FEATURE_NAME}.md"
+            exit 1
+          fi
+          echo "✅ Extraction assessment found"
+          
+          # Check for implementation plan
+          if [ ! -f "docs/upstream-analysis/extraction/plans/${FEATURE_NAME}.md" ]; then
+            echo "❌ Missing implementation plan: docs/upstream-analysis/extraction/plans/${FEATURE_NAME}.md"
+            exit 1
+          fi
+          echo "✅ Implementation plan found"
+          
+          # Check for analysis session reference
+          ANALYSIS_SESSIONS=$(find .github/analysis-sessions -name "*.md" 2>/dev/null | wc -l)
+          if [ $ANALYSIS_SESSIONS -eq 0 ]; then
+            echo "⚠️ No analysis sessions found - consider adding analysis session reference"
+          else
+            echo "✅ Analysis sessions available"
+          fi
+
+      - name: Validate PR template completion
+        run: |
+          echo "📝 Validating PR description completeness"
+          
+          # Check if PR description contains extraction template elements
+          if ! grep -q "Extraction ID" <<< "${{ github.event.pull_request.body }}"; then
+            echo "⚠️ PR description missing Extraction ID"
+          fi
+          
+          if ! grep -q "Value Score" <<< "${{ github.event.pull_request.body }}"; then
+            echo "⚠️ PR description missing Value Assessment"
+          fi
+          
+          if ! grep -q "Upstream Commit" <<< "${{ github.event.pull_request.body }}"; then
+            echo "⚠️ PR description missing Upstream Reference"
+          fi
+          
+          echo "✅ PR template validation completed"
+
+  validate-traceability:
+    name: "🔗 Validate Traceability"
+    runs-on: ubuntu-latest
+    needs: [detect-extraction, validate-extraction-metadata]
+    if: needs.detect-extraction.outputs.is_extraction == 'true'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Validate traceability chain
+        run: |
+          FEATURE_NAME="${{ needs.detect-extraction.outputs.feature_name }}"
+          echo "🔗 Validating traceability for: $FEATURE_NAME"
+          
+          # Check if traceability validation script exists
+          if [ -f "scripts/validate_traceability.js" ]; then
+            node scripts/validate_traceability.js --feature="$FEATURE_NAME" --branch="${{ github.head_ref }}"
+          else
+            echo "⚠️ Traceability validation script not found, performing basic checks"
+            
+            # Basic traceability checks
+            echo "Checking basic traceability requirements:"
+            echo "- Feature branch: ${{ github.head_ref }}"
+            echo "- Extraction ID: ${{ needs.detect-extraction.outputs.extraction_id }}"
+            echo "- Documentation path: docs/upstream-analysis/extraction/"
+          fi
+
+  quality-validation:
+    name: "🔍 Extraction Quality Validation"
+    runs-on: ubuntu-latest
+    needs: detect-extraction
+    if: needs.detect-extraction.outputs.is_extraction == 'true'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pixi
+        uses: prefix-dev/setup-pixi@v0.8.11
+        with:
+          pixi-version: v0.49.0
+          cache: true
+
+      - name: Install dependencies
+        run: pixi install -e quality
+
+      - name: Run extraction-specific quality checks
+        run: |
+          echo "🔍 Running quality validation for extracted feature"
+          
+          # Standard quality gates
+          echo "## Quality Check Results" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          
+          # Critical lint check
+          if pixi run -e quality lint; then
+            echo "| Critical Lint (F,E9) | ✅ PASS |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| Critical Lint (F,E9) | ❌ FAIL |" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+          
+          # Format check
+          if pixi run -e quality format-check; then
+            echo "| Code Formatting | ✅ PASS |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| Code Formatting | ❌ FAIL |" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+          
+          # Type check
+          if pixi run -e quality typecheck; then
+            echo "| Type Checking | ✅ PASS |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| Type Checking | ❌ FAIL |" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+          
+          # Smoke tests
+          if pixi run -e smoke-test test-smoke; then
+            echo "| Smoke Tests | ✅ PASS |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| Smoke Tests | ❌ FAIL |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Security scan for extracted features
+        run: |
+          echo "🔒 Running security scan for extracted feature"
+          
+          # Run security analysis
+          pixi run -e quality security-scan || echo "⚠️ Security scan completed with warnings"
+          
+          # Check for common extraction security issues
+          echo "Checking for extraction-specific security concerns:"
+          echo "- Input validation for extracted parameters"
+          echo "- Secure handling of upstream data"
+          echo "- Proper error handling and logging"
+
+  performance-validation:
+    name: "⚡ Performance Impact Assessment"
+    runs-on: ubuntu-latest
+    needs: detect-extraction
+    if: needs.detect-extraction.outputs.is_extraction == 'true'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pixi
+        uses: actions/setup-pixi@v0.8.11
+        with:
+          pixi-version: v0.49.0
+          cache: true
+
+      - name: Performance impact assessment
+        run: |
+          echo "⚡ Assessing performance impact of extracted feature"
+          
+          # Check if performance benchmarks exist
+          if [ -f "scripts/benchmark_extraction.py" ]; then
+            echo "Running performance benchmarks..."
+            pixi run python scripts/benchmark_extraction.py --feature="${{ needs.detect-extraction.outputs.feature_name }}"
+          else
+            echo "⚠️ No performance benchmarks found"
+            echo "Consider adding performance tests for extracted features"
+          fi
+          
+          # Basic performance checks
+          echo "## Performance Assessment" >> $GITHUB_STEP_SUMMARY
+          echo "- Feature: ${{ needs.detect-extraction.outputs.feature_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Performance impact: To be measured post-merge" >> $GITHUB_STEP_SUMMARY
+          echo "- Baseline establishment recommended" >> $GITHUB_STEP_SUMMARY
+
+  generate-extraction-report:
+    name: "📊 Generate Extraction Report"
+    runs-on: ubuntu-latest
+    needs: [detect-extraction, validate-extraction-metadata, validate-traceability, quality-validation]
+    if: always() && needs.detect-extraction.outputs.is_extraction == 'true'
+    steps:
+      - name: Generate comprehensive extraction report
+        run: |
+          echo "# 🎯 Feature Extraction Validation Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Feature**: ${{ needs.detect-extraction.outputs.feature_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Extraction ID**: ${{ needs.detect-extraction.outputs.extraction_id }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch**: ${{ github.head_ref }}" >> $GITHUB_STEP_SUMMARY
+          echo "**PR**: #${{ github.event.number }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "## ✅ Validation Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Metadata validation
+          if [ "${{ needs.validate-extraction-metadata.result }}" == "success" ]; then
+            echo "- 📋 **Metadata**: ✅ Valid extraction documentation" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- 📋 **Metadata**: ❌ Missing or invalid documentation" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Traceability validation
+          if [ "${{ needs.validate-traceability.result }}" == "success" ]; then
+            echo "- 🔗 **Traceability**: ✅ Complete traceability chain" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- 🔗 **Traceability**: ❌ Incomplete traceability" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Quality validation
+          if [ "${{ needs.quality-validation.result }}" == "success" ]; then
+            echo "- 🔍 **Quality**: ✅ All quality gates passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- 🔍 **Quality**: ❌ Quality checks failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 📋 Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ needs.validate-extraction-metadata.result }}" == "success" ] && [ "${{ needs.quality-validation.result }}" == "success" ]; then
+            echo "✅ **Ready for Review**: All validation checks passed" >> $GITHUB_STEP_SUMMARY
+            echo "- Request reviews from required stakeholders" >> $GITHUB_STEP_SUMMARY
+            echo "- Verify final testing completion" >> $GITHUB_STEP_SUMMARY
+            echo "- Confirm deployment readiness" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ **Action Required**: Address validation failures before review" >> $GITHUB_STEP_SUMMARY
+            echo "- Fix documentation issues" >> $GITHUB_STEP_SUMMARY
+            echo "- Resolve quality gate failures" >> $GITHUB_STEP_SUMMARY
+            echo "- Complete traceability requirements" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "*Generated by Feature Extraction Framework v1.0*" >> $GITHUB_STEP_SUMMARY

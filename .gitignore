@@ -36,6 +36,14 @@ node_modules/
 # OS specific
 .DS_Store
 
+# Development tooling files
+.aider/
+.mcp.json
+.taskmaster/
+CLAUDE.md
+*-report.md
+*-report.json
+
 # Task files
 # tasks.json
-# tasks/ 
+# tasks/

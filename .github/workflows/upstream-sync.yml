@@ -1,0 +1,343 @@
+---
+name: Upstream Sync
+
+"on":
+  schedule:
+    # Run daily at midnight UTC
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+    # Allow manual triggering
+    inputs:
+      force_sync:
+        description: 'Force sync even if no changes detected'
+        required: false
+        default: 'false'
+        type: boolean
+
+jobs:
+  sync-upstream:
+    runs-on: ubuntu-latest
+    
+    outputs:
+      has_changes: ${{ steps.changes.outputs.has_changes }}
+      upstream_commit: ${{ steps.fetch.outputs.upstream_commit }}
+      sync_successful: ${{ steps.push.conclusion == 'success' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email \
+            'github-actions[bot]@users.noreply.github.com'
+
+      - name: Add upstream remote
+        run: |
+          echo "🔗 Adding upstream remote..."
+          git remote add upstream \
+            https://github.com/vitali87/code-graph-rag.git || true
+          git remote -v
+
+      - name: Fetch upstream changes
+        id: fetch
+        run: |
+          echo "⬇️ Fetching upstream changes..."
+
+          # Retry logic with exponential backoff
+          max_retries=3
+          retry_count=0
+
+          while [ $retry_count -lt $max_retries ]; do
+            if git fetch upstream; then
+              echo "✅ Successfully fetched upstream changes"
+              break
+            else
+              retry_count=$((retry_count + 1))
+              if [ $retry_count -lt $max_retries ]; then
+                sleep_time=$((2 ** retry_count))
+                echo "❌ Fetch failed. Retrying in ${sleep_time} seconds..."
+                echo "(attempt $retry_count/$max_retries)"
+                sleep $sleep_time
+              else
+                echo "❌ Failed to fetch upstream after $max_retries attempts"
+                exit 1
+              fi
+            fi
+          done
+
+          # Get latest upstream commit
+          upstream_commit=$(git rev-parse upstream/main)
+          echo "upstream_commit=$upstream_commit" >> $GITHUB_OUTPUT
+          echo "📍 Latest upstream commit: $upstream_commit"
+
+      - name: Check for changes
+        id: changes
+        run: |
+          echo "🔍 Checking for changes..."
+
+          # Get current upstream-mirror commit
+          git checkout upstream-mirror || {
+            echo "⚠️ upstream-mirror branch doesn't exist, will be created"
+            echo "needs_creation=true" >> $GITHUB_OUTPUT
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            exit 0
+          }
+
+          current_commit=$(git rev-parse HEAD)
+          upstream_commit="${{ steps.fetch.outputs.upstream_commit }}"
+
+          echo "📍 Current upstream-mirror commit: $current_commit"
+          echo "📍 Latest upstream commit: $upstream_commit"
+
+          force_sync="${{ inputs.force_sync }}"
+          if [ "$current_commit" != "$upstream_commit" ] || \
+             [ "$force_sync" = "true" ]; then
+            echo "✅ Changes detected or force sync requested"
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+
+            # Get commit count for summary
+            commit_count=$(git rev-list --count \
+              $current_commit..$upstream_commit 2>/dev/null || echo "unknown")
+            echo "commit_count=$commit_count" >> $GITHUB_OUTPUT
+          else
+            echo "ℹ️ No changes detected"
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Update upstream-mirror branch
+        if: steps.changes.outputs.has_changes == 'true'
+        run: |
+          echo "🔄 Updating upstream-mirror branch..."
+
+          # Handle branch creation or update
+          if [ "${{ steps.changes.outputs.needs_creation }}" = "true" ]; then
+            echo "🆕 Creating upstream-mirror branch"
+            git checkout -b upstream-mirror upstream/main
+          else
+            echo "♻️ Updating existing upstream-mirror branch"
+            # Check if we need to handle force pushes
+            if ! git merge-base --is-ancestor upstream/main HEAD; then
+              echo "⚠️ Force push detected upstream, resetting branch"
+              git reset --hard upstream/main
+            else
+              echo "📈 Fast-forward update possible"
+              git reset --hard upstream/main
+            fi
+          fi
+
+          echo "✅ Branch updated successfully"
+          git log --oneline -5
+
+      - name: Push changes
+        if: steps.changes.outputs.has_changes == 'true'
+        run: |
+          echo "⬆️ Pushing changes to origin..."
+
+          # Retry logic for push
+          max_retries=3
+          retry_count=0
+
+          while [ $retry_count -lt $max_retries ]; do
+            if git push origin upstream-mirror --force-with-lease; then
+              echo "✅ Successfully pushed changes"
+              break
+            else
+              retry_count=$((retry_count + 1))
+              if [ $retry_count -lt $max_retries ]; then
+                sleep_time=$((2 ** retry_count))
+                echo "❌ Push failed. Retrying in ${sleep_time} seconds..."
+                echo "(attempt $retry_count/$max_retries)"
+                sleep $sleep_time
+
+                # Re-fetch in case of concurrent updates
+                git fetch origin upstream-mirror || true
+              else
+                echo "❌ Failed to push after $max_retries attempts"
+                exit 1
+              fi
+            fi
+          done
+
+      - name: Create sync summary
+        if: steps.changes.outputs.has_changes == 'true'
+        run: |
+          echo "📊 Sync Summary" >> $GITHUB_STEP_SUMMARY
+          echo "===============" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ✅ Successfully synced" >> $GITHUB_STEP_SUMMARY
+          commit_count="${{ steps.changes.outputs.commit_count }}"
+          echo "- **Commits synced**: $commit_count" >> $GITHUB_STEP_SUMMARY
+          upstream_commit="${{ steps.fetch.outputs.upstream_commit }}"
+          echo "- **Latest upstream commit**: \`$upstream_commit\`" \
+            >> $GITHUB_STEP_SUMMARY
+          echo "- **Sync time**: $(date -u)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Recent upstream commits:" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          git log --oneline -10 upstream/main >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+      - name: No changes summary
+        if: steps.changes.outputs.has_changes == 'false'
+        run: |
+          echo "📊 Sync Summary" >> $GITHUB_STEP_SUMMARY
+          echo "===============" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ℹ️ No changes detected" >> $GITHUB_STEP_SUMMARY
+          upstream_commit="${{ steps.fetch.outputs.upstream_commit }}"
+          echo "- **Current commit**: \`$upstream_commit\`" \
+            >> $GITHUB_STEP_SUMMARY
+          echo "- **Check time**: $(date -u)" >> $GITHUB_STEP_SUMMARY
+
+          echo "ℹ️ upstream-mirror is already up to date with upstream/main"
+
+  analyze-changes:
+    runs-on: ubuntu-latest
+    needs: sync-upstream
+    if: needs.sync-upstream.outputs.has_changes == 'true'
+    
+    outputs:
+      analysis_success: ${{ steps.analyze.outputs.analysis_success }}
+      significance_score: ${{ steps.analyze.outputs.significance_score }}
+      change_level: ${{ steps.analyze.outputs.change_level }}
+      github_issue_created: ${{ steps.analyze.outputs.github_issue_created }}
+      slack_sent: ${{ steps.analyze.outputs.slack_sent }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: '.github/upstream-analysis/package.json'
+
+      - name: Install analysis dependencies
+        run: |
+          echo "📦 Installing analysis dependencies..."
+          cd .github/upstream-analysis
+          npm ci
+
+      - name: Configure Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email \
+            'github-actions[bot]@users.noreply.github.com'
+
+      - name: Add upstream remote
+        run: |
+          git remote add upstream \
+            https://github.com/vitali87/code-graph-rag.git || true
+          git fetch upstream
+
+      - name: Determine analysis range
+        id: range
+        run: |
+          echo "🔍 Determining commit range for analysis..."
+          
+          # Get the previous upstream-mirror commit (before sync)
+          # This should be available from the sync job, but we'll calculate it
+          current_commit=$(git rev-parse upstream/main)
+          
+          # Try to get the previous commit from a few sources
+          if [ -f .github/upstream-analysis/last-analysis.txt ]; then
+            previous_commit=$(cat .github/upstream-analysis/last-analysis.txt)
+            echo "📄 Using stored previous commit: $previous_commit"
+          else
+            # Fallback: use commit from 24 hours ago
+            previous_commit=$(git log --since="24 hours ago" --format="%H" \
+              upstream/main | tail -1)
+            if [ -z "$previous_commit" ]; then
+              previous_commit="$current_commit~5"  # Last 5 commits as fallback
+            fi
+            echo "🕒 Using calculated previous commit: $previous_commit"
+          fi
+          
+          echo "from_ref=$previous_commit" >> $GITHUB_OUTPUT
+          echo "to_ref=$current_commit" >> $GITHUB_OUTPUT
+          echo "📊 Analysis range: $previous_commit → $current_commit"
+
+      - name: Run upstream analysis
+        id: analyze
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          FROM_REF: ${{ steps.range.outputs.from_ref }}
+          TO_REF: ${{ steps.range.outputs.to_ref }}
+        run: |
+          echo "🧠 Running upstream change analysis..."
+          cd .github/upstream-analysis
+          
+          # Run the analysis script
+          node analyze-changes.js "$FROM_REF" "$TO_REF"
+          
+          echo "✅ Analysis completed"
+
+      - name: Store analysis checkpoint
+        if: steps.analyze.outputs.analysis_success == 'true'
+        run: |
+          echo "💾 Storing analysis checkpoint..."
+          mkdir -p .github/upstream-analysis
+          echo "${{ steps.range.outputs.to_ref }}" > \
+            .github/upstream-analysis/last-analysis.txt
+          
+          # Commit the checkpoint file
+          git add .github/upstream-analysis/last-analysis.txt
+          if git diff --staged --quiet; then
+            echo "ℹ️ No checkpoint changes to commit"
+          else
+            git commit -m "chore: update analysis checkpoint
+            
+            🤖 Generated with [Claude Code](https://claude.ai/code)
+            Co-Authored-By: Claude <noreply@anthropic.com>"
+            git push origin upstream-mirror
+          fi
+
+      - name: Create analysis summary
+        if: always()
+        run: |
+          echo "📊 Analysis Summary" >> $GITHUB_STEP_SUMMARY
+          echo "==================" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ steps.analyze.outputs.analysis_success }}" = "true" ]; then
+            echo "- **Status**: ✅ Analysis completed" >> $GITHUB_STEP_SUMMARY
+            echo "- **Significance Score**: ${{ steps.analyze.outputs.significance_score }}" \
+              >> $GITHUB_STEP_SUMMARY
+            echo "- **Change Level**: ${{ steps.analyze.outputs.change_level }}" \
+              >> $GITHUB_STEP_SUMMARY
+            echo "- **Range**: \`${{ steps.range.outputs.from_ref }}\` → \`${{ steps.range.outputs.to_ref }}\`" \
+              >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            
+            # Notification status
+            echo "### Notifications" >> $GITHUB_STEP_SUMMARY
+            if [ "${{ steps.analyze.outputs.github_issue_created }}" = "true" ]; then
+              echo "- ✅ GitHub issue created" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "- ➖ No GitHub issue created" >> $GITHUB_STEP_SUMMARY
+            fi
+            
+            if [ "${{ steps.analyze.outputs.slack_sent }}" = "true" ]; then
+              echo "- ✅ Slack notification sent" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "- ➖ No Slack notification sent" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "- **Status**: ❌ Analysis failed" >> $GITHUB_STEP_SUMMARY
+            echo "- **Check logs**: Review workflow logs for details" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "*Analysis completed: $(date -u)*" >> $GITHUB_STEP_SUMMARY

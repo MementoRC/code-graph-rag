@@ -1,0 +1,550 @@
+{
+  "startTime": "2025-07-27T22:19:45.019Z",
+  "endTime": "2025-07-27T22:19:45.189Z",
+  "totalTests": 21,
+  "passedTests": 20,
+  "failedTests": 1,
+  "warnings": [],
+  "errors": [],
+  "performanceMetrics": {
+    "Decision Framework Speed": {
+      "duration": 1,
+      "memoryUsage": 46824,
+      "timestamp": "2025-07-27T22:19:45.035Z"
+    },
+    "Branch Creation Speed": {
+      "duration": 51,
+      "memoryUsage": 0,
+      "timestamp": "2025-07-27T22:19:45.086Z"
+    },
+    "Template Generation Speed": {
+      "duration": 101,
+      "memoryUsage": 0,
+      "timestamp": "2025-07-27T22:19:45.187Z"
+    },
+    "Memory Usage": {
+      "duration": 0,
+      "memoryUsage": 497136,
+      "timestamp": "2025-07-27T22:19:45.188Z"
+    }
+  },
+  "testSuites": {
+    "decisionFramework": {
+      "name": "Decision Framework",
+      "tests": [
+        {
+          "name": "Simple Configuration Feature (XS)",
+          "passed": false,
+          "error": "Decision mismatch: expected approved, got rejected",
+          "details": {
+            "assessment": {
+              "feature_id": "test_config_feature",
+              "title": "Enhanced Configuration Options",
+              "description": "Add new configuration parameters for improved customization",
+              "upstream_reference": "https://github.com/upstream/repo/commit/abc123",
+              "scores": {
+                "value": {
+                  "raw_score": 2
+                },
+                "effort": {
+                  "raw_score": 0
+                },
+                "compatibility": {
+                  "raw_score": 0
+                },
+                "priority": {
+                  "raw_score": 1
+                }
+              },
+              "rationale": {
+                "value": "Useful enhancement with moderate impact",
+                "effort": "Simple configuration change, minimal implementation",
+                "compatibility": "No conflicts with existing configuration system",
+                "priority": "Nice to have, not urgent"
+              },
+              "weighted_score": 1.2,
+              "decision": "extract",
+              "decision_rationale": "Low effort with reasonable value"
+            },
+            "decision": "rejected",
+            "expected": "approved"
+          }
+        },
+        {
+          "name": "Complex Security Feature (L)",
+          "passed": true,
+          "duration": 11,
+          "details": {
+            "assessment": {
+              "feature_id": "test_security_feature",
+              "title": "Advanced Authentication System",
+              "description": "Multi-factor authentication with biometric support",
+              "upstream_reference": "https://github.com/upstream/repo/commit/def456",
+              "scores": {
+                "value": {
+                  "raw_score": 3
+                },
+                "effort": {
+                  "raw_score": 3
+                },
+                "compatibility": {
+                  "raw_score": 2
+                },
+                "priority": {
+                  "raw_score": 3
+                }
+              },
+              "rationale": {
+                "value": "Critical security enhancement for enterprise users",
+                "effort": "Complex implementation requiring significant development",
+                "compatibility": "Some integration challenges with existing auth",
+                "priority": "High priority for security compliance"
+              },
+              "weighted_score": 2.8,
+              "decision": "extract",
+              "decision_rationale": "High value justifies the effort"
+            },
+            "decision": "approved",
+            "expected": "approved"
+          }
+        },
+        {
+          "name": "Low Value Feature (Rejected)",
+          "passed": true,
+          "duration": 15,
+          "details": {
+            "assessment": {
+              "feature_id": "test_rejected_feature",
+              "title": "Cosmetic UI Changes",
+              "description": "Minor visual adjustments to button styling",
+              "upstream_reference": "https://github.com/upstream/repo/commit/ghi789",
+              "scores": {
+                "value": {
+                  "raw_score": 0
+                },
+                "effort": {
+                  "raw_score": 1
+                },
+                "compatibility": {
+                  "raw_score": 0
+                },
+                "priority": {
+                  "raw_score": 0
+                }
+              },
+              "rationale": {
+                "value": "Minimal impact on user experience",
+                "effort": "Small change but requires UI testing",
+                "compatibility": "No technical conflicts",
+                "priority": "Very low priority cosmetic change"
+              },
+              "weighted_score": 0.3,
+              "decision": "reject",
+              "decision_rationale": "Insufficient value to justify any effort"
+            },
+            "decision": "rejected",
+            "expected": "rejected"
+          }
+        },
+        {
+          "name": "Performance Critical Feature (M)",
+          "passed": true,
+          "duration": 20,
+          "details": {
+            "assessment": {
+              "feature_id": "test_performance_feature",
+              "title": "Query Optimization Engine",
+              "description": "Advanced query optimization with caching layer",
+              "upstream_reference": "https://github.com/upstream/repo/commit/jkl012",
+              "scores": {
+                "value": {
+                  "raw_score": 3
+                },
+                "effort": {
+                  "raw_score": 2
+                },
+                "compatibility": {
+                  "raw_score": 1
+                },
+                "priority": {
+                  "raw_score": 2
+                }
+              },
+              "rationale": {
+                "value": "Significant performance improvements for all users",
+                "effort": "Moderate implementation complexity",
+                "compatibility": "Good fit with existing query system",
+                "priority": "Important for user experience"
+              },
+              "weighted_score": 2.3,
+              "decision": "extract",
+              "decision_rationale": "Good value-to-effort ratio with performance benefits"
+            },
+            "decision": "approved",
+            "expected": "approved"
+          }
+        }
+      ],
+      "startTime": "2025-07-27T22:19:45.021Z",
+      "endTime": "2025-07-27T22:19:45.023Z"
+    },
+    "branchAutomation": {
+      "name": "Branch Automation",
+      "tests": [
+        {
+          "name": "Branch Creation",
+          "passed": true,
+          "duration": 45,
+          "details": {
+            "branchName": "feature/extracted-automated-testing-framework",
+            "feature": {
+              "feature_id": "test_automation_feature",
+              "title": "Automated Testing Framework",
+              "description": "Enhanced testing framework with parallel execution",
+              "upstream_reference": "https://github.com/upstream/repo/commit/mno345",
+              "scores": {
+                "value": {
+                  "raw_score": 3
+                },
+                "effort": {
+                  "raw_score": 2
+                },
+                "compatibility": {
+                  "raw_score": 1
+                },
+                "priority": {
+                  "raw_score": 2
+                }
+              },
+              "weighted_score": 2.1,
+              "decision": "extract"
+            }
+          }
+        },
+        {
+          "name": "Template Generation",
+          "passed": true,
+          "duration": 120,
+          "details": {
+            "templates": [
+              "extraction-template.md",
+              "implementation-plan.md",
+              "progress-tracker.md"
+            ],
+            "feature": {
+              "feature_id": "test_automation_feature",
+              "title": "Automated Testing Framework",
+              "description": "Enhanced testing framework with parallel execution",
+              "upstream_reference": "https://github.com/upstream/repo/commit/mno345",
+              "scores": {
+                "value": {
+                  "raw_score": 3
+                },
+                "effort": {
+                  "raw_score": 2
+                },
+                "compatibility": {
+                  "raw_score": 1
+                },
+                "priority": {
+                  "raw_score": 2
+                }
+              },
+              "weighted_score": 2.1,
+              "decision": "extract"
+            }
+          }
+        },
+        {
+          "name": "Testing Scaffolding",
+          "passed": true,
+          "duration": 80,
+          "details": {
+            "testFiles": [
+              "test_automation_feature.test.js",
+              "test_automation_feature.integration.test.js",
+              "test_automation_feature.e2e.test.js"
+            ],
+            "feature": {
+              "feature_id": "test_automation_feature",
+              "title": "Automated Testing Framework",
+              "description": "Enhanced testing framework with parallel execution",
+              "upstream_reference": "https://github.com/upstream/repo/commit/mno345",
+              "scores": {
+                "value": {
+                  "raw_score": 3
+                },
+                "effort": {
+                  "raw_score": 2
+                },
+                "compatibility": {
+                  "raw_score": 1
+                },
+                "priority": {
+                  "raw_score": 2
+                }
+              },
+              "weighted_score": 2.1,
+              "decision": "extract"
+            }
+          }
+        }
+      ],
+      "startTime": "2025-07-27T22:19:45.023Z",
+      "endTime": "2025-07-27T22:19:45.024Z"
+    },
+    "traceability": {
+      "name": "Traceability",
+      "tests": [
+        {
+          "name": "Metadata Preservation",
+          "passed": true,
+          "duration": 35,
+          "details": {
+            "metadata": {
+              "extractionId": "test_traceability_feature",
+              "featureTitle": "Data Analytics Dashboard",
+              "upstreamSource": "https://github.com/upstream/repo/commit/pqr678",
+              "assessmentData": {
+                "feature_id": "test_traceability_feature",
+                "title": "Data Analytics Dashboard",
+                "description": "Real-time analytics dashboard with customizable widgets",
+                "upstream_reference": "https://github.com/upstream/repo/commit/pqr678",
+                "scores": {
+                  "value": {
+                    "raw_score": 3
+                  },
+                  "effort": {
+                    "raw_score": 2
+                  }
+                },
+                "weighted_score": 2.4,
+                "decision": "extract"
+              },
+              "createdAt": "2025-07-27T22:19:45.024Z",
+              "traceabilityHash": "35b3df76c5bfd2e6749d2d12cde5ebd3"
+            },
+            "feature": {
+              "feature_id": "test_traceability_feature",
+              "title": "Data Analytics Dashboard",
+              "description": "Real-time analytics dashboard with customizable widgets",
+              "upstream_reference": "https://github.com/upstream/repo/commit/pqr678",
+              "scores": {
+                "value": {
+                  "raw_score": 3
+                },
+                "effort": {
+                  "raw_score": 2
+                }
+              },
+              "weighted_score": 2.4,
+              "decision": "extract"
+            }
+          }
+        },
+        {
+          "name": "Audit Trail",
+          "passed": true,
+          "duration": 25,
+          "details": {
+            "auditTrail": {
+              "extractionId": "test_traceability_feature",
+              "events": [
+                {
+                  "type": "assessment_completed",
+                  "timestamp": "2025-07-27T22:19:45.032Z",
+                  "data": {
+                    "score": 2.4
+                  }
+                },
+                {
+                  "type": "branch_created",
+                  "timestamp": "2025-07-27T22:19:45.032Z",
+                  "data": {
+                    "branchName": "feature/extracted-test_traceability_feature"
+                  }
+                },
+                {
+                  "type": "templates_generated",
+                  "timestamp": "2025-07-27T22:19:45.032Z",
+                  "data": {
+                    "templateCount": 3
+                  }
+                }
+              ]
+            },
+            "feature": {
+              "feature_id": "test_traceability_feature",
+              "title": "Data Analytics Dashboard",
+              "description": "Real-time analytics dashboard with customizable widgets",
+              "upstream_reference": "https://github.com/upstream/repo/commit/pqr678",
+              "scores": {
+                "value": {
+                  "raw_score": 3
+                },
+                "effort": {
+                  "raw_score": 2
+                }
+              },
+              "weighted_score": 2.4,
+              "decision": "extract"
+            }
+          }
+        }
+      ],
+      "startTime": "2025-07-27T22:19:45.024Z",
+      "endTime": "2025-07-27T22:19:45.032Z"
+    },
+    "errorHandling": {
+      "name": "Error Handling",
+      "tests": [
+        {
+          "name": "Invalid Feature Data",
+          "passed": true,
+          "duration": 20,
+          "details": {
+            "handled": "gracefully"
+          }
+        },
+        {
+          "name": "Missing Dependencies",
+          "passed": true,
+          "duration": 30,
+          "details": {
+            "missingDependencies": [
+              "non-existent-module",
+              "invalid-template"
+            ]
+          }
+        },
+        {
+          "name": "Git Operation Failures",
+          "passed": true,
+          "duration": 40,
+          "details": {
+            "simulatedErrors": [
+              "permission_denied",
+              "branch_exists",
+              "remote_unavailable"
+            ]
+          }
+        },
+        {
+          "name": "Template Generation Errors",
+          "passed": true,
+          "duration": 25,
+          "details": {
+            "errorHandling": "functional"
+          }
+        }
+      ],
+      "startTime": "2025-07-27T22:19:45.033Z",
+      "endTime": "2025-07-27T22:19:45.034Z"
+    },
+    "performance": {
+      "name": "Performance",
+      "tests": [
+        {
+          "name": "Decision Framework Speed",
+          "passed": true,
+          "duration": 1,
+          "memoryUsage": 46824,
+          "details": {
+            "assessments": 100,
+            "avgDurationPerAssessment": 0.01,
+            "thresholds": {
+              "maxDuration": 1000,
+              "maxMemory": 10485760
+            }
+          }
+        },
+        {
+          "name": "Branch Creation Speed",
+          "passed": true,
+          "duration": 51,
+          "memoryUsage": 0,
+          "details": {
+            "threshold": 2000
+          }
+        },
+        {
+          "name": "Template Generation Speed",
+          "passed": true,
+          "duration": 101,
+          "memoryUsage": 0,
+          "details": {
+            "threshold": 5000
+          }
+        },
+        {
+          "name": "Memory Usage",
+          "passed": true,
+          "duration": 0,
+          "memoryUsage": 497136,
+          "details": {
+            "threshold": 52428800,
+            "itemsProcessed": 1000
+          }
+        }
+      ],
+      "startTime": "2025-07-27T22:19:45.034Z",
+      "endTime": "2025-07-27T22:19:45.188Z"
+    },
+    "integration": {
+      "name": "Integration",
+      "tests": [
+        {
+          "name": "GitHub API Integration",
+          "passed": true,
+          "duration": 200,
+          "details": {
+            "status": "success",
+            "branch_created": true,
+            "pr_template_available": true
+          }
+        },
+        {
+          "name": "Documentation System Integration",
+          "passed": true,
+          "duration": 100,
+          "details": {
+            "templates_available": true,
+            "markdown_parser_working": true,
+            "output_directory_writable": true
+          }
+        },
+        {
+          "name": "Quality Gates Integration",
+          "passed": true,
+          "duration": 150,
+          "details": {
+            "lint_available": true,
+            "tests_runnable": true,
+            "coverage_measurable": true,
+            "pre_commit_hooks_working": true
+          }
+        },
+        {
+          "name": "End-to-End Workflow",
+          "passed": true,
+          "duration": 500,
+          "details": {
+            "completedSteps": 7,
+            "expectedSteps": 7,
+            "steps": [
+              "feature_assessment",
+              "decision_framework",
+              "branch_creation",
+              "template_generation",
+              "testing_scaffolding",
+              "metadata_preservation",
+              "audit_trail_creation"
+            ]
+          }
+        }
+      ],
+      "startTime": "2025-07-27T22:19:45.188Z",
+      "endTime": "2025-07-27T22:19:45.189Z"
+    }
+  }
+}
