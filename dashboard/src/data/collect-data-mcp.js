@@ -334,7 +334,7 @@ class MCPDataCollector {
   }
 
   async run() {
-    console.log('🚀 Starting MCP-enhanced data collection for Upstream Analysis Dashboard\\n');
+    console.log('🚀 Starting MCP-enhanced data collection for Upstream Analysis Dashboard\n');
     
     await this.ensureDataDir();
     
@@ -350,7 +350,7 @@ class MCPDataCollector {
         gitStats, analysisDocs, githubData, upstreamActivity
       );
       
-      console.log('\\n📊 Data collection completed!');
+      console.log('\n📊 Data collection completed!');
       console.log('Summary:', summary);
       
       return summary;
