@@ -62,76 +62,77 @@ jobs:
             mkdir -p _site
             cp -r src/_data _site/
             # Create a functional dashboard page
-            cat > _site/index.html << 'HTMLEOF'
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upstream Analysis Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</head>
-<body class="bg-gray-50">
-    <div class="min-h-screen">
-        <header class="bg-white shadow">
-            <div class="max-w-7xl mx-auto py-6 px-4">
-                <h1 class="text-3xl font-bold text-gray-900">🚀 Upstream Analysis Dashboard</h1>
-                <p class="mt-2 text-lg text-gray-600">Visualizing upstream activity and analysis status</p>
-            </div>
-        </header>
-        
-        <main class="max-w-7xl mx-auto py-6 px-4">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <div class="bg-white rounded-lg shadow p-6">
-                    <h3 class="text-lg font-semibold text-gray-900">Total Commits</h3>
-                    <p class="text-2xl font-bold text-blue-600" id="totalCommits">Loading...</p>
-                </div>
-                <div class="bg-white rounded-lg shadow p-6">
-                    <h3 class="text-lg font-semibold text-gray-900">Analysis Sessions</h3>
-                    <p class="text-2xl font-bold text-green-600" id="analysisSessions">Loading...</p>
-                </div>
-                <div class="bg-white rounded-lg shadow p-6">
-                    <h3 class="text-lg font-semibold text-gray-900">Active Extractions</h3>
-                    <p class="text-2xl font-bold text-purple-600" id="activeExtractions">Loading...</p>
-                </div>
-                <div class="bg-white rounded-lg shadow p-6">
-                    <h3 class="text-lg font-semibold text-gray-900">Upstream Activity</h3>
-                    <p class="text-2xl font-bold text-red-600" id="upstreamActivity">Loading...</p>
-                </div>
-            </div>
-            
-            <div class="bg-white rounded-lg shadow p-6">
-                <h2 class="text-xl font-semibold text-gray-900 mb-4">Dashboard Status</h2>
-                <p class="text-gray-600">Dashboard is operational with live data collection.</p>
-                <p class="text-sm text-gray-500 mt-2">Last Updated: <span id="lastUpdated">Loading...</span></p>
-            </div>
-        </main>
-    </div>
-    
-    <script>
-        // Load data and update dashboard
-        fetch('./_data/collection-summary.json')
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('totalCommits').textContent = data.stats.totalCommits || '0';
-                document.getElementById('analysisSessions').textContent = data.stats.analysisSessionsCount || '0';
-                document.getElementById('activeExtractions').textContent = data.stats.extractionsInProgress || '0';
-                document.getElementById('upstreamActivity').textContent = data.stats.upstreamCommitsLastMonth || '0';
-                document.getElementById('lastUpdated').textContent = new Date(data.lastUpdated).toLocaleString();
-            })
-            .catch(error => {
-                // Fallback data
-                document.getElementById('totalCommits').textContent = '45';
-                document.getElementById('analysisSessions').textContent = '1';
-                document.getElementById('activeExtractions').textContent = '3';
-                document.getElementById('upstreamActivity').textContent = '20';
-                document.getElementById('lastUpdated').textContent = new Date().toLocaleString();
-            });
-    </script>
-</body>
-</html>
-HTMLEOF
+            # Create HTML using echo to avoid HEREDOC YAML parsing issues
+            {
+              echo '<!DOCTYPE html>'
+              echo '<html lang="en">'
+              echo '<head>'
+              echo '    <meta charset="UTF-8">'
+              echo '    <meta name="viewport" content="width=device-width, initial-scale=1.0">'
+              echo '    <title>Upstream Analysis Dashboard</title>'
+              echo '    <script src="https://cdn.tailwindcss.com"></script>'
+              echo '    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>'
+              echo '</head>'
+              echo '<body class="bg-gray-50">'
+              echo '    <div class="min-h-screen">'
+              echo '        <header class="bg-white shadow">'
+              echo '            <div class="max-w-7xl mx-auto py-6 px-4">'
+              echo '                <h1 class="text-3xl font-bold text-gray-900">🚀 Upstream Analysis Dashboard</h1>'
+              echo '                <p class="mt-2 text-lg text-gray-600">Visualizing upstream activity and analysis status</p>'
+              echo '            </div>'
+              echo '        </header>'
+              echo '        '
+              echo '        <main class="max-w-7xl mx-auto py-6 px-4">'
+              echo '            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">'
+              echo '                <div class="bg-white rounded-lg shadow p-6">'
+              echo '                    <h3 class="text-lg font-semibold text-gray-900">Total Commits</h3>'
+              echo '                    <p class="text-2xl font-bold text-blue-600" id="totalCommits">Loading...</p>'
+              echo '                </div>'
+              echo '                <div class="bg-white rounded-lg shadow p-6">'
+              echo '                    <h3 class="text-lg font-semibold text-gray-900">Analysis Sessions</h3>'
+              echo '                    <p class="text-2xl font-bold text-green-600" id="analysisSessions">Loading...</p>'
+              echo '                </div>'
+              echo '                <div class="bg-white rounded-lg shadow p-6">'
+              echo '                    <h3 class="text-lg font-semibold text-gray-900">Active Extractions</h3>'
+              echo '                    <p class="text-2xl font-bold text-purple-600" id="activeExtractions">Loading...</p>'
+              echo '                </div>'
+              echo '                <div class="bg-white rounded-lg shadow p-6">'
+              echo '                    <h3 class="text-lg font-semibold text-gray-900">Upstream Activity</h3>'
+              echo '                    <p class="text-2xl font-bold text-red-600" id="upstreamActivity">Loading...</p>'
+              echo '                </div>'
+              echo '            </div>'
+              echo '            '
+              echo '            <div class="bg-white rounded-lg shadow p-6">'
+              echo '                <h2 class="text-xl font-semibold text-gray-900 mb-4">Dashboard Status</h2>'
+              echo '                <p class="text-gray-600">Dashboard is operational with live data collection.</p>'
+              echo '                <p class="text-sm text-gray-500 mt-2">Last Updated: <span id="lastUpdated">Loading...</span></p>'
+              echo '            </div>'
+              echo '        </main>'
+              echo '    </div>'
+              echo '    '
+              echo '    <script>'
+              echo '        // Load data and update dashboard'
+              echo "        fetch('./_data/collection-summary.json')"
+              echo '            .then(response => response.json())'
+              echo '            .then(data => {'
+              echo "                document.getElementById('totalCommits').textContent = data.stats.totalCommits || '0';"
+              echo "                document.getElementById('analysisSessions').textContent = data.stats.analysisSessionsCount || '0';"
+              echo "                document.getElementById('activeExtractions').textContent = data.stats.extractionsInProgress || '0';"
+              echo "                document.getElementById('upstreamActivity').textContent = data.stats.upstreamCommitsLastMonth || '0';"
+              echo "                document.getElementById('lastUpdated').textContent = new Date(data.lastUpdated).toLocaleString();"
+              echo '            })'
+              echo '            .catch(error => {'
+              echo '                // Fallback data'
+              echo "                document.getElementById('totalCommits').textContent = '45';"
+              echo "                document.getElementById('analysisSessions').textContent = '1';"
+              echo "                document.getElementById('activeExtractions').textContent = '3';"
+              echo "                document.getElementById('upstreamActivity').textContent = '20';"
+              echo "                document.getElementById('lastUpdated').textContent = new Date().toLocaleString();"
+              echo '            });'
+              echo '    </script>'
+              echo '</body>'
+              echo '</html>'
+            } > _site/index.html
           fi
           
           echo "✅ Dashboard build completed"
