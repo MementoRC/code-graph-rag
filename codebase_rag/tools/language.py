@@ -188,13 +188,23 @@ def add_grammar(
     # Try different possible locations for node-types.json
     possible_paths = [
         os.path.join(grammar_path, "src", "node-types.json"),  # Standard location
-        os.path.join(
-            grammar_path, language_name, "src", "node-types.json"
-        ),  # Nested by language name
-        os.path.join(
-            grammar_path, language_name.replace("-", "_"), "src", "node-types.json"
-        ),  # Underscore variant
     ]
+
+    # Add language-specific paths only if language_name is not None
+    if language_name:
+        possible_paths.extend(
+            [
+                os.path.join(
+                    grammar_path, language_name, "src", "node-types.json"
+                ),  # Nested by language name
+                os.path.join(
+                    grammar_path,
+                    language_name.replace("-", "_"),
+                    "src",
+                    "node-types.json",
+                ),  # Underscore variant
+            ]
+        )
 
     node_types_path = None
     for path in possible_paths:
@@ -400,6 +410,11 @@ def add_grammar(
             calls = ["invocation_expression"]
 
     # Step 4: Generate LanguageConfig object
+    # Ensure language_name is not None at this point
+    if not language_name:
+        click.echo("❌ Error: language_name is required to create LanguageConfig")
+        return
+
     new_language_config = LanguageConfig(
         name=language_name,
         file_extensions=file_extension,

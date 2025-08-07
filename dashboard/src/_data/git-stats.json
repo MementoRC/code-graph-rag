@@ -1,0 +1,559 @@
+{
+  "lastUpdated": "2025-07-30T13:52:34.313Z",
+  "repository": {
+    "status": "feature/upstream-analysis-strategy",
+    "ahead": 0,
+    "behind": 0,
+    "modified": 2,
+    "created": 1,
+    "deleted": 0
+  },
+  "commits": {
+    "total": 45,
+    "last7Days": 3,
+    "last30Days": 15,
+    "byDate": {
+      "2025-05-05": [
+        {
+          "hash": "duwjxpvq9ft",
+          "message": "refactor: improve data collection performance",
+          "author_name": "Alice Developer",
+          "author_email": "developer@example.com",
+          "date": "2025-05-05T13:52:34.313Z",
+          "refs": ""
+        }
+      ],
+      "2025-07-08": [
+        {
+          "hash": "f5fc4nokov8",
+          "message": "refactor: enhance error handling",
+          "author_name": "Carol Analyst",
+          "author_email": "developer@example.com",
+          "date": "2025-07-08T13:52:34.313Z",
+          "refs": ""
+        }
+      ],
+      "2025-06-02": [
+        {
+          "hash": "s2r37cz7myl",
+          "message": "feat: fix dashboard chart rendering",
+          "author_name": "Carol Analyst",
+          "author_email": "developer@example.com",
+          "date": "2025-06-02T13:52:34.313Z",
+          "refs": ""
+        }
+      ],
+      "2025-05-28": [
+        {
+          "hash": "4haps5bmdqo",
+          "message": "docs: enhance error handling",
+          "author_name": "David Maintainer",
+          "author_email": "developer@example.com",
+          "date": "2025-05-28T13:52:34.313Z",
+          "refs": ""
+        }
+      ],
+      "2025-05-09": [
+        {
+          "hash": "qf10v937gv",
+          "message": "style: fix dashboard chart rendering",
+          "author_name": "Alice Developer",
+          "author_email": "developer@example.com",
+          "date": "2025-05-09T13:52:34.313Z",
+          "refs": ""
+        },
+        {
+          "hash": "5pzei51ufl",
+          "message": "feat: update analysis documentation",
+          "author_name": "Alice Developer",
+          "author_email": "developer@example.com",
+          "date": "2025-05-09T13:52:34.313Z",
+          "refs": ""
+        }
+      ],
+      "2025-07-29": [
+        {
+          "hash": "xejjyrfwbno",
+          "message": "refactor: optimize git statistics parsing",
+          "author_name": "Carol Analyst",
+          "author_email": "developer@example.com",
+          "date": "2025-07-29T13:52:34.313Z",
+          "refs": ""
+        }
+      ],
+      "2025-07-14": [
+        {
+          "hash": "vbwnkp4ljmg",
+          "message": "refactor: enhance error handling",
+          "author_name": "Carol Analyst",
+          "author_email": "developer@example.com",
+          "date": "2025-07-14T13:52:34.313Z",
+          "refs": ""
+        }
+      ],
+      "2025-07-28": [
+        {
+          "hash": "kg9p2acqvq",
+          "message": "test: update analysis documentation",
+          "author_name": "Bob Engineer",
+          "author_email": "developer@example.com",
+          "date": "2025-07-28T13:52:34.313Z",
+          "refs": ""
+        }
+      ],
+      "2025-06-03": [
+        {
+          "hash": "ne1fhu28y6j",
+          "message": "fix: add upstream sync automation",
+          "author_name": "Carol Analyst",
+          "author_email": "developer@example.com",
+          "date": "2025-06-03T13:52:34.313Z",
+          "refs": ""
+        },
+        {
+          "hash": "15c9ts9zs77",
+          "message": "style: add upstream sync automation",
+          "author_name": "Bob Engineer",
+          "author_email": "developer@example.com",
+          "date": "2025-06-03T13:52:34.313Z",
+          "refs": ""
+        },
+        {
+          "hash": "4jr4n63r213",
+          "message": "style: enhance error handling",
+          "author_name": "Alice Developer",
+          "author_email": "developer@example.com",
+          "date": "2025-06-03T13:52:34.313Z",
+          "refs": ""
+        }
+      ],
+      "2025-05-15": [
+        {
+          "hash": "imbxeb2g2bg",
+          "message": "test: add upstream sync automation",
+          "author_name": "David Maintainer",
+          "author_email": "developer@example.com",
+          "date": "2025-05-15T13:52:34.313Z",
+          "refs": ""
+        }
+      ],
+      "2025-07-10": [
+        {
+          "hash": "emsykvuczyn",
+          "message": "fix: improve data collection performance",
+          "author_name": "Bob Engineer",
+          "author_email": "developer@example.com",
+          "date": "2025-07-10T13:52:34.313Z",
+          "refs": ""
+        }
+      ],
+      "2025-06-12": [
+        {
+          "hash": "n6872mq2ryn",
+          "message": "test: update analysis documentation",
+          "author_name": "Alice Developer",
+          "author_email": "developer@example.com",
+          "date": "2025-06-12T13:52:34.313Z",
+          "refs": ""
+        }
+      ],
+      "2025-06-26": [
+        {
+          "hash": "ruo2r4yxg5n",
+          "message": "test: implement branch protection rules",
+          "author_name": "Alice Developer",
+          "author_email": "developer@example.com",
+          "date": "2025-06-26T13:52:34.313Z",
+          "refs": ""
+        }
+      ],
+      "2025-06-01": [
+        {
+          "hash": "twrrfdlbt5n",
+          "message": "fix: enhance error handling",
+          "author_name": "Carol Analyst",
+          "author_email": "developer@example.com",
+          "date": "2025-06-01T13:52:34.313Z",
+          "refs": ""
+        }
+      ],
+      "2025-05-24": [
+        {
+          "hash": "d83nqomhox7",
+          "message": "test: implement branch protection rules",
+          "author_name": "Carol Analyst",
+          "author_email": "developer@example.com",
+          "date": "2025-05-24T13:52:34.313Z",
+          "refs": ""
+        }
+      ],
+      "2025-06-28": [
+        {
+          "hash": "uzdglj7xse",
+          "message": "refactor: optimize git statistics parsing",
+          "author_name": "David Maintainer",
+          "author_email": "developer@example.com",
+          "date": "2025-06-28T13:52:34.313Z",
+          "refs": ""
+        }
+      ],
+      "2025-05-23": [
+        {
+          "hash": "xse1dyxxgk",
+          "message": "docs: add upstream sync automation",
+          "author_name": "David Maintainer",
+          "author_email": "developer@example.com",
+          "date": "2025-05-23T13:52:34.313Z",
+          "refs": ""
+        }
+      ],
+      "2025-05-21": [
+        {
+          "hash": "uf87hj713w",
+          "message": "feat: add upstream sync automation",
+          "author_name": "Alice Developer",
+          "author_email": "developer@example.com",
+          "date": "2025-05-21T13:52:34.313Z",
+          "refs": ""
+        }
+      ],
+      "2025-06-17": [
+        {
+          "hash": "yhazleq8kha",
+          "message": "feat: add upstream sync automation",
+          "author_name": "Bob Engineer",
+          "author_email": "developer@example.com",
+          "date": "2025-06-17T13:52:34.313Z",
+          "refs": ""
+        },
+        {
+          "hash": "800q5e78mzx",
+          "message": "refactor: optimize git statistics parsing",
+          "author_name": "David Maintainer",
+          "author_email": "developer@example.com",
+          "date": "2025-06-17T13:52:34.313Z",
+          "refs": ""
+        }
+      ],
+      "2025-07-18": [
+        {
+          "hash": "31xpdwq1ad8",
+          "message": "fix: optimize git statistics parsing",
+          "author_name": "Bob Engineer",
+          "author_email": "developer@example.com",
+          "date": "2025-07-18T13:52:34.313Z",
+          "refs": ""
+        },
+        {
+          "hash": "k6szaned8go",
+          "message": "docs: add responsive design improvements",
+          "author_name": "Alice Developer",
+          "author_email": "developer@example.com",
+          "date": "2025-07-18T13:52:34.313Z",
+          "refs": ""
+        }
+      ],
+      "2025-07-03": [
+        {
+          "hash": "d3wh1vpyapa",
+          "message": "feat: add upstream sync automation",
+          "author_name": "Alice Developer",
+          "author_email": "developer@example.com",
+          "date": "2025-07-03T13:52:34.313Z",
+          "refs": ""
+        }
+      ],
+      "2025-07-19": [
+        {
+          "hash": "xo1unwiksvh",
+          "message": "refactor: add upstream sync automation",
+          "author_name": "Bob Engineer",
+          "author_email": "developer@example.com",
+          "date": "2025-07-19T13:52:34.313Z",
+          "refs": ""
+        },
+        {
+          "hash": "pqe4rsddloo",
+          "message": "test: fix dashboard chart rendering",
+          "author_name": "Carol Analyst",
+          "author_email": "developer@example.com",
+          "date": "2025-07-19T13:52:34.313Z",
+          "refs": ""
+        }
+      ],
+      "2025-05-12": [
+        {
+          "hash": "cvqa7hnje3",
+          "message": "test: implement branch protection rules",
+          "author_name": "Carol Analyst",
+          "author_email": "developer@example.com",
+          "date": "2025-05-12T13:52:34.313Z",
+          "refs": ""
+        },
+        {
+          "hash": "8azt5hnwv29",
+          "message": "fix: improve data collection performance",
+          "author_name": "Carol Analyst",
+          "author_email": "developer@example.com",
+          "date": "2025-05-12T13:52:34.313Z",
+          "refs": ""
+        }
+      ],
+      "2025-06-09": [
+        {
+          "hash": "ndt37grrb9s",
+          "message": "feat: enhance error handling",
+          "author_name": "Alice Developer",
+          "author_email": "developer@example.com",
+          "date": "2025-06-09T13:52:34.313Z",
+          "refs": ""
+        }
+      ],
+      "2025-05-13": [
+        {
+          "hash": "yas7bijpbms",
+          "message": "test: update analysis documentation",
+          "author_name": "Carol Analyst",
+          "author_email": "developer@example.com",
+          "date": "2025-05-13T13:52:34.313Z",
+          "refs": ""
+        },
+        {
+          "hash": "9gubtwh5jiw",
+          "message": "style: update analysis documentation",
+          "author_name": "Bob Engineer",
+          "author_email": "developer@example.com",
+          "date": "2025-05-13T13:52:34.313Z",
+          "refs": ""
+        }
+      ],
+      "2025-07-15": [
+        {
+          "hash": "du1bld8zkiu",
+          "message": "feat: fix dashboard chart rendering",
+          "author_name": "Carol Analyst",
+          "author_email": "developer@example.com",
+          "date": "2025-07-15T13:52:34.313Z",
+          "refs": ""
+        }
+      ],
+      "2025-06-20": [
+        {
+          "hash": "y7uq29shbw",
+          "message": "refactor: optimize git statistics parsing",
+          "author_name": "Bob Engineer",
+          "author_email": "developer@example.com",
+          "date": "2025-06-20T13:52:34.313Z",
+          "refs": ""
+        }
+      ],
+      "2025-07-17": [
+        {
+          "hash": "cb762vp20cq",
+          "message": "fix: implement branch protection rules",
+          "author_name": "Carol Analyst",
+          "author_email": "developer@example.com",
+          "date": "2025-07-17T13:52:34.313Z",
+          "refs": ""
+        }
+      ],
+      "2025-07-13": [
+        {
+          "hash": "jjufefep00r",
+          "message": "refactor: enhance error handling",
+          "author_name": "David Maintainer",
+          "author_email": "developer@example.com",
+          "date": "2025-07-13T13:52:34.313Z",
+          "refs": ""
+        }
+      ],
+      "2025-06-07": [
+        {
+          "hash": "h3olc2opw7",
+          "message": "test: enhance error handling",
+          "author_name": "Alice Developer",
+          "author_email": "developer@example.com",
+          "date": "2025-06-07T13:52:34.313Z",
+          "refs": ""
+        },
+        {
+          "hash": "0ng7wmwvvn8",
+          "message": "style: add responsive design improvements",
+          "author_name": "Carol Analyst",
+          "author_email": "developer@example.com",
+          "date": "2025-06-07T13:52:34.313Z",
+          "refs": ""
+        }
+      ],
+      "2025-05-26": [
+        {
+          "hash": "dnl9k2yqdb",
+          "message": "test: improve data collection performance",
+          "author_name": "Carol Analyst",
+          "author_email": "developer@example.com",
+          "date": "2025-05-26T13:52:34.313Z",
+          "refs": ""
+        }
+      ],
+      "2025-05-10": [
+        {
+          "hash": "vni5yerinri",
+          "message": "style: add responsive design improvements",
+          "author_name": "David Maintainer",
+          "author_email": "developer@example.com",
+          "date": "2025-05-10T13:52:34.313Z",
+          "refs": ""
+        }
+      ],
+      "2025-07-05": [
+        {
+          "hash": "ybr1m0q0cv",
+          "message": "fix: improve data collection performance",
+          "author_name": "Carol Analyst",
+          "author_email": "developer@example.com",
+          "date": "2025-07-05T13:52:34.313Z",
+          "refs": ""
+        }
+      ],
+      "2025-07-30": [
+        {
+          "hash": "kgqt5uy5a2s",
+          "message": "refactor: fix dashboard chart rendering",
+          "author_name": "David Maintainer",
+          "author_email": "developer@example.com",
+          "date": "2025-07-30T13:52:34.313Z",
+          "refs": ""
+        }
+      ],
+      "2025-05-04": [
+        {
+          "hash": "kiel8q81h4p",
+          "message": "docs: optimize git statistics parsing",
+          "author_name": "Bob Engineer",
+          "author_email": "developer@example.com",
+          "date": "2025-05-04T13:52:34.313Z",
+          "refs": ""
+        }
+      ],
+      "2025-06-16": [
+        {
+          "hash": "nuhhj87e0q",
+          "message": "refactor: improve data collection performance",
+          "author_name": "Carol Analyst",
+          "author_email": "developer@example.com",
+          "date": "2025-06-16T13:52:34.313Z",
+          "refs": ""
+        }
+      ]
+    },
+    "byAuthor": {
+      "Alice Developer": 11,
+      "Carol Analyst": 17,
+      "David Maintainer": 8,
+      "Bob Engineer": 9
+    },
+    "byType": {
+      "feature": 12,
+      "fix": 8,
+      "docs": 5,
+      "refactor": 3,
+      "test": 4,
+      "other": 13
+    },
+    "recent": [
+      {
+        "hash": "duwjxpvq9ft",
+        "message": "refactor: improve data collection performance",
+        "author_name": "Alice Developer",
+        "author_email": "developer@example.com",
+        "date": "2025-05-05T13:52:34.313Z",
+        "refs": ""
+      },
+      {
+        "hash": "f5fc4nokov8",
+        "message": "refactor: enhance error handling",
+        "author_name": "Carol Analyst",
+        "author_email": "developer@example.com",
+        "date": "2025-07-08T13:52:34.313Z",
+        "refs": ""
+      },
+      {
+        "hash": "s2r37cz7myl",
+        "message": "feat: fix dashboard chart rendering",
+        "author_name": "Carol Analyst",
+        "author_email": "developer@example.com",
+        "date": "2025-06-02T13:52:34.313Z",
+        "refs": ""
+      },
+      {
+        "hash": "4haps5bmdqo",
+        "message": "docs: enhance error handling",
+        "author_name": "David Maintainer",
+        "author_email": "developer@example.com",
+        "date": "2025-05-28T13:52:34.313Z",
+        "refs": ""
+      },
+      {
+        "hash": "qf10v937gv",
+        "message": "style: fix dashboard chart rendering",
+        "author_name": "Alice Developer",
+        "author_email": "developer@example.com",
+        "date": "2025-05-09T13:52:34.313Z",
+        "refs": ""
+      },
+      {
+        "hash": "xejjyrfwbno",
+        "message": "refactor: optimize git statistics parsing",
+        "author_name": "Carol Analyst",
+        "author_email": "developer@example.com",
+        "date": "2025-07-29T13:52:34.313Z",
+        "refs": ""
+      },
+      {
+        "hash": "vbwnkp4ljmg",
+        "message": "refactor: enhance error handling",
+        "author_name": "Carol Analyst",
+        "author_email": "developer@example.com",
+        "date": "2025-07-14T13:52:34.313Z",
+        "refs": ""
+      },
+      {
+        "hash": "kg9p2acqvq",
+        "message": "test: update analysis documentation",
+        "author_name": "Bob Engineer",
+        "author_email": "developer@example.com",
+        "date": "2025-07-28T13:52:34.313Z",
+        "refs": ""
+      },
+      {
+        "hash": "ne1fhu28y6j",
+        "message": "fix: add upstream sync automation",
+        "author_name": "Carol Analyst",
+        "author_email": "developer@example.com",
+        "date": "2025-06-03T13:52:34.313Z",
+        "refs": ""
+      },
+      {
+        "hash": "imbxeb2g2bg",
+        "message": "test: add upstream sync automation",
+        "author_name": "David Maintainer",
+        "author_email": "developer@example.com",
+        "date": "2025-05-15T13:52:34.313Z",
+        "refs": ""
+      }
+    ]
+  },
+  "branches": {
+    "current": "feature/upstream-analysis-strategy",
+    "all": [
+      "main",
+      "development",
+      "feature/upstream-analysis-strategy"
+    ],
+    "remotes": [
+      "origin/main",
+      "origin/development",
+      "upstream/main"
+    ]
+  }
+}

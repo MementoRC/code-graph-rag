@@ -1,0 +1,203 @@
+[
+  {
+    "commitHash": "abc123456789",
+    "subject": "feat: add multi-language support for graph parsing",
+    "author": "John Developer",
+    "files": [
+      {"path": "src/parsers/multi_lang.py", "status": "A"},
+      {"path": "src/config/languages.yml", "status": "A"},
+      {"path": "tests/test_multi_lang.py", "status": "A"}
+    ],
+    "expectedCategory": "feature",
+    "confidence": 0.9,
+    "relevance": 0.8,
+    "notes": "New functionality for parsing multiple programming languages"
+  },
+  {
+    "commitHash": "def456789012",
+    "subject": "fix: resolve memory leak in graph updater",
+    "author": "Jane Bugfixer",
+    "files": [
+      {"path": "src/graph_updater.py", "status": "M"},
+      {"path": "tests/test_graph_updater.py", "status": "M"}
+    ],
+    "expectedCategory": "bugfix",
+    "confidence": 0.85,
+    "relevance": 0.9,
+    "notes": "Critical memory management fix"
+  },
+  {
+    "commitHash": "ghi789012345",
+    "subject": "security: fix SQL injection vulnerability in query handler",
+    "author": "Security Team",
+    "files": [
+      {"path": "src/services/graph_service.py", "status": "M"},
+      {"path": "tests/security/test_sql_injection.py", "status": "A"}
+    ],
+    "expectedCategory": "security",
+    "confidence": 0.95,
+    "relevance": 0.95,
+    "notes": "Critical security vulnerability fix"
+  },
+  {
+    "commitHash": "jkl012345678",
+    "subject": "perf: optimize graph traversal algorithms",
+    "author": "Performance Team",
+    "files": [
+      {"path": "src/graph_loader.py", "status": "M"},
+      {"path": "src/schemas.py", "status": "M"},
+      {"path": "tests/benchmarks/test_traversal.py", "status": "A"}
+    ],
+    "expectedCategory": "performance",
+    "confidence": 0.9,
+    "relevance": 0.85,
+    "notes": "Graph traversal performance improvements"
+  },
+  {
+    "commitHash": "mno345678901",
+    "subject": "refactor: simplify query interface and improve readability",
+    "author": "Code Quality Team",
+    "files": [
+      {"path": "src/services/graph_service.py", "status": "M"},
+      {"path": "src/main.py", "status": "M"}
+    ],
+    "expectedCategory": "refactor",
+    "confidence": 0.8,
+    "relevance": 0.7,
+    "notes": "Code restructuring for better maintainability"
+  },
+  {
+    "commitHash": "pqr678901234",
+    "subject": "docs: update README with new installation instructions",
+    "author": "Documentation Team",
+    "files": [
+      {"path": "README.md", "status": "M"},
+      {"path": "docs/installation.md", "status": "A"}
+    ],
+    "expectedCategory": "documentation",
+    "confidence": 0.95,
+    "relevance": 0.4,
+    "notes": "Documentation updates"
+  },
+  {
+    "commitHash": "stu901234567",
+    "subject": "ci: add automated testing workflow for Python 3.11",
+    "author": "DevOps Team",
+    "files": [
+      {"path": ".github/workflows/test.yml", "status": "M"},
+      {"path": "pyproject.toml", "status": "M"}
+    ],
+    "expectedCategory": "build",
+    "confidence": 0.9,
+    "relevance": 0.6,
+    "notes": "CI/CD pipeline improvements"
+  },
+  {
+    "commitHash": "vwx234567890",
+    "subject": "test: add comprehensive unit tests for graph operations",
+    "author": "QA Team",
+    "files": [
+      {"path": "tests/test_graph_operations.py", "status": "A"},
+      {"path": "tests/conftest.py", "status": "M"}
+    ],
+    "expectedCategory": "test",
+    "confidence": 0.9,
+    "relevance": 0.7,
+    "notes": "Test coverage improvements"
+  },
+  {
+    "commitHash": "yza567890123",
+    "subject": "BREAKING: remove deprecated graph format v1 support",
+    "author": "Architecture Team",
+    "files": [
+      {"path": "src/graph_loader.py", "status": "M"},
+      {"path": "src/schemas.py", "status": "M"},
+      {"path": "CHANGELOG.md", "status": "M"}
+    ],
+    "expectedCategory": "breaking",
+    "confidence": 0.95,
+    "relevance": 0.9,
+    "notes": "Breaking change requiring migration"
+  },
+  {
+    "commitHash": "bcd890123456",
+    "subject": "feat: implement caching layer for query results",
+    "author": "Performance Team",
+    "files": [
+      {"path": "src/cache/query_cache.py", "status": "A"},
+      {"path": "src/services/graph_service.py", "status": "M"},
+      {"path": "tests/test_cache.py", "status": "A"}
+    ],
+    "expectedCategory": "feature",
+    "confidence": 0.85,
+    "relevance": 0.8,
+    "notes": "New caching functionality"
+  },
+  {
+    "commitHash": "efg123456789",
+    "subject": "fix: handle edge case in tree-sitter parsing",
+    "author": "Parser Team",
+    "files": [
+      {"path": "src/parser_loader.py", "status": "M"},
+      {"path": "tests/test_edge_cases.py", "status": "A"}
+    ],
+    "expectedCategory": "bugfix",
+    "confidence": 0.8,
+    "relevance": 0.85,
+    "notes": "Edge case handling in parsing logic"
+  },
+  {
+    "commitHash": "hij456789012",
+    "subject": "docs: add API documentation for graph queries",
+    "author": "Technical Writer",
+    "files": [
+      {"path": "docs/api/graph_queries.md", "status": "A"},
+      {"path": "docs/index.md", "status": "M"}
+    ],
+    "expectedCategory": "documentation",
+    "confidence": 0.9,
+    "relevance": 0.5,
+    "notes": "API documentation addition"
+  },
+  {
+    "commitHash": "klm789012345",
+    "subject": "perf: reduce memory usage in large graph processing",
+    "author": "Memory Optimization Team",
+    "files": [
+      {"path": "src/graph_updater.py", "status": "M"},
+      {"path": "src/config.py", "status": "M"}
+    ],
+    "expectedCategory": "performance",
+    "confidence": 0.85,
+    "relevance": 0.9,
+    "notes": "Memory optimization for large graphs"
+  },
+  {
+    "commitHash": "nop012345678",
+    "subject": "chore: update dependencies to latest versions",
+    "author": "Maintenance Team",
+    "files": [
+      {"path": "pyproject.toml", "status": "M"},
+      {"path": "uv.lock", "status": "M"}
+    ],
+    "expectedCategory": "build",
+    "confidence": 0.7,
+    "relevance": 0.5,
+    "notes": "Dependency maintenance"
+  },
+  {
+    "commitHash": "qrs345678901",
+    "subject": "refactor: extract common utilities into shared module",
+    "author": "Architecture Team",
+    "files": [
+      {"path": "src/utils/__init__.py", "status": "A"},
+      {"path": "src/utils/common.py", "status": "A"},
+      {"path": "src/graph_loader.py", "status": "M"},
+      {"path": "src/graph_updater.py", "status": "M"}
+    ],
+    "expectedCategory": "refactor",
+    "confidence": 0.85,
+    "relevance": 0.7,
+    "notes": "Code organization improvement"
+  }
+]

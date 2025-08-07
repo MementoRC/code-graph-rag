@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if title %}{{ title }} - {% endif %}Upstream Analysis Dashboard</title>
+    <meta name="description" content="{{ description or 'Dashboard for visualizing upstream activity and analysis status' }}">
+    
+    <!-- Tailwind CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.3.6/dist/tailwind.min.css" rel="stylesheet">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js"></script>
+    
+    <!-- D3.js for advanced visualizations -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+    
+    <!-- Chart.js Zoom Plugin -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+    
+    <!-- Dynamic Dashboard Scripts -->
+    <script src="/js/dashboard.js"></script>
+    <script src="/js/dynamic-dashboard.js"></script>
+    <script src="/js/alpine-dashboard.js"></script>
+    
+    <!-- Dynamic Dashboard Styles -->
+    <link rel="stylesheet" href="/css/dynamic-dashboard.css">
+    <link rel="stylesheet" href="/css/dynamic-enhancements.css">
+    
+    <!-- Custom styles -->
+    <style>
+        .fade-in { animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .card { 
+            @apply bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200;
+        }
+        
+        .stat-card {
+            @apply bg-gradient-to-br from-white to-gray-50 rounded-lg p-6 border border-gray-200 hover:border-primary-300 transition-colors duration-200;
+        }
+        
+        .nav-link {
+            @apply px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200;
+        }
+        
+        .nav-link.active {
+            @apply bg-primary-100 text-primary-700;
+        }
+        
+        .nav-link:hover {
+            @apply text-primary-600;
+        }
+        
+        .btn {
+            @apply inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors duration-200;
+        }
+        
+        .btn-primary {
+            @apply text-white bg-primary-600 hover:bg-primary-700 focus:ring-primary-500;
+        }
+        
+        .btn-secondary {
+            @apply text-gray-700 bg-white hover:bg-gray-50 border-gray-300 focus:ring-primary-500;
+        }
+    </style>
+</head>
+<body class="h-full bg-gray-50" x-data="{ sidebarOpen: false }">
+    <div class="min-h-full">
+        <!-- Navigation Header -->
+        <nav class="bg-white shadow-sm border-b border-gray-200">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between h-16">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 flex items-center">
+                            <svg class="h-8 w-8 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                            </svg>
+                            <span class="ml-2 text-xl font-bold text-gray-900">Upstream Analysis</span>
+                        </div>
+                        
+                        <!-- Desktop Navigation -->
+                        <div class="hidden md:ml-10 md:flex md:space-x-8">
+                            <a href="/" class="nav-link {% if page.url == '/' %}active{% endif %}">
+                                Overview
+                            </a>
+                            <a href="/analysis/" class="nav-link {% if '/analysis/' in page.url %}active{% endif %}">
+                                Analysis Sessions
+                            </a>
+                            <a href="/extractions/" class="nav-link {% if '/extractions/' in page.url %}active{% endif %}">
+                                Extractions
+                            </a>
+                            <a href="/upstream/" class="nav-link {% if '/upstream/' in page.url %}active{% endif %}">
+                                Upstream Activity
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center">
+                        <div class="flex items-center space-x-4">
+                            <!-- Status Indicator -->
+                            <div class="flex items-center text-sm text-gray-500">
+                                <div class="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></div>
+                                Live
+                            </div>
+                            
+                            <!-- Last Updated -->
+                            <div class="text-sm text-gray-500">
+                                Updated: {{ collections.data.lastUpdated | dateFormat('MMM dd, HH:mm') if collections.data.lastUpdated }}
+                            </div>
+                        </div>
+                        
+                        <!-- Mobile menu button -->
+                        <div class="md:hidden ml-4">
+                            <button @click="sidebarOpen = !sidebarOpen" class="text-gray-400 hover:text-gray-500">
+                                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Mobile Navigation -->
+            <div x-show="sidebarOpen" x-transition class="md:hidden">
+                <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white border-t border-gray-200">
+                    <a href="/" class="nav-link block {% if page.url == '/' %}active{% endif %}">Overview</a>
+                    <a href="/analysis/" class="nav-link block {% if '/analysis/' in page.url %}active{% endif %}">Analysis Sessions</a>
+                    <a href="/extractions/" class="nav-link block {% if '/extractions/' in page.url %}active{% endif %}">Extractions</a>
+                    <a href="/upstream/" class="nav-link block {% if '/upstream/' in page.url %}active{% endif %}">Upstream Activity</a>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+            {% if title %}
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold text-gray-900">{{ title }}</h1>
+                {% if description %}
+                <p class="mt-2 text-lg text-gray-600">{{ description }}</p>
+                {% endif %}
+            </div>
+            {% endif %}
+            
+            <div class="fade-in">
+                {{ content | safe }}
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="bg-white border-t border-gray-200 mt-16">
+            <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center">
+                    <div class="text-sm text-gray-500">
+                        <p>&copy; {% year %} Upstream Analysis Dashboard. Built with 
+                            <a href="https://www.11ty.dev/" class="text-primary-600 hover:text-primary-700">Eleventy</a>,
+                            <a href="https://tailwindcss.com/" class="text-primary-600 hover:text-primary-700">Tailwind CSS</a>, and
+                            <a href="https://alpinejs.dev/" class="text-primary-600 hover:text-primary-700">Alpine.js</a>.
+                        </p>
+                    </div>
+                    <div class="flex space-x-4 text-sm">
+                        <a href="https://github.com/MementoRC/code-graph-rag" class="text-gray-400 hover:text-gray-500">
+                            <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 0C4.477 0 0 4.484 0 10.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0110 4.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.203 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.942.359.31.678.921.678 1.856 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0020 10.017C20 4.484 15.522 0 10 0z" clip-rule="evenodd" />
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+</body>
+</html>

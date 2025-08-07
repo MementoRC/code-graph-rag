@@ -1,0 +1,50 @@
+{
+  "name": "Upstream Analysis Dashboard",
+  "description": "Dashboard for visualizing upstream activity and analysis status",
+  "url": "https://mementorc.github.io/code-graph-rag",
+  "author": "Upstream Analysis Team",
+  "repository": {
+    "owner": "MementoRC",
+    "name": "code-graph-rag",
+    "branch": "feat-upstream-analysis-strategy"
+  },
+  "upstream": {
+    "owner": "vitali87",
+    "name": "code-graph-rag"
+  },
+  "buildInfo": {
+    "generator": "Eleventy",
+    "version": "2.0.1",
+    "nodeVersion": "18.x",
+    "buildDate": "{{ 'now' | date: '%Y-%m-%d' }}"
+  },
+  "features": {
+    "charts": true,
+    "interactivity": true,
+    "mobileResponsive": true,
+    "darkMode": false,
+    "realTimeUpdates": false
+  },
+  "navigation": [
+    {
+      "name": "Overview",
+      "url": "/",
+      "icon": "home"
+    },
+    {
+      "name": "Analysis Sessions",
+      "url": "/analysis/",
+      "icon": "clipboard"
+    },
+    {
+      "name": "Extractions",
+      "url": "/extractions/",
+      "icon": "download"
+    },
+    {
+      "name": "Upstream Activity", 
+      "url": "/upstream/",
+      "icon": "activity"
+    }
+  ]
+}

@@ -15,6 +15,9 @@
   <a href="https://github.com/vitali87/code-graph-rag/blob/main/LICENSE">
     <img src="https://img.shields.io/github/license/vitali87/code-graph-rag" alt="License" />
   </a>
+  <a href="https://github.com/MementoRC/code-graph-rag/actions/workflows/upstream-sync.yml">
+    <img src="https://github.com/MementoRC/code-graph-rag/workflows/Upstream%20Sync/badge.svg" alt="Upstream Sync" />
+  </a>
 </p>
 </div>
 
@@ -53,6 +56,51 @@ Use the Makefile for:
 - **🔗 Dependency Analysis**: Parses `pyproject.toml` to understand external dependencies
 - **🎯 Nested Function Support**: Handles complex nested functions and class hierarchies
 - **🔄 Language-Agnostic Design**: Unified graph schema across all supported languages
+
+## 🌿 Branch Architecture & Upstream Synchronization
+
+This repository maintains synchronization with the upstream [vitali87/code-graph-rag](https://github.com/vitali87/code-graph-rag) repository through a structured branch architecture:
+
+### Branch Structure
+
+- **`main`**: Primary development branch for local enhancements and features
+- **`upstream-mirror`**: Read-only mirror of the upstream repository's main branch
+- **`analysis/YYYY-MM-DD`**: Temporary branches for conducting upstream analysis sessions
+- **`feature/extracted-*`**: Feature branches for extracting and adapting valuable upstream changes
+
+### Upstream Synchronization Process
+
+1. **Daily Sync**: Automated GitHub Action syncs upstream changes to `upstream-mirror` branch
+2. **Change Detection**: System monitors for significant upstream changes and notifies the team
+3. **Analysis Sessions**: Regular reviews of upstream changes using dedicated analysis branches
+4. **Feature Extraction**: Valuable upstream changes are extracted and adapted through feature branches
+
+### Branch Protection Rules
+
+The `upstream-mirror` branch is protected with the following rules:
+- No direct commits allowed
+- Automatic updates only through upstream sync workflow
+- Branch cannot be deleted or force-pushed to
+
+### Manual Sync Commands
+
+For manual synchronization when needed:
+
+```bash
+# Fetch latest upstream changes
+git fetch upstream
+
+# Update upstream-mirror branch
+git checkout upstream-mirror
+git reset --hard upstream/main
+git push origin upstream-mirror
+```
+
+### Branch Naming Conventions
+
+- **Analysis branches**: `analysis/YYYY-MM-DD` (e.g., `analysis/2024-01-15`)
+- **Feature branches**: `feature/extracted-<description>` (e.g., `feature/extracted-better-error-handling`)
+- **Upstream mirror**: `upstream-mirror` (fixed name, tracks upstream/main)
 
 ## 🏗️ Architecture
 

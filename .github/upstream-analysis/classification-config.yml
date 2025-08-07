@@ -1,0 +1,362 @@
+---
+# Automated Change Classification Configuration
+# Defines rules and scoring for intelligent classification of upstream changes
+
+# Classification Rules
+# Each category defines patterns and weights for automated classification
+classification_rules:
+  feature:
+    keywords:
+      - "feat"
+      - "feature" 
+      - "add"
+      - "new"
+      - "implement"
+      - "introduce"
+      - "create"
+      - "enhance"
+    file_patterns:
+      - "*.py"
+      - "*.js"
+      - "*.ts"
+      - "*.rs"
+      - "*.go"
+      - "src/**"
+      - "codebase_rag/**"
+    negative_keywords:
+      - "fix"
+      - "bug"
+      - "remove"
+      - "delete"
+      - "deprecate"
+    weight: 1.0
+    confidence_threshold: 0.6
+    description: "New functionality and feature additions"
+
+  bugfix:
+    keywords:
+      - "fix"
+      - "bug"
+      - "patch"
+      - "resolve"
+      - "correct"
+      - "repair"
+      - "issue"
+      - "problem"
+    file_patterns:
+      - "*.py"
+      - "*.js"
+      - "*.ts"
+      - "*.rs"
+      - "*.go"
+      - "src/**"
+      - "tests/**"
+    negative_keywords:
+      - "feat"
+      - "feature"
+      - "add"
+      - "new"
+    weight: 1.0
+    confidence_threshold: 0.7
+    description: "Bug fixes and issue resolutions"
+
+  security:
+    keywords:
+      - "security"
+      - "vulnerability"
+      - "cve"
+      - "exploit"
+      - "auth"
+      - "authentication"
+      - "authorization"
+      - "secure"
+      - "sanitize"
+      - "validate"
+    file_patterns:
+      - "*auth*"
+      - "*security*" 
+      - "*login*"
+      - "*.py"
+      - "*.js"
+      - "*.ts"
+    negative_keywords: []
+    weight: 1.5
+    confidence_threshold: 0.5
+    description: "Security updates and vulnerability fixes"
+
+  performance:
+    keywords:
+      - "perf"
+      - "performance"
+      - "optimize"
+      - "speed"
+      - "fast"
+      - "cache"
+      - "efficient"
+      - "memory"
+      - "cpu"
+      - "benchmark"
+    file_patterns:
+      - "*.py"
+      - "*.js"
+      - "*.ts"
+      - "*.rs"
+      - "*.go"
+      - "src/**"
+    negative_keywords: []
+    weight: 1.2
+    confidence_threshold: 0.6
+    description: "Performance improvements and optimizations"
+
+  refactor:
+    keywords:
+      - "refactor"
+      - "restructure"
+      - "reorganize"
+      - "cleanup"
+      - "simplify"
+      - "improve"
+      - "clean"
+      - "rename"
+      - "move"
+    file_patterns:
+      - "*.py"
+      - "*.js"
+      - "*.ts"
+      - "*.rs"
+      - "*.go"
+      - "src/**"
+    negative_keywords:
+      - "feat"
+      - "feature"
+      - "fix"
+      - "bug"
+      - "add"
+    weight: 0.8
+    confidence_threshold: 0.6
+    description: "Code restructuring and cleanup"
+
+  documentation:
+    keywords:
+      - "docs"
+      - "documentation"
+      - "readme"
+      - "comment"
+      - "docstring"
+      - "doc"
+      - "guide"
+      - "manual"
+      - "help"
+    file_patterns:
+      - "*.md"
+      - "*.rst"
+      - "*.txt"
+      - "docs/**"
+      - "README*"
+      - "CHANGELOG*"
+      - "CONTRIBUTING*"
+    negative_keywords: []
+    weight: 0.5
+    confidence_threshold: 0.4
+    description: "Documentation updates and improvements"
+
+  build:
+    keywords:
+      - "build"
+      - "ci"
+      - "deploy"
+      - "release"
+      - "workflow"
+      - "action"
+      - "pipeline"
+      - "docker"
+      - "container"
+    file_patterns:
+      - ".github/**"
+      - "*.yml"
+      - "*.yaml"
+      - "Dockerfile"
+      - "docker-compose.yml"
+      - "*.toml"
+      - "*.json"
+      - "Makefile"
+    negative_keywords: []
+    weight: 0.6
+    confidence_threshold: 0.5
+    description: "Build, CI/CD, and deployment changes"
+
+  test:
+    keywords:
+      - "test"
+      - "testing"
+      - "spec"
+      - "unittest"
+      - "pytest"
+      - "coverage"
+      - "mock"
+      - "fixture"
+    file_patterns:
+      - "test_*.py"
+      - "*_test.py"
+      - "tests/**"
+      - "*.test.js"
+      - "*.spec.js"
+      - "*test*"
+    negative_keywords: []
+    weight: 0.7
+    confidence_threshold: 0.6
+    description: "Testing improvements and additions"
+
+  breaking:
+    keywords:
+      - "breaking"
+      - "BREAKING"
+      - "major"
+      - "incompatible"
+      - "removed"
+      - "deprecated"
+      - "migration"
+    file_patterns:
+      - "*.py"
+      - "*.js"
+      - "*.ts"
+      - "src/**"
+      - "codebase_rag/**"
+    negative_keywords: []
+    weight: 2.0
+    confidence_threshold: 0.4
+    description: "Breaking changes requiring migration"
+
+# Relevance Scoring Configuration
+# Determines how relevant upstream changes are to the local codebase
+relevance_scoring:
+  # File overlap analysis
+  file_overlap:
+    weight: 0.4
+    description: "Relevance based on file and directory overlap"
+    local_extensions:
+      - ".py"
+      - ".js" 
+      - ".ts"
+      - ".md"
+      - ".yml"
+      - ".yaml"
+      - ".json"
+      - ".toml"
+    core_directories:
+      - "src/"
+      - "codebase_rag/"
+      - "tests/"
+      - "docs/"
+      - ".github/"
+    ignore_directories:
+      - "node_modules/"
+      - "__pycache__/"
+      - ".git/"
+      - "venv/"
+      - ".env/"
+
+  # Functionality impact analysis
+  functionality_impact:
+    weight: 0.3
+    description: "Impact on core RAG functionality"
+    core_keywords:
+      - "graph"
+      - "query"
+      - "parse"
+      - "rag"
+      - "database"
+      - "api"
+      - "search"
+      - "retrieval"
+      - "embedding"
+      - "vector"
+      - "nlp"
+      - "ai"
+      - "ml"
+    impact_multiplier: 1.5
+    critical_components:
+      - "graph_loader"
+      - "graph_updater"
+      - "query"
+      - "parser"
+      - "schema"
+      - "service"
+
+  # Roadmap alignment scoring
+  roadmap_alignment:
+    weight: 0.3
+    description: "Alignment with local development priorities"
+    priority_keywords:
+      - "performance"
+      - "security"
+      - "api"
+      - "ui"
+      - "scale"
+      - "multi-language"
+      - "optimization"
+    alignment_bonus: 1.2
+    strategic_areas:
+      - "multi-language support"
+      - "performance optimization"
+      - "api improvements"
+      - "security enhancements"
+      - "ui/ux improvements"
+
+# Advanced Classification Settings
+advanced_settings:
+  # NLP Enhancement
+  nlp_analysis:
+    enabled: true
+    min_confidence: 0.1
+    use_stemming: true
+    use_sentiment: false
+    entity_recognition: true
+
+  # Machine Learning (if TensorFlow.js is available)
+  machine_learning:
+    enabled: false
+    model_path: "models/classification-model.json"
+    training_threshold: 100
+    retrain_interval: 30  # days
+    
+  # Feedback Learning
+  feedback_learning:
+    enabled: true
+    min_feedback_count: 10
+    confidence_adjustment: 0.1
+    category_rebalancing: true
+
+  # Performance Settings
+  performance:
+    batch_size: 50
+    cache_classifications: true
+    cache_duration: 3600  # seconds
+    parallel_processing: true
+
+# Classification Quality Thresholds
+quality_thresholds:
+  minimum_confidence: 0.3
+  high_confidence: 0.8
+  minimum_relevance: 0.2
+  high_relevance: 0.7
+  
+  # Auto-approval thresholds
+  auto_approve:
+    security_fixes: 0.6
+    critical_bugs: 0.7
+    high_relevance: 0.8
+
+# Output Configuration
+output_settings:
+  include_reasoning: true
+  include_confidence_scores: true
+  include_alternative_classifications: false
+  max_reasoning_length: 200
+  
+  # Classification summary
+  summary_stats:
+    category_distribution: true
+    confidence_histogram: true
+    relevance_distribution: true
+    top_classifications: 10

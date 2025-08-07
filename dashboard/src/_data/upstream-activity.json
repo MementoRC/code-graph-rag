@@ -1,0 +1,116 @@
+{
+  "lastUpdated": "2025-07-30T13:52:34.322Z",
+  "repository": {
+    "owner": "vitali87",
+    "name": "code-graph-rag",
+    "url": "https://github.com/vitali87/code-graph-rag"
+  },
+  "commits": {
+    "total": 20,
+    "recent": [
+      {
+        "sha": "4sth3qoq3f9",
+        "message": "style: improve data collection performance",
+        "author": "vitali87",
+        "date": "2025-07-06T13:52:34.322Z",
+        "url": "https://github.com/vitali87/code-graph-rag/commit/ic9u87jfxdb"
+      },
+      {
+        "sha": "3uove92019b",
+        "message": "feat: enhance error handling",
+        "author": "vitali87",
+        "date": "2025-07-06T13:52:34.322Z",
+        "url": "https://github.com/vitali87/code-graph-rag/commit/f8gzmxps8g7"
+      },
+      {
+        "sha": "v6hiqos2ed9",
+        "message": "feat: update analysis documentation",
+        "author": "vitali87",
+        "date": "2025-07-18T13:52:34.322Z",
+        "url": "https://github.com/vitali87/code-graph-rag/commit/k0y0zfanfga"
+      },
+      {
+        "sha": "h8xw02gjcl",
+        "message": "style: fix dashboard chart rendering",
+        "author": "vitali87",
+        "date": "2025-07-25T13:52:34.322Z",
+        "url": "https://github.com/vitali87/code-graph-rag/commit/n05teace3t"
+      },
+      {
+        "sha": "fwq19wzbwtv",
+        "message": "fix: add upstream sync automation",
+        "author": "vitali87",
+        "date": "2025-07-19T13:52:34.322Z",
+        "url": "https://github.com/vitali87/code-graph-rag/commit/j78eb39eces"
+      },
+      {
+        "sha": "h92wjbeh036",
+        "message": "refactor: implement branch protection rules",
+        "author": "vitali87",
+        "date": "2025-07-12T13:52:34.322Z",
+        "url": "https://github.com/vitali87/code-graph-rag/commit/zo4kfq6qp4"
+      },
+      {
+        "sha": "lp4ficy0ir9",
+        "message": "style: implement branch protection rules",
+        "author": "vitali87",
+        "date": "2025-07-09T13:52:34.322Z",
+        "url": "https://github.com/vitali87/code-graph-rag/commit/rnbdlwvtym"
+      },
+      {
+        "sha": "e0a5nosnt",
+        "message": "test: add upstream sync automation",
+        "author": "vitali87",
+        "date": "2025-07-29T13:52:34.322Z",
+        "url": "https://github.com/vitali87/code-graph-rag/commit/hqf3wwlergn"
+      },
+      {
+        "sha": "wvbsdcxitgg",
+        "message": "fix: improve data collection performance",
+        "author": "vitali87",
+        "date": "2025-07-08T13:52:34.322Z",
+        "url": "https://github.com/vitali87/code-graph-rag/commit/8v8gwxogrb7"
+      },
+      {
+        "sha": "7l3ecnyvr4",
+        "message": "fix: enhance error handling",
+        "author": "vitali87",
+        "date": "2025-07-07T13:52:34.322Z",
+        "url": "https://github.com/vitali87/code-graph-rag/commit/7b19tuldlix"
+      }
+    ],
+    "byDate": {
+      "2025-07-06": 3,
+      "2025-07-18": 1,
+      "2025-07-25": 2,
+      "2025-07-19": 1,
+      "2025-07-12": 1,
+      "2025-07-09": 1,
+      "2025-07-29": 1,
+      "2025-07-08": 2,
+      "2025-07-07": 2,
+      "2025-07-02": 1,
+      "2025-07-15": 2,
+      "2025-07-11": 1,
+      "2025-07-01": 1,
+      "2025-07-23": 1
+    }
+  },
+  "contributors": [
+    {
+      "login": "vitali87",
+      "contributions": 15,
+      "avatarUrl": "https://github.com/vitali87.png"
+    },
+    {
+      "login": "contributor1",
+      "contributions": 8,
+      "avatarUrl": "https://github.com/contributor1.png"
+    },
+    {
+      "login": "contributor2",
+      "contributions": 5,
+      "avatarUrl": "https://github.com/contributor2.png"
+    }
+  ]
+}

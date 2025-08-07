@@ -1,0 +1,24 @@
+{
+  "lastUpdated": "2025-07-30T13:52:34.322Z",
+  "repository": {
+    "name": "code-graph-rag",
+    "owner": "MementoRC",
+    "url": "https://github.com/MementoRC/code-graph-rag",
+    "stargazers_count": 42,
+    "forks_count": 15,
+    "open_issues_count": 8
+  },
+  "extractions": {
+    "total": 12,
+    "completed": 7,
+    "inProgress": 3,
+    "pending": 2,
+    "issues": 8
+  },
+  "pullRequests": {
+    "open": 2,
+    "merged": 15,
+    "closed": 3
+  },
+  "issues": []
+}
