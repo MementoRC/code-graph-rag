@@ -159,9 +159,6 @@ jobs:
           echo "📁 Dashboard files available in build artifacts"
 
   deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     needs: build
     if: needs.build.outputs.pages-enabled == 'true'
