@@ -25,7 +25,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     outputs:
-      pages-enabled: ${{ steps.setup-pages.outcome == 'success' }}
+      pages-enabled: ${{ steps.setup-pages.outcome == 'success' && 'true' || 'false' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
