@@ -3,7 +3,7 @@ name = "graph-code"
 version = "0.0.2"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = "~=3.12.0"
 dependencies = [
     # Dependencies now managed by pixi - keeping empty for pip compatibility
 ]
@@ -42,11 +42,11 @@ disallow_untyped_defs = true
 
 [tool.pixi.project]
 channels = ["conda-forge", "MementoRC"]
-platforms = ["linux-64"]  # Local development only - CI uses --platform flag for cross-platform validation
+platforms = ["linux-64"]  # pymgclient (graph database) only available for Linux; cross-platform unit tests run in CI
 
 [tool.pixi.dependencies]
 # Core runtime dependencies - pixi replaces pip entirely
-python = ">=3.12"
+python = "~=3.12.0"  # Only Python 3.12 (pymgclient not built for 3.13 yet)
 loguru = ">=0.7.3"
 python-dotenv = ">=1.1.0" 
 toml = ">=0.10.2"

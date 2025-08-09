@@ -46,23 +46,30 @@ jobs:
               - 'pytest.ini'
 
   test-matrix:
-    name: "🧪 Test Matrix (${{ matrix.python-version }}, ${{ matrix.test-type }})"
-    runs-on: ubuntu-latest
+    name: "🧪 Test Matrix (${{ matrix.os }}, py${{ matrix.python-version }}, ${{ matrix.test-type }})"
+    runs-on: ${{ matrix.os }}
     needs: changes
     if: needs.changes.outputs.python == 'true' || needs.changes.outputs.tests == 'true' || github.event_name == 'workflow_dispatch'
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.12", "3.13"]
+        os: ["ubuntu-latest", "windows-latest", "macos-latest"]
+        python-version: ["3.12"]
         test-type: ["unit", "integration", "e2e"]
         exclude:
-          # Skip e2e tests on Python 3.13 for now (until dependencies are fully compatible)
-          - python-version: "3.13"
+          # Skip pymgclient-dependent tests on Windows/macOS (package only available for Linux)
+          - os: "windows-latest"
+            test-type: "integration"
+          - os: "windows-latest" 
+            test-type: "e2e"
+          - os: "macos-latest"
+            test-type: "integration"
+          - os: "macos-latest"
             test-type: "e2e"
     
     services:
       memgraph:
-        image: memgraph/memgraph:2.18.1
+        image: ${{ matrix.os == 'ubuntu-latest' && 'memgraph/memgraph:2.18.1' || '' }}
         ports:
           - 7687:7687
         options: >-
@@ -88,7 +95,7 @@ jobs:
         run: pixi run -e dev dev-setup
 
       - name: Verify Memgraph connection
-        if: matrix.test-type != 'unit'
+        if: matrix.test-type != 'unit' && matrix.os == 'ubuntu-latest'
         run: |
           echo "🗄️ Testing database connection..."
           timeout 30 bash -c 'until nc -z localhost 7687; do sleep 1; done'
@@ -177,14 +184,14 @@ jobs:
           echo "| Command | \`${{ steps.select-tests.outputs.test_cmd }}\` |" >> $GITHUB_STEP_SUMMARY
 
   performance-matrix:
-    name: "⚡ Performance Tests (Python ${{ matrix.python-version }})"
+    name: "⚡ Performance Tests (Linux, Python ${{ matrix.python-version }})"
     runs-on: ubuntu-latest
     needs: changes
     if: needs.changes.outputs.python == 'true' || github.event_name == 'workflow_dispatch'
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.12"]  # Run performance tests only on stable Python version
+        python-version: ["3.12"]  # Run performance tests only on Linux with stable Python version
     
     services:
       memgraph:
@@ -264,20 +271,19 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           
           # Test matrix results
-          echo "## 📋 Test Execution Matrix" >> $GITHUB_STEP_SUMMARY
-          echo "| Python | Unit | Integration | E2E | Performance |" >> $GITHUB_STEP_SUMMARY
-          echo "|--------|------|-------------|-----|-------------|" >> $GITHUB_STEP_SUMMARY
+          echo "## 📋 Cross-Platform Test Matrix" >> $GITHUB_STEP_SUMMARY
+          echo "| OS | Python | Unit | Integration* | E2E* | Performance |" >> $GITHUB_STEP_SUMMARY
+          echo "|----|----|------|------------|-----|-------------|" >> $GITHUB_STEP_SUMMARY
           
-          # Parse results from needs context
-          py312_unit="${{ needs.test-matrix.result == 'success' && '✅' || '❌' }}"
-          py312_integration="${{ needs.test-matrix.result == 'success' && '✅' || '❌' }}"
-          py312_e2e="${{ needs.test-matrix.result == 'success' && '✅' || '❌' }}"
-          py312_perf="${{ needs.performance-matrix.result == 'success' && '✅' || '❌' }}"
-          py313_unit="${{ needs.test-matrix.result == 'success' && '✅' || '❌' }}"
-          py313_integration="${{ needs.test-matrix.result == 'success' && '✅' || '❌' }}"
+          # Parse results from needs context  
+          test_status="${{ needs.test-matrix.result == 'success' && '✅' || '❌' }}"
+          perf_status="${{ needs.performance-matrix.result == 'success' && '✅' || '❌' }}"
           
-          echo "| 3.12 | $py312_unit | $py312_integration | $py312_e2e | $py312_perf |" >> $GITHUB_STEP_SUMMARY
-          echo "| 3.13 | $py313_unit | $py313_integration | ⏭️ Skip | ⏭️ Skip |" >> $GITHUB_STEP_SUMMARY
+          echo "| Linux | 3.12 | $test_status | $test_status | $test_status | $perf_status |" >> $GITHUB_STEP_SUMMARY
+          echo "| Windows | 3.12 | $test_status | ⏭️ Skip | ⏭️ Skip | ⏭️ Skip |" >> $GITHUB_STEP_SUMMARY  
+          echo "| macOS | 3.12 | $test_status | ⏭️ Skip | ⏭️ Skip | ⏭️ Skip |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "*Integration and E2E tests require pymgclient (Linux-only)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
           # Overall status
