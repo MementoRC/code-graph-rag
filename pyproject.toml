@@ -41,7 +41,7 @@ disallow_untyped_defs = true
 # =============================================================================
 
 [tool.pixi.project]
-channels = ["conda-forge"]
+channels = ["conda-forge", "MementoRC"]
 platforms = ["linux-64"]  # Local development only - CI uses --platform flag for cross-platform validation
 
 [tool.pixi.dependencies]
@@ -59,6 +59,7 @@ rich = ">=13.7.1"
 prompt-toolkit = ">=3.0.0"
 diff-match-patch = ">=20241021"
 click = ">=8.0.0"
+pymgclient = ">=1.4.0"  # Graph database client from MementoRC channel
 # pydantic and pydantic-settings moved to feature-specific dependencies
 # Build tools for native packages
 cmake = "*"
@@ -240,7 +241,7 @@ clean = "rm -rf __pycache__ .pytest_cache .coverage htmlcov .ruff_cache dist bui
 
 # ===== PROJECT-SPECIFIC TASKS =====
 # Graph-Code specific tasks (require pymgclient)
-install-pymgclient = "bash -c 'CMAKE_C_FLAGS=\"-Wno-unused-value\" pip install pymgclient --no-deps || echo \"WARNING: pymgclient failed to install - some functionality may be limited\"'"
+install-pymgclient = "echo 'pymgclient is automatically installed via PIXI dependencies from MementoRC channel'"
 serve = { depends-on = ["install-pymgclient"], cmd = "python -m codebase_rag.main start --repo-path ." }
 parse-repo = { depends-on = ["install-pymgclient"], cmd = "python -m codebase_rag.main start --repo-path . --update-graph --clean" }
 export-graph = { depends-on = ["install-pymgclient"], cmd = "python -m codebase_rag.main export -o graph_export.json" }
