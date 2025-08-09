@@ -57,6 +57,7 @@ rich = ">=13.7.1"
 prompt-toolkit = ">=3.0.0"
 diff-match-patch = ">=20241021"
 click = ">=8.0.0"
+google-genai = ">=1.27.0"  # conda-forge: For document analyzer imports
 # pymgclient moved to platform-specific dependencies below
 # pydantic and pydantic-settings moved to feature-specific dependencies
 # Build tools moved to platform-specific section (not needed for basic cross-platform unit tests)
@@ -187,6 +188,9 @@ ci = {features = ["quality", "quality-ci"], solve-group = "quality"}
 
 # CI with smoke tests (uses smoke solve-group for pydantic >=2.10 compatibility)
 ci-smoke = {features = ["quality", "smoke-test"], solve-group = "smoke"}
+
+# CI with integration test support (includes base deps + tree-sitter and pymgclient for Linux)  
+ci-integration = {features = ["runtime", "quality"], solve-group = "default"}
 
 [tool.pixi.tasks]
 # ===== TIER 1: CORE DEVELOPMENT TASKS (ESSENTIAL) =====
