@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "lib": ["ES2020", "DOM"],
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "allowJs": true,
+    "checkJs": true,
+    "noEmit": true,
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true
+  },
+  "include": [
+    "scripts/**/*.js",
+    "dashboard/src/**/*.js",
+    "*.js"
+  ],
+  "exclude": [
+    "node_modules",
+    "docs/node_modules",
+    "dashboard/node_modules",
+    "scripts/node_modules",
+    "**/build",
+    "**/.docusaurus",
+    "**/_site"
+  ]
+}

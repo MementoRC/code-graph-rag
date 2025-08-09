@@ -1,0 +1,31 @@
+{
+  "name": "code-graph-rag",
+  "version": "1.0.0",
+  "description": "Code graph RAG system with upstream analysis capabilities",
+  "private": true,
+  "scripts": {
+    "typecheck": "cd docs && ./node_modules/.bin/tsc --project ../tsconfig.json --noEmit && npm run typecheck",
+    "typecheck:root": "cd docs && ./node_modules/.bin/tsc --project ../tsconfig.json --noEmit",
+    "typecheck:docs": "cd docs && npm run typecheck",
+    "lint": "cd docs && npm run lint",
+    "install:all": "cd docs && npm install && cd ../dashboard && npm install",
+    "build:docs": "cd docs && npm run build",
+    "build:dashboard": "cd dashboard && npm run build",
+    "dev:docs": "cd docs && npm start",
+    "dev:dashboard": "cd dashboard && npm run dev"
+  },
+  "devDependencies": {},
+  "workspaces": [
+    "docs",
+    "dashboard"
+  ],
+  "keywords": [
+    "code-graph",
+    "rag",
+    "upstream-analysis",
+    "typescript",
+    "python"
+  ],
+  "author": "MementoRC",
+  "license": "MIT"
+}
