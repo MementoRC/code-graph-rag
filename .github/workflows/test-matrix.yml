@@ -59,6 +59,9 @@ jobs:
           # Skip e2e tests on Python 3.13 for now (until dependencies are fully compatible)
           - python-version: "3.13"
             test-type: "e2e"
+          # Skip integration tests on Python 3.13 (pymgclient package not available for py313 yet)
+          - python-version: "3.13"
+            test-type: "integration"
     
     services:
       memgraph:
