@@ -100,11 +100,28 @@ def local_func():
     # Step 7: Execute query and find calls
     print_diagnostic("QUERY EXECUTION")
     try:
-        captures = calls_query.captures(root_node)
-        print(f"Query returned {len(captures)} captures")
-        print(f"Captures dict keys: {list(captures.keys())}")
+        # Check what methods are available on the query object
+        print(f"Query object type: {type(calls_query)}")
+        print(f"Available methods: {[attr for attr in dir(calls_query) if not attr.startswith('_')]}")
         
-        call_nodes = captures.get("call", [])
+        # Try different tree-sitter API methods
+        if hasattr(calls_query, 'captures'):
+            captures = calls_query.captures(root_node)
+            print(f"Using captures() method: {len(captures)} captures")
+            print(f"Captures dict keys: {list(captures.keys())}")
+            call_nodes = captures.get("call", [])
+        elif hasattr(calls_query, 'matches'):
+            matches = calls_query.matches(root_node)
+            print(f"Using matches() method: {len(matches)} matches")
+            call_nodes = []
+            for pattern_index, match_captures in matches:
+                for capture in match_captures:
+                    if capture[1] == "call":  # capture name
+                        call_nodes.append(capture[0])  # capture node
+        else:
+            print("❌ Neither captures() nor matches() method available")
+            return
+            
         print(f"Found {len(call_nodes)} call nodes")
         
         if call_nodes:
