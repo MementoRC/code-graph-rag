@@ -193,10 +193,13 @@ def load_parsers() -> tuple[dict[str, Parser], dict[str, Any]]:
                     ]
                 )
 
+                # Use modern Query constructor instead of deprecated language.query()
+                from tree_sitter import Query
+                
                 queries[lang_name] = {
-                    "functions": language.query(function_patterns),
-                    "classes": language.query(class_patterns),
-                    "calls": language.query(call_patterns) if call_patterns else None,
+                    "functions": Query(language, function_patterns),
+                    "classes": Query(language, class_patterns),
+                    "calls": Query(language, call_patterns) if call_patterns else None,
                     "config": lang_config,
                 }
 
