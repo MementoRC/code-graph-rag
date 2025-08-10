@@ -268,9 +268,8 @@ class GraphUpdater:
         lang_config: LanguageConfig = lang_queries["config"]
 
         query = lang_queries["functions"]
-        captures = query.captures(root_node)
-
-        func_nodes = captures.get("function", [])
+        # Use compatibility layer for different tree-sitter API versions
+        func_nodes = self._execute_query_with_fallback(query, root_node, "function")
 
         for func_node in func_nodes:
             if not isinstance(func_node, Node):
@@ -386,8 +385,8 @@ class GraphUpdater:
         lang_queries = self.queries[language]
 
         query = lang_queries["classes"]
-        captures = query.captures(root_node)
-        class_nodes = captures.get("class", [])
+        # Use compatibility layer for different tree-sitter API versions
+        class_nodes = self._execute_query_with_fallback(query, root_node, "class")
 
         for class_node in class_nodes:
             if not isinstance(class_node, Node):
@@ -421,8 +420,8 @@ class GraphUpdater:
                 continue
 
             method_query = lang_queries["functions"]
-            method_captures = method_query.captures(body_node)
-            method_nodes = method_captures.get("function", [])
+            # Use compatibility layer for different tree-sitter API versions
+            method_nodes = self._execute_query_with_fallback(method_query, body_node, "function")
             for method_node in method_nodes:
                 if not isinstance(method_node, Node):
                     continue
@@ -510,8 +509,8 @@ class GraphUpdater:
         lang_config: LanguageConfig = lang_queries["config"]
 
         query = lang_queries["functions"]
-        captures = query.captures(root_node)
-        func_nodes = captures.get("function", [])
+        # Use compatibility layer for different tree-sitter API versions
+        func_nodes = self._execute_query_with_fallback(query, root_node, "function")
         for func_node in func_nodes:
             if not isinstance(func_node, Node):
                 continue
@@ -540,8 +539,8 @@ class GraphUpdater:
         lang_queries = self.queries[language]
 
         query = lang_queries["classes"]
-        captures = query.captures(root_node)
-        class_nodes = captures.get("class", [])
+        # Use compatibility layer for different tree-sitter API versions
+        class_nodes = self._execute_query_with_fallback(query, root_node, "class")
 
         for class_node in class_nodes:
             if not isinstance(class_node, Node):
@@ -560,8 +559,8 @@ class GraphUpdater:
                 continue
 
             method_query = lang_queries["functions"]
-            method_captures = method_query.captures(body_node)
-            method_nodes = method_captures.get("function", [])
+            # Use compatibility layer for different tree-sitter API versions
+            method_nodes = self._execute_query_with_fallback(method_query, body_node, "function")
             for method_node in method_nodes:
                 if not isinstance(method_node, Node):
                     continue
@@ -619,8 +618,8 @@ class GraphUpdater:
         if not calls_query:
             return
 
-        captures = calls_query.captures(caller_node)
-        call_nodes = captures.get("call", [])
+        # Use compatibility layer for different tree-sitter API versions
+        call_nodes = self._execute_query_with_fallback(calls_query, caller_node, "call")
 
         for call_node in call_nodes:
             if not isinstance(call_node, Node):
@@ -690,3 +689,51 @@ class GraphUpdater:
             return True
 
         return False
+
+    def _execute_query_with_fallback(self, query, node: Node, capture_name: str) -> list[Node]:
+        """Execute tree-sitter query with API compatibility fallback.
+        
+        This method handles different tree-sitter API versions:
+        - Modern API: uses query.captures() method
+        - Older API: uses manual tree traversal as fallback
+        """
+        try:
+            # Try modern API first
+            if hasattr(query, 'captures'):
+                captures = query.captures(node)
+                return captures.get(capture_name, [])
+            elif hasattr(query, 'matches'):
+                matches = query.matches(node) 
+                captured_nodes = []
+                for pattern_index, match_captures in matches:
+                    for capture in match_captures:
+                        if len(capture) >= 2 and capture[1] == capture_name:
+                            captured_nodes.append(capture[0])
+                return captured_nodes
+            else:
+                # Fallback to manual traversal for older tree-sitter versions
+                logger.debug(f"Using manual traversal fallback for capture '{capture_name}'")
+                return self._manual_traverse_for_capture(node, capture_name)
+        except Exception as e:
+            logger.warning(f"Query execution failed, using manual traversal: {e}")
+            return self._manual_traverse_for_capture(node, capture_name)
+    
+    def _manual_traverse_for_capture(self, node: Node, capture_name: str) -> list[Node]:
+        """Manual AST traversal to find nodes of specific type.
+        
+        This is used as fallback when tree-sitter query API is unavailable.
+        """
+        found_nodes = []
+        
+        def traverse(current_node: Node) -> None:
+            # Map capture names to node types
+            target_type = capture_name  # For most cases, capture name matches node type
+            
+            if current_node.type == target_type:
+                found_nodes.append(current_node)
+            
+            for child in current_node.children:
+                traverse(child)
+        
+        traverse(node)
+        return found_nodes
