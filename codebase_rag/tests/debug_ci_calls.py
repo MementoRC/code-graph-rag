@@ -120,37 +120,57 @@ def local_func():
                         call_nodes.append(capture[0])  # capture node
         else:
             # This appears to be an older tree-sitter API
-            # Try to use language.query() instead of Query object directly
-            print("Trying alternative API approach...")
+            # Try to use the Language object directly to query
+            print("Trying older tree-sitter API pattern...")
             
             # Import tree_sitter_python language function
             import tree_sitter_python
             PYTHON_LANGUAGE = tree_sitter_python.language()
             
-            # Try to create query using language.query()
+            print(f"Language object type: {type(PYTHON_LANGUAGE)}")
+            print(f"Language methods: {[attr for attr in dir(PYTHON_LANGUAGE) if not attr.startswith('_')]}")
+            
+            # Try older pattern: execute query on the node itself
             try:
-                alt_query = PYTHON_LANGUAGE.query(calls_query_string)
-                print(f"Alternative query created: {type(alt_query)}")
-                print(f"Alternative methods: {[attr for attr in dir(alt_query) if not attr.startswith('_')]}")
-                
-                if hasattr(alt_query, 'captures'):
-                    captures = alt_query.captures(root_node)
-                    print(f"Alternative captures() worked: {len(captures)} captures")
-                    call_nodes = captures.get("call", [])
-                elif hasattr(alt_query, 'matches'):
-                    matches = alt_query.matches(root_node)
-                    print(f"Alternative matches() worked: {len(matches)} matches")
+                # The older API might use query directly on nodes
+                if hasattr(root_node, 'children') and hasattr(PYTHON_LANGUAGE, 'query'):
+                    print("Trying direct language query execution...")
+                    # This is a guess at the older API pattern
+                    matches = list(PYTHON_LANGUAGE.query(calls_query_string).matches(root_node))
+                    print(f"Direct language query found {len(matches)} matches")
                     call_nodes = []
-                    for pattern_index, match_captures in matches:
-                        for capture in match_captures:
+                    for match in matches:
+                        for capture in match:
                             if len(capture) >= 2 and capture[1] == "call":
                                 call_nodes.append(capture[0])
                 else:
-                    print("❌ Alternative API also lacks captures/matches methods")
-                    return
+                    print("❌ Could not determine correct older API pattern")
+                    # Fallback: manual tree traversal to find call nodes
+                    print("Falling back to manual tree traversal...")
+                    call_nodes = []
+                    
+                    def find_calls(node):
+                        if node.type == "call":
+                            call_nodes.append(node)
+                        for child in node.children:
+                            find_calls(child)
+                    
+                    find_calls(root_node)
+                    print(f"Manual traversal found {len(call_nodes)} call nodes")
+                    
             except Exception as e:
-                print(f"❌ Alternative API approach failed: {e}")
-                return
+                print(f"❌ Older API pattern failed: {e}")
+                print("Falling back to manual tree traversal...")
+                call_nodes = []
+                
+                def find_calls(node):
+                    if node.type == "call":
+                        call_nodes.append(node)
+                    for child in node.children:
+                        find_calls(child)
+                
+                find_calls(root_node)
+                print(f"Manual traversal found {len(call_nodes)} call nodes")
             
         print(f"Found {len(call_nodes)} call nodes")
         
