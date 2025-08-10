@@ -703,7 +703,7 @@ class GraphUpdater:
         This method handles different tree-sitter API versions:
         - Modern API: uses query.captures() method
         - Alternative API: uses query.matches() method  
-        - Very old API: uses direct iteration over matches
+        - Very old API: direct function call to query with node
         - Ultimate fallback: manual tree traversal
         """
         try:
@@ -722,32 +722,61 @@ class GraphUpdater:
                             captured_nodes.append(capture[0])
                 return captured_nodes
             else:
-                # Try very old tree-sitter API pattern
-                logger.debug(f"Trying very old API pattern for '{capture_name}'")
-                if hasattr(query, 'capture_count') and hasattr(query, 'pattern_count'):
-                    # This is the very old tree-sitter API
-                    captured_nodes = []
+                # Try very old tree-sitter API pattern where query is callable
+                logger.debug(f"Trying very old API pattern - direct query call for '{capture_name}'")
+                if callable(query) or hasattr(query, '__call__'):
                     try:
-                        # Try to iterate through matches using the old pattern
-                        # In very old versions, you had to iterate differently
-                        matches_iter = iter(query)  # Some old versions were iterable
-                        for match in matches_iter:
-                            if hasattr(match, 'captures'):
-                                for capture_name_actual, capture_node in match.captures:
-                                    if capture_name_actual == capture_name:
-                                        captured_nodes.append(capture_node)
-                            elif len(match) >= 2:  # match is a tuple/list
-                                capture_node, capture_name_actual = match
-                                if capture_name_actual == capture_name:
-                                    captured_nodes.append(capture_node)
+                        # In very old tree-sitter, you call query(node) directly
+                        matches = query(node)
+                        captured_nodes = []
+                        logger.debug(f"Query call returned: {type(matches)} with {len(matches) if hasattr(matches, '__len__') else 'unknown'} items")
+                        
+                        for match in matches:
+                            # match format in old API: (node, capture_name) tuples
+                            if isinstance(match, tuple) and len(match) >= 2:
+                                match_node, match_capture_name = match
+                                if match_capture_name == capture_name:
+                                    captured_nodes.append(match_node)
+                            # Alternative format: match object with captures attribute
+                            elif hasattr(match, 'captures'):
+                                for capture in match.captures:
+                                    if isinstance(capture, tuple) and len(capture) >= 2:
+                                        capture_node, capture_name_actual = capture
+                                        if capture_name_actual == capture_name:
+                                            captured_nodes.append(capture_node)
+                        
+                        logger.debug(f"Very old API found {len(captured_nodes)} nodes for '{capture_name}'")
                         if captured_nodes:
-                            logger.debug(f"Very old API found {len(captured_nodes)} nodes for '{capture_name}'")
                             return captured_nodes
+                            
                     except Exception as old_api_error:
                         logger.debug(f"Very old API pattern failed: {old_api_error}")
                 
+                # Even older API: check if query has capture_count (but no __call__)
+                elif hasattr(query, 'capture_count') and hasattr(query, 'pattern_count'):
+                    logger.debug(f"Trying ancient API with capture_count for '{capture_name}'")
+                    try:
+                        # This is an even older API where we need to use a different approach
+                        # Try to find if there's a way to execute the query
+                        for attr_name in ['execute', 'match', 'search']:
+                            if hasattr(query, attr_name):
+                                executor = getattr(query, attr_name)
+                                if callable(executor):
+                                    matches = executor(node)
+                                    captured_nodes = []
+                                    for match in matches:
+                                        if isinstance(match, tuple) and len(match) >= 2:
+                                            match_node, match_capture_name = match
+                                            if match_capture_name == capture_name:
+                                                captured_nodes.append(match_node)
+                                    if captured_nodes:
+                                        logger.debug(f"Ancient API ({attr_name}) found {len(captured_nodes)} nodes")
+                                        return captured_nodes
+                    except Exception as ancient_api_error:
+                        logger.debug(f"Ancient API pattern failed: {ancient_api_error}")
+                
                 # Final fallback to manual traversal for any older tree-sitter versions
-                logger.debug(f"Using manual traversal fallback for capture '{capture_name}'")
+                logger.debug(f"All API attempts failed, using manual traversal fallback for capture '{capture_name}'")
                 return self._manual_traverse_for_capture(node, capture_name)
         except Exception as e:
             logger.warning(f"Query execution failed, using manual traversal: {e}")
