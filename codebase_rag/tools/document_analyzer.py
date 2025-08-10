@@ -2,12 +2,11 @@ import mimetypes
 import shutil
 import uuid
 from pathlib import Path
-from typing import Union
 
 from google import genai
+from google.auth import load_credentials_from_file
 from google.genai import types
 from google.genai.errors import ClientError
-from google.auth import load_credentials_from_file
 from loguru import logger
 from pydantic_ai import Tool
 
@@ -19,7 +18,7 @@ class _NotSupportedClient:
 
     def __getattr__(self, name: str) -> None:
         raise NotImplementedError(
-            "DocumentAnalyzer does not support the 'local' LLM provider."
+            "DocumentAnalyzer does not support the 'local' LLM provider.",
         )
 
 
@@ -31,7 +30,7 @@ class DocumentAnalyzer:
 
     def __init__(self, project_root: str) -> None:
         self.project_root = Path(project_root).resolve()
-        self.client: Union[genai.Client, _NotSupportedClient]
+        self.client: genai.Client | _NotSupportedClient
 
         # Initialize client based on the orchestrator model's provider
         # Note: Document analysis uses the orchestrator model since it's the main reasoning model
@@ -44,7 +43,7 @@ class DocumentAnalyzer:
             else:  # vertex provider
                 # For Vertex AI, use service account authentication
                 credentials, _ = load_credentials_from_file(
-                    settings.GCP_SERVICE_ACCOUNT_FILE
+                    settings.GCP_SERVICE_ACCOUNT_FILE,
                 )
                 self.client = genai.Client(
                     project=settings.GCP_PROJECT_ID,
@@ -63,7 +62,7 @@ class DocumentAnalyzer:
         with a specific question, and returns the model's analysis.
         """
         logger.info(
-            f"[DocumentAnalyzer] Analyzing '{file_path}' with question: '{question}'"
+            f"[DocumentAnalyzer] Analyzing '{file_path}' with question: '{question}'",
         )
         try:
             # Handle absolute paths by copying to .tmp folder
@@ -109,7 +108,8 @@ class DocumentAnalyzer:
             if not hasattr(self.client, "models") or self.client.models is None:
                 raise RuntimeError("Client models not available")
             response = self.client.models.generate_content(
-                model=settings.GEMINI_MODEL_ID, contents=prompt_parts
+                model=settings.GEMINI_MODEL_ID,
+                contents=prompt_parts,
             )
 
             logger.success(f"Successfully received analysis for '{file_path}'.")
@@ -147,7 +147,8 @@ class DocumentAnalyzer:
             return f"API error: {e}"
         except Exception as e:
             logger.error(
-                f"Failed to analyze document '{file_path}': {e}", exc_info=True
+                f"Failed to analyze document '{file_path}': {e}",
+                exc_info=True,
             )
             return f"An error occurred during analysis: {e}"
 
@@ -167,12 +168,13 @@ def create_document_analyzer_tool(analyzer: DocumentAnalyzer) -> Tool:
         try:
             result = analyzer.analyze(file_path, question)
             logger.debug(
-                f"[analyze_document] Result type: {type(result)}, content: {result[:100] if result else 'None'}..."
+                f"[analyze_document] Result type: {type(result)}, content: {result[:100] if result else 'None'}...",
             )
             return result
         except Exception as e:
             logger.error(
-                f"[analyze_document] Exception during analysis: {e}", exc_info=True
+                f"[analyze_document] Exception during analysis: {e}",
+                exc_info=True,
             )
             if str(e).startswith("Error:") or str(e).startswith("API error:"):
                 return str(e)

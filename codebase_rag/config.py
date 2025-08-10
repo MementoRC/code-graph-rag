@@ -69,7 +69,7 @@ class AppConfig(BaseSettings):
         """Validate that required API keys are set for the providers being used."""
         # Get the providers for active models
         orchestrator_provider = detect_provider_from_model(
-            self.active_orchestrator_model
+            self.active_orchestrator_model,
         )
         cypher_provider = detect_provider_from_model(self.active_cypher_model)
 
@@ -79,17 +79,17 @@ class AppConfig(BaseSettings):
         if "gemini" in providers_in_use:
             if self.GEMINI_PROVIDER == "gla" and not self.GEMINI_API_KEY:
                 raise ValueError(
-                    "Configuration Error: GEMINI_API_KEY is required when using Gemini models with 'gla' provider."
+                    "Configuration Error: GEMINI_API_KEY is required when using Gemini models with 'gla' provider.",
                 )
             if self.GEMINI_PROVIDER == "vertex" and not self.GCP_PROJECT_ID:
                 raise ValueError(
-                    "Configuration Error: GCP_PROJECT_ID is required when using Gemini models with 'vertex' provider."
+                    "Configuration Error: GCP_PROJECT_ID is required when using Gemini models with 'vertex' provider.",
                 )
 
         if "openai" in providers_in_use:
             if not self.OPENAI_API_KEY:
                 raise ValueError(
-                    "Configuration Error: OPENAI_API_KEY is required when using OpenAI models."
+                    "Configuration Error: OPENAI_API_KEY is required when using OpenAI models.",
                 )
         return
 

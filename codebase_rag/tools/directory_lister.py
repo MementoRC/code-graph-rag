@@ -46,7 +46,7 @@ class DirectoryLister:
             safe_path.relative_to(self.project_root)
         except ValueError as e:
             raise PermissionError(
-                "Access denied: Cannot access files outside the project root."
+                "Access denied: Cannot access files outside the project root.",
             ) from e
 
         return safe_path

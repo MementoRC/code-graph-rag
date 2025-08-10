@@ -20,7 +20,7 @@ class LanguageConfig:
 
     # Package detection patterns
     package_indicators: list[str] = field(
-        default_factory=list
+        default_factory=list,
     )  # e.g., ["__init__.py"] for Python
 
 

@@ -21,7 +21,8 @@ class GraphData(BaseModel):
             clean_row = {}
             for k, val in row.items():
                 if not isinstance(
-                    val, str | int | float | bool | list | dict | type(None)
+                    val,
+                    str | int | float | bool | list | dict | type(None),
                 ):
                     clean_row[k] = str(val)
                 else:

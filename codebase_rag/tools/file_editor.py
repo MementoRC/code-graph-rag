@@ -86,7 +86,10 @@ class FileEditor:
         return tree.root_node
 
     def get_function_source_code(
-        self, file_path: str, function_name: str, line_number: int | None = None
+        self,
+        file_path: str,
+        function_name: str,
+        line_number: int | None = None,
     ) -> str | None:
         root_node = self.get_ast(file_path)
         if not root_node:
@@ -126,7 +129,7 @@ class FileEditor:
                                 "parent_class": parent_class,
                                 "line_number": node.start_point[0]
                                 + 1,  # 1-based line numbers
-                            }
+                            },
                         )
 
                     # Don't recurse into function bodies for nested functions
@@ -165,7 +168,7 @@ class FileEditor:
                             return None
                         return str(node_text.decode("utf-8"))
                 logger.warning(
-                    f"No function '{function_name}' found at line {line_number}"
+                    f"No function '{function_name}' found at line {line_number}",
                 )
                 return None
 
@@ -178,7 +181,7 @@ class FileEditor:
                             return None
                         return str(node_text.decode("utf-8"))
                 logger.warning(
-                    f"No function found with qualified name '{function_name}'"
+                    f"No function found with qualified name '{function_name}'",
                 )
                 return None
 
@@ -192,7 +195,7 @@ class FileEditor:
                 f"Ambiguous function name '{function_name}' in {file_path}. "
                 f"Found {len(matching_functions)} matches: {', '.join(function_details)}. "
                 f"Using first match. Consider using qualified name (e.g., 'ClassName.{function_name}') "
-                f"or specify line number for precise targeting."
+                f"or specify line number for precise targeting.",
             )
 
             # Return the first match but warn the user
@@ -209,7 +212,9 @@ class FileEditor:
         line_number: int | None = None,
     ) -> bool:
         original_code = self.get_function_source_code(
-            file_path, function_name, line_number
+            file_path,
+            function_name,
+            line_number,
         )
         if not original_code:
             logger.error(f"Function '{function_name}' not found in {file_path}.")
@@ -227,7 +232,7 @@ class FileEditor:
         # Check if all patches were applied successfully
         if not all(results):
             logger.warning(
-                f"Patches for function '{function_name}' did not apply cleanly."
+                f"Patches for function '{function_name}' did not apply cleanly.",
             )
             return False
 
@@ -239,7 +244,7 @@ class FileEditor:
             f.write(new_content)
 
         logger.success(
-            f"Successfully replaced function '{function_name}' in {file_path}."
+            f"Successfully replaced function '{function_name}' in {file_path}.",
         )
         return True
 
@@ -251,7 +256,9 @@ class FileEditor:
         line_number: int | None = None,
     ) -> str | None:
         original_code = self.get_function_source_code(
-            file_path, function_name, line_number
+            file_path,
+            function_name,
+            line_number,
         )
         if not original_code:
             return None
@@ -298,7 +305,10 @@ class FileEditor:
             return False
 
     def _display_colored_diff(
-        self, original_content: str, new_content: str, file_path: str
+        self,
+        original_content: str,
+        new_content: str,
+        file_path: str,
     ) -> None:
         """Display a concise colored diff with limited context."""
         # Generate diffs using diff-match-patch
@@ -351,11 +361,14 @@ class FileEditor:
         print()  # Extra newline for spacing
 
     def replace_code_block(
-        self, file_path: str, target_block: str, replacement_block: str
+        self,
+        file_path: str,
+        target_block: str,
+        replacement_block: str,
     ) -> bool:
         """Surgically replace a specific code block in a file using diff-match-patch."""
         logger.info(
-            f"[FileEditor] Attempting surgical block replacement in: {file_path}"
+            f"[FileEditor] Attempting surgical block replacement in: {file_path}",
         )
         try:
             full_path = (self.project_root / file_path).resolve()
@@ -377,18 +390,20 @@ class FileEditor:
 
             # Create surgical patch - replace only the target block
             modified_content = original_content.replace(
-                target_block, replacement_block, 1
+                target_block,
+                replacement_block,
+                1,
             )
 
             # Verify only one replacement was made
             if original_content.count(target_block) > 1:
                 logger.warning(
-                    "Multiple occurrences of target block found. Only replacing first occurrence."
+                    "Multiple occurrences of target block found. Only replacing first occurrence.",
                 )
 
             if original_content == modified_content:
                 logger.warning(
-                    "No changes detected - target and replacement are identical"
+                    "No changes detected - target and replacement are identical",
                 )
                 return False
 
@@ -408,13 +423,13 @@ class FileEditor:
                 f.write(patched_content)
 
             logger.success(
-                f"[FileEditor] Successfully applied surgical block replacement in: {file_path}"
+                f"[FileEditor] Successfully applied surgical block replacement in: {file_path}",
             )
             return True
 
         except ValueError:
             logger.error(
-                "Security risk: Attempted to edit file outside of project root."
+                "Security risk: Attempted to edit file outside of project root.",
             )
             return False
         except Exception as e:
@@ -433,7 +448,9 @@ class FileEditor:
                 error_msg = f"File not found or is a directory: {file_path}"
                 logger.warning(f"[FileEditor] {error_msg}")
                 return EditResult(
-                    file_path=file_path, success=False, error_message=error_msg
+                    file_path=file_path,
+                    success=False,
+                    error_message=error_msg,
                 )
 
             # Read original content to show diff
@@ -449,7 +466,7 @@ class FileEditor:
                 f.write(new_content)
 
             logger.success(
-                f"[FileEditor] Successfully replaced entire file: {file_path}"
+                f"[FileEditor] Successfully replaced entire file: {file_path}",
             )
             return EditResult(file_path=file_path, success=True)
 
@@ -457,13 +474,17 @@ class FileEditor:
             error_msg = "Security risk: Attempted to edit file outside of project root."
             logger.error(f"[FileEditor] {error_msg}")
             return EditResult(
-                file_path=file_path, success=False, error_message=error_msg
+                file_path=file_path,
+                success=False,
+                error_message=error_msg,
             )
         except Exception as e:
             error_msg = f"An unexpected error occurred: {e}"
             logger.error(f"[FileEditor] Error editing file {file_path}: {e}")
             return EditResult(
-                file_path=file_path, success=False, error_message=error_msg
+                file_path=file_path,
+                success=False,
+                error_message=error_msg,
             )
 
 
@@ -471,7 +492,9 @@ def create_file_editor_tool(file_editor: FileEditor) -> Tool:
     """Factory function to create the file editor tool."""
 
     async def replace_code_surgically(
-        file_path: str, target_code: str, replacement_code: str
+        file_path: str,
+        target_code: str,
+        replacement_code: str,
     ) -> str:
         """
         Surgically replaces a specific code block in a file using diff-match-patch.
@@ -487,7 +510,9 @@ def create_file_editor_tool(file_editor: FileEditor) -> Tool:
         without affecting the rest of the file. The target_code must be an exact match.
         """
         success = file_editor.replace_code_block(
-            file_path, target_code, replacement_code
+            file_path,
+            target_code,
+            replacement_code,
         )
         if success:
             return f"Successfully applied surgical code replacement in: {file_path}"

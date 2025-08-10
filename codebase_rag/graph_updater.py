@@ -59,17 +59,23 @@ class GraphUpdater:
         self._identify_structure()
 
         logger.info(
-            "\n--- Pass 2: Processing Files, Caching ASTs, and Collecting Definitions ---"
+            "\n--- Pass 2: Processing Files, Caching ASTs, and Collecting Definitions ---",
         )
         self._process_files()
 
-        logger.critical(f"🔍 INTEGRATION TEST DEBUG: Found {len(self.function_registry)} functions in registry")
-        logger.critical(f"🔍 INTEGRATION TEST DEBUG: AST cache has {len(self.ast_cache)} files")
-        print(f"🔍 INTEGRATION TEST DEBUG: Found {len(self.function_registry)} functions in registry")
+        logger.critical(
+            f"🔍 INTEGRATION TEST DEBUG: Found {len(self.function_registry)} functions in registry",
+        )
+        logger.critical(
+            f"🔍 INTEGRATION TEST DEBUG: AST cache has {len(self.ast_cache)} files",
+        )
+        print(
+            f"🔍 INTEGRATION TEST DEBUG: Found {len(self.function_registry)} functions in registry",
+        )
         print(f"🔍 INTEGRATION TEST DEBUG: AST cache has {len(self.ast_cache)} files")
 
         logger.info(
-            f"\n--- Found {len(self.function_registry)} functions/methods in codebase ---"
+            f"\n--- Found {len(self.function_registry)} functions/methods in codebase ---",
         )
         logger.info("--- Pass 3: Processing Function Calls from AST Cache ---")
         self._process_function_calls()
@@ -128,7 +134,8 @@ class GraphUpdater:
                 self.structural_elements[relative_root] = None  # Mark as folder
                 logger.info(f"  Identified Folder: '{relative_root}'")
                 self.ingestor.ensure_node_batch(
-                    "Folder", {"path": str(relative_root), "name": root.name}
+                    "Folder",
+                    {"path": str(relative_root), "name": root.name},
                 )
                 parent_label, parent_key, parent_val = (
                     ("Project", "name", self.project_name)
@@ -230,11 +237,11 @@ class GraphUpdater:
             self.ast_cache[file_path] = (root_node, language)
 
             module_qn = ".".join(
-                [self.project_name] + list(relative_path.with_suffix("").parts)
+                [self.project_name] + list(relative_path.with_suffix("").parts),
             )
             if file_path.name == "__init__.py":
                 module_qn = ".".join(
-                    [self.project_name] + list(relative_path.parent.parts)
+                    [self.project_name] + list(relative_path.parent.parts),
                 )
 
             self.ingestor.ensure_node_batch(
@@ -271,7 +278,10 @@ class GraphUpdater:
             logger.error(f"Failed to parse or ingest {file_path}: {e}")
 
     def _ingest_top_level_functions(
-        self, root_node: Node, module_qn: str, language: str
+        self,
+        root_node: Node,
+        module_qn: str,
+        language: str,
     ) -> None:
         lang_queries = self.queries[language]
         lang_config: LanguageConfig = lang_queries["config"]
@@ -283,7 +293,7 @@ class GraphUpdater:
         for func_node in func_nodes:
             if not isinstance(func_node, Node):
                 logger.warning(
-                    f"Expected Node object but got {type(func_node)}: {func_node}"
+                    f"Expected Node object but got {type(func_node)}: {func_node}",
                 )
                 continue
             if self._is_method(func_node, lang_config):
@@ -332,7 +342,7 @@ class GraphUpdater:
 
         if not isinstance(current, Node):
             logger.warning(
-                f"Unexpected parent type for node {func_node}: {type(current)}. Skipping."
+                f"Unexpected parent type for node {func_node}: {type(current)}. Skipping.",
             )
             return None
 
@@ -365,7 +375,10 @@ class GraphUpdater:
         return False
 
     def _determine_function_parent(
-        self, func_node: Node, module_qn: str, lang_config: LanguageConfig
+        self,
+        func_node: Node,
+        module_qn: str,
+        lang_config: LanguageConfig,
     ) -> tuple[str, str]:
         current = func_node.parent
         if not isinstance(current, Node):
@@ -379,7 +392,10 @@ class GraphUpdater:
                         continue
                     parent_func_name = parent_text.decode("utf8")
                     if parent_func_qn := self._build_nested_qualified_name(
-                        current, module_qn, parent_func_name, lang_config
+                        current,
+                        module_qn,
+                        parent_func_name,
+                        lang_config,
                     ):
                         return "Function", parent_func_qn
                 break
@@ -389,7 +405,10 @@ class GraphUpdater:
         return "Module", module_qn
 
     def _ingest_classes_and_methods(
-        self, root_node: Node, module_qn: str, language: str
+        self,
+        root_node: Node,
+        module_qn: str,
+        language: str,
     ) -> None:
         lang_queries = self.queries[language]
 
@@ -430,7 +449,11 @@ class GraphUpdater:
 
             method_query = lang_queries["functions"]
             # Use compatibility layer for different tree-sitter API versions
-            method_nodes = self._execute_query_with_fallback(method_query, body_node, "function")
+            method_nodes = self._execute_query_with_fallback(
+                method_query,
+                body_node,
+                "function",
+            )
             for method_node in method_nodes:
                 if not isinstance(method_node, Node):
                     continue
@@ -500,7 +523,10 @@ class GraphUpdater:
         logger.critical("🔍 === COMPLETED FUNCTION CALL PROCESSING ===")
 
     def _process_calls_in_file(
-        self, file_path: Path, root_node: Node, language: str
+        self,
+        file_path: Path,
+        root_node: Node,
+        language: str,
     ) -> None:
         """Process function calls in a specific file using its cached AST."""
         relative_path = file_path.relative_to(self.repo_path)
@@ -508,11 +534,11 @@ class GraphUpdater:
 
         try:
             module_qn = ".".join(
-                [self.project_name] + list(relative_path.with_suffix("").parts)
+                [self.project_name] + list(relative_path.with_suffix("").parts),
             )
             if file_path.name == "__init__.py":
                 module_qn = ".".join(
-                    [self.project_name] + list(relative_path.parent.parts)
+                    [self.project_name] + list(relative_path.parent.parts),
                 )
 
             self._process_calls_in_functions(root_node, module_qn, language)
@@ -522,7 +548,10 @@ class GraphUpdater:
             logger.error(f"Failed to process calls in {file_path}: {e}")
 
     def _process_calls_in_functions(
-        self, root_node: Node, module_qn: str, language: str
+        self,
+        root_node: Node,
+        module_qn: str,
+        language: str,
     ) -> None:
         lang_queries = self.queries[language]
         lang_config: LanguageConfig = lang_queries["config"]
@@ -547,16 +576,26 @@ class GraphUpdater:
                 continue
             func_name = text.decode("utf8")
             func_qn = self._build_nested_qualified_name(
-                func_node, module_qn, func_name, lang_config
+                func_node,
+                module_qn,
+                func_name,
+                lang_config,
             )
 
             if func_qn:
                 self._ingest_function_calls(
-                    func_node, func_qn, "Function", module_qn, language
+                    func_node,
+                    func_qn,
+                    "Function",
+                    module_qn,
+                    language,
                 )
 
     def _process_calls_in_classes(
-        self, root_node: Node, module_qn: str, language: str
+        self,
+        root_node: Node,
+        module_qn: str,
+        language: str,
     ) -> None:
         lang_queries = self.queries[language]
 
@@ -582,7 +621,11 @@ class GraphUpdater:
 
             method_query = lang_queries["functions"]
             # Use compatibility layer for different tree-sitter API versions
-            method_nodes = self._execute_query_with_fallback(method_query, body_node, "function")
+            method_nodes = self._execute_query_with_fallback(
+                method_query,
+                body_node,
+                "function",
+            )
             for method_node in method_nodes:
                 if not isinstance(method_node, Node):
                     continue
@@ -596,7 +639,11 @@ class GraphUpdater:
                 method_qn = f"{class_qn}.{method_name}"
 
                 self._ingest_function_calls(
-                    method_node, method_qn, "Method", module_qn, language
+                    method_node,
+                    method_qn,
+                    "Method",
+                    module_qn,
+                    language,
                 )
 
     def _get_call_target_name(self, call_node: Node) -> str | None:
@@ -664,12 +711,14 @@ class GraphUpdater:
 
             callee_info = self._resolve_function_call(call_name, module_qn)
             if not callee_info:
-                logger.debug(f"Could not resolve function call: {call_name} in module {module_qn}")
+                logger.debug(
+                    f"Could not resolve function call: {call_name} in module {module_qn}",
+                )
                 continue
 
             callee_type, callee_qn = callee_info
             logger.info(
-                f"      CREATING CALL RELATIONSHIP: {caller_qn} -> {call_name} (resolved as {callee_type}:{callee_qn})"
+                f"      CREATING CALL RELATIONSHIP: {caller_qn} -> {call_name} (resolved as {callee_type}:{callee_qn})",
             )
 
             self.ingestor.ensure_relationship_batch(
@@ -679,7 +728,9 @@ class GraphUpdater:
             )
 
     def _resolve_function_call(
-        self, call_name: str, module_qn: str
+        self,
+        call_name: str,
+        module_qn: str,
     ) -> tuple[str, str] | None:
         # First, try to resolve with fully qualified names
         possible_qns = [
@@ -708,7 +759,10 @@ class GraphUpdater:
 
     # TODO: (VA) This is a hack to resolve function calls. We need to improve this.
     def _is_likely_same_function(
-        self, call_name: str, registered_qn: str, caller_module_qn: str
+        self,
+        call_name: str,
+        registered_qn: str,
+        caller_module_qn: str,
     ) -> bool:
         if len(call_name) > 10 or "_" in call_name:
             return True
@@ -725,7 +779,12 @@ class GraphUpdater:
 
         return False
 
-    def _execute_query_with_fallback(self, query, node: Node, capture_name: str) -> list[Node]:
+    def _execute_query_with_fallback(
+        self,
+        query,
+        node: Node,
+        capture_name: str,
+    ) -> list[Node]:
         """Execute tree-sitter query with API compatibility fallback.
 
         This method handles different tree-sitter API versions:
@@ -734,36 +793,58 @@ class GraphUpdater:
         - Ultimate fallback: manual tree traversal
         """
         # TEMPORARY: Force manual traversal in CI environment since diagnostic test proves it works
-        if os.environ.get('ENVIRONMENT') == 'ci':
-            print(f"🔄 CI ENVIRONMENT: Forcing manual traversal for '{capture_name}'", file=sys.stderr)
-            logger.critical(f"🔄 CI ENVIRONMENT: Forcing manual traversal for '{capture_name}'")
+        if os.environ.get("ENVIRONMENT") == "ci":
+            print(
+                f"🔄 CI ENVIRONMENT: Forcing manual traversal for '{capture_name}'",
+                file=sys.stderr,
+            )
+            logger.critical(
+                f"🔄 CI ENVIRONMENT: Forcing manual traversal for '{capture_name}'",
+            )
             result = self._manual_traverse_for_capture(node, capture_name)
-            print(f"🔄 CI MANUAL TRAVERSAL: Found {len(result)} nodes for '{capture_name}'", file=sys.stderr)
-            logger.critical(f"🔄 CI MANUAL TRAVERSAL: Found {len(result)} nodes for '{capture_name}'")
+            print(
+                f"🔄 CI MANUAL TRAVERSAL: Found {len(result)} nodes for '{capture_name}'",
+                file=sys.stderr,
+            )
+            logger.critical(
+                f"🔄 CI MANUAL TRAVERSAL: Found {len(result)} nodes for '{capture_name}'",
+            )
             return result
 
         try:
             # Try modern API first (should work now with Query constructor)
-            if hasattr(query, 'captures'):
-                logger.info(f"Using modern API: query.captures() for '{capture_name}'")  # Changed to INFO
+            if hasattr(query, "captures"):
+                logger.info(
+                    f"Using modern API: query.captures() for '{capture_name}'",
+                )  # Changed to INFO
                 captures = query.captures(node)
                 result = captures.get(capture_name, [])
-                logger.info(f"Modern API found {len(result)} nodes for '{capture_name}'")  # Changed to INFO
+                logger.info(
+                    f"Modern API found {len(result)} nodes for '{capture_name}'",
+                )  # Changed to INFO
                 return result
-            elif hasattr(query, 'matches'):
-                logger.info(f"Using alternative API: query.matches() for '{capture_name}'")  # Changed to INFO
+            elif hasattr(query, "matches"):
+                logger.info(
+                    f"Using alternative API: query.matches() for '{capture_name}'",
+                )  # Changed to INFO
                 matches = query.matches(node)
                 captured_nodes = []
                 for pattern_index, match_captures in matches:
                     for capture in match_captures:
                         if len(capture) >= 2 and capture[1] == capture_name:
                             captured_nodes.append(capture[0])
-                logger.info(f"Alternative API found {len(captured_nodes)} nodes for '{capture_name}'")  # Changed to INFO
+                logger.info(
+                    f"Alternative API found {len(captured_nodes)} nodes for '{capture_name}'",
+                )  # Changed to INFO
                 return captured_nodes
             else:
                 # Handle very old tree-sitter API that has capture_count, pattern_count etc.
-                logger.warning(f"Query object has no captures() or matches() methods - trying old API patterns for '{capture_name}'")
-                logger.warning(f"Available query methods: {[attr for attr in dir(query) if not attr.startswith('_')]}")  # Show available methods
+                logger.warning(
+                    f"Query object has no captures() or matches() methods - trying old API patterns for '{capture_name}'",
+                )
+                logger.warning(
+                    f"Available query methods: {[attr for attr in dir(query) if not attr.startswith('_')]}",
+                )  # Show available methods
 
                 # Try different execution patterns for old tree-sitter API
                 try:
@@ -773,7 +854,7 @@ class GraphUpdater:
                         matches = query(node)
                         captured_nodes = []
                         for match in matches:
-                            if hasattr(match, 'captures'):
+                            if hasattr(match, "captures"):
                                 for capture in match.captures:
                                     if capture[1] == capture_name:  # (node, name) tuple
                                         captured_nodes.append(capture[0])
@@ -781,11 +862,13 @@ class GraphUpdater:
                                 if match[1] == capture_name:
                                     captured_nodes.append(match[0])
                         if captured_nodes:
-                            logger.info(f"Old API callable pattern found {len(captured_nodes)} nodes")
+                            logger.info(
+                                f"Old API callable pattern found {len(captured_nodes)} nodes",
+                            )
                             return captured_nodes
 
                     # Pattern 2: Check if node has a method to execute queries
-                    for method_name in ['query', 'search', 'match']:
+                    for method_name in ["query", "search", "match"]:
                         if hasattr(node, method_name):
                             logger.info(f"Trying node.{method_name}(query) pattern")
                             executor = getattr(node, method_name)
@@ -797,14 +880,19 @@ class GraphUpdater:
                                         if match[1] == capture_name:
                                             captured_nodes.append(match[0])
                                 if captured_nodes:
-                                    logger.info(f"Node method {method_name} found {len(captured_nodes)} nodes")
+                                    logger.info(
+                                        f"Node method {method_name} found {len(captured_nodes)} nodes",
+                                    )
                                     return captured_nodes
 
                     # Pattern 3: Maybe there's a global query execution function
                     import tree_sitter
-                    for func_name in ['query', 'execute_query', 'search']:
+
+                    for func_name in ["query", "execute_query", "search"]:
                         if hasattr(tree_sitter, func_name):
-                            logger.info(f"Trying tree_sitter.{func_name}(query, node) pattern")
+                            logger.info(
+                                f"Trying tree_sitter.{func_name}(query, node) pattern",
+                            )
                             executor = getattr(tree_sitter, func_name)
                             if callable(executor):
                                 try:
@@ -815,18 +903,26 @@ class GraphUpdater:
                                             if match[1] == capture_name:
                                                 captured_nodes.append(match[0])
                                     if captured_nodes:
-                                        logger.info(f"Module function {func_name} found {len(captured_nodes)} nodes")
+                                        logger.info(
+                                            f"Module function {func_name} found {len(captured_nodes)} nodes",
+                                        )
                                         return captured_nodes
                                 except Exception as e:
-                                    logger.debug(f"Module function {func_name} failed: {e}")
+                                    logger.debug(
+                                        f"Module function {func_name} failed: {e}",
+                                    )
 
                 except Exception as api_error:
                     logger.warning(f"Old API execution failed: {api_error}")
 
                 # Final fallback to manual traversal
-                logger.info(f"All query API attempts failed, using manual traversal for '{capture_name}'")
+                logger.info(
+                    f"All query API attempts failed, using manual traversal for '{capture_name}'",
+                )
                 result = self._manual_traverse_for_capture(node, capture_name)
-                logger.info(f"Manual traversal fallback found {len(result)} nodes for '{capture_name}'")
+                logger.info(
+                    f"Manual traversal fallback found {len(result)} nodes for '{capture_name}'",
+                )
                 return result
         except Exception as e:
             logger.warning(f"Query execution failed: {e}, using manual traversal")
@@ -857,7 +953,10 @@ class GraphUpdater:
 
             if current_node.type in target_types:
                 found_nodes.append(current_node)
-                print(f"🎯 FOUND {capture_name} NODE: {current_node.type} at line {current_node.start_point[0]+1}", file=sys.stderr)
+                print(
+                    f"🎯 FOUND {capture_name} NODE: {current_node.type} at line {current_node.start_point[0] + 1}",
+                    file=sys.stderr,
+                )
 
             for child in current_node.children:
                 traverse(child)

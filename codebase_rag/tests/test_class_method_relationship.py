@@ -24,7 +24,8 @@ def temp_project(temp_repo: Path) -> Path:
 
 
 def test_defines_method_relationship_is_created(
-    temp_project: Path, mock_ingestor: MagicMock
+    temp_project: Path,
+    mock_ingestor: MagicMock,
 ) -> None:
     """
     Tests that GraphUpdater correctly identifies and creates DEFINES_METHOD relationships.

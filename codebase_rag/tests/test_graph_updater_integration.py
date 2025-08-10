@@ -31,7 +31,8 @@ def temp_project(temp_repo: Path) -> Path:
 
 
 def test_function_call_relationships_are_created(
-    temp_project: Path, mock_ingestor: MemgraphIngestor
+    temp_project: Path,
+    mock_ingestor: MemgraphIngestor,
 ) -> None:
     """
     Tests that GraphUpdater correctly identifies and creates CALLS relationships.
@@ -78,6 +79,7 @@ def test_function_call_relationships_are_created(
     except Exception as e:
         print(f"ERROR loading parsers: {e}")
         import traceback
+
         traceback.print_exc()
         raise
 
@@ -100,8 +102,12 @@ def test_function_call_relationships_are_created(
     )
     print("GraphUpdater created successfully")
     print(f"GraphUpdater repo_path: {updater.repo_path}")
-    print(f"GraphUpdater has parsers: {hasattr(updater, 'parsers') and updater.parsers is not None}")
-    print(f"GraphUpdater has queries: {hasattr(updater, 'queries') and updater.queries is not None}")
+    print(
+        f"GraphUpdater has parsers: {hasattr(updater, 'parsers') and updater.parsers is not None}",
+    )
+    print(
+        f"GraphUpdater has queries: {hasattr(updater, 'queries') and updater.queries is not None}",
+    )
 
     # === DEBUGGING: Run Execution ===
     print("\n=== RUNNING GRAPH UPDATER ===")
@@ -111,6 +117,7 @@ def test_function_call_relationships_are_created(
     except Exception as e:
         print(f"ERROR during GraphUpdater.run(): {e}")
         import traceback
+
         traceback.print_exc()
         raise
 
@@ -126,11 +133,13 @@ def test_function_call_relationships_are_created(
     print("All ensure_relationship_batch calls:")
     for i, call_obj in enumerate(relationship_calls):
         print(f"  Call {i + 1}: {call_obj}")
-        if hasattr(call_obj, 'args') and len(call_obj.args) >= 2:
+        if hasattr(call_obj, "args") and len(call_obj.args) >= 2:
             print(f"    Relationship type: {call_obj.args[1]}")
 
     # Analyze other mock method calls
-    other_method_calls = [call for call in all_calls if 'ensure_relationship_batch' not in str(call)]
+    other_method_calls = [
+        call for call in all_calls if "ensure_relationship_batch" not in str(call)
+    ]
     print(f"Other method calls: {len(other_method_calls)}")
     for i, call_obj in enumerate(other_method_calls[:10]):  # Show first 10
         print(f"  Other call {i + 1}: {call_obj}")

@@ -24,9 +24,9 @@ from tree_sitter import Language, Node, Parser
 
 def print_diagnostic(title: str, content: Any = None) -> None:
     """Print diagnostic information with clear formatting."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"🔍 {title}")
-    print('='*60)
+    print("=" * 60)
     if content is not None:
         print(content)
 
@@ -46,6 +46,7 @@ def test_debug_calls_detection():
     print_diagnostic("TREE-SITTER PYTHON IMPORT")
     try:
         from tree_sitter_python import language as python_language
+
         print("✅ Successfully imported tree_sitter_python")
         print(f"Language function type: {type(python_language)}")
     except ImportError as e:
@@ -93,6 +94,7 @@ def local_func():
         calls_query_string = "(call) @call"
         # Use modern Query constructor instead of deprecated language.query()
         from tree_sitter import Query
+
         calls_query = Query(language, calls_query_string)
         print(f"✅ Query created with modern constructor: {calls_query_string}")
     except Exception as e:
@@ -110,15 +112,17 @@ def local_func():
     try:
         # Check what methods are available on the query object
         print(f"Query object type: {type(calls_query)}")
-        print(f"Available methods: {[attr for attr in dir(calls_query) if not attr.startswith('_')]}")
+        print(
+            f"Available methods: {[attr for attr in dir(calls_query) if not attr.startswith('_')]}",
+        )
 
         # Try different tree-sitter API methods
-        if hasattr(calls_query, 'captures'):
+        if hasattr(calls_query, "captures"):
             captures = calls_query.captures(root_node)
             print(f"Using captures() method: {len(captures)} captures")
             print(f"Captures dict keys: {list(captures.keys())}")
             call_nodes = captures.get("call", [])
-        elif hasattr(calls_query, 'matches'):
+        elif hasattr(calls_query, "matches"):
             matches = calls_query.matches(root_node)
             print(f"Using matches() method: {len(matches)} matches")
             call_nodes = []
@@ -133,18 +137,23 @@ def local_func():
 
             # Import tree_sitter_python language function
             import tree_sitter_python
+
             PYTHON_LANGUAGE = tree_sitter_python.language()
 
             print(f"Language object type: {type(PYTHON_LANGUAGE)}")
-            print(f"Language methods: {[attr for attr in dir(PYTHON_LANGUAGE) if not attr.startswith('_')]}")
+            print(
+                f"Language methods: {[attr for attr in dir(PYTHON_LANGUAGE) if not attr.startswith('_')]}",
+            )
 
             # Try older pattern: execute query on the node itself
             try:
                 # The older API might use query directly on nodes
-                if hasattr(root_node, 'children') and hasattr(PYTHON_LANGUAGE, 'query'):
+                if hasattr(root_node, "children") and hasattr(PYTHON_LANGUAGE, "query"):
                     print("Trying direct language query execution...")
                     # This is a guess at the older API pattern
-                    matches = list(PYTHON_LANGUAGE.query(calls_query_string).matches(root_node))
+                    matches = list(
+                        PYTHON_LANGUAGE.query(calls_query_string).matches(root_node),
+                    )
                     print(f"Direct language query found {len(matches)} matches")
                     call_nodes = []
                     for match in matches:
@@ -187,14 +196,18 @@ def local_func():
             for i, call_node in enumerate(call_nodes, 1):
                 print(f"\nCall {i}:")
                 print(f"  Type: {call_node.type}")
-                print(f"  Text: {call_node.text.decode('utf8') if call_node.text else 'None'}")
+                print(
+                    f"  Text: {call_node.text.decode('utf8') if call_node.text else 'None'}",
+                )
 
                 # Try to extract function name
                 func_child = call_node.child_by_field_name("function")
                 if func_child:
                     print(f"  Function child type: {func_child.type}")
                     if func_child.type == "identifier":
-                        func_name = func_child.text.decode("utf8") if func_child.text else None
+                        func_name = (
+                            func_child.text.decode("utf8") if func_child.text else None
+                        )
                         print(f"  Function name: {func_name}")
         else:
             print("❌ No calls detected!")
@@ -202,6 +215,7 @@ def local_func():
     except Exception as e:
         print(f"❌ Failed to execute query: {e}")
         import traceback
+
         traceback.print_exc()
         return
 
@@ -226,7 +240,9 @@ def local_func():
         print("\n📞 MANUALLY FOUND CALLS:")
         for i, call_node in enumerate(manual_calls, 1):
             print(f"\nCall {i}:")
-            print(f"  Text: {call_node.text.decode('utf8') if call_node.text else 'None'}")
+            print(
+                f"  Text: {call_node.text.decode('utf8') if call_node.text else 'None'}",
+            )
 
     # Step 9: Test with temporary file (simulating CI environment)
     print_diagnostic("TEMPORARY FILE TEST")
@@ -244,10 +260,10 @@ def local_func():
 
         # Use same compatibility approach as GraphUpdater
         try:
-            if hasattr(calls_query, 'captures'):
+            if hasattr(calls_query, "captures"):
                 captures = calls_query.captures(root_node)
                 temp_calls = captures.get("call", [])
-            elif hasattr(calls_query, 'matches'):
+            elif hasattr(calls_query, "matches"):
                 matches = calls_query.matches(root_node)
                 temp_calls = []
                 for pattern_index, match_captures in matches:
@@ -257,22 +273,26 @@ def local_func():
             else:
                 # Manual fallback
                 temp_calls = []
+
                 def find_calls_temp(node):
                     if node.type == "call":
                         temp_calls.append(node)
                     for child in node.children:
                         find_calls_temp(child)
+
                 find_calls_temp(root_node)
             print(f"Calls found from temp file: {len(temp_calls)}")
         except Exception as e:
             print(f"Temp file test failed with compatibility approach: {e}")
             # Fallback to manual traversal
             temp_calls = []
+
             def find_calls_temp(node):
                 if node.type == "call":
                     temp_calls.append(node)
                 for child in node.children:
                     find_calls_temp(child)
+
             find_calls_temp(root_node)
             print(f"Calls found from temp file (manual fallback): {len(temp_calls)}")
 
@@ -280,8 +300,12 @@ def local_func():
     print_diagnostic("SUMMARY")
     print("✅ Parser works: Yes")
     print("✅ Query compiles: Yes")
-    print(f"{'✅' if call_nodes else '❌'} Query finds calls: {'Yes' if call_nodes else 'No'}")
-    print(f"{'✅' if manual_calls else '❌'} Manual traversal finds calls: {'Yes' if manual_calls else 'No'}")
+    print(
+        f"{'✅' if call_nodes else '❌'} Query finds calls: {'Yes' if call_nodes else 'No'}",
+    )
+    print(
+        f"{'✅' if manual_calls else '❌'} Manual traversal finds calls: {'Yes' if manual_calls else 'No'}",
+    )
     print("Expected calls: util_func(), local_func()")
     print(f"Actual calls found: {len(call_nodes)}")
 

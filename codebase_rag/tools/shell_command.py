@@ -113,7 +113,9 @@ class ShellCommander:
 
     @timing_decorator
     async def execute(
-        self, command: str, confirmed: bool = False
+        self,
+        command: str,
+        confirmed: bool = False,
     ) -> ShellCommandResult:
         """
         Execute a shell command and return the status code, stdout, and stderr.
@@ -123,7 +125,9 @@ class ShellCommander:
             cmd_parts = shlex.split(command)
             if not cmd_parts:
                 return ShellCommandResult(
-                    return_code=-1, stdout="", stderr="Empty command provided."
+                    return_code=-1,
+                    stdout="",
+                    stderr="Empty command provided.",
                 )
 
             # Security: Check if the command is in the allowlist
@@ -151,7 +155,9 @@ class ShellCommander:
                 confirmation_msg = f"I will run `{command_str}`. Do you approve? [y/n]"
                 logger.info(f"Command requires confirmation: {command_str}")
                 return ShellCommandResult(
-                    return_code=-2, stdout=confirmation_msg, stderr=""
+                    return_code=-2,
+                    stdout=confirmation_msg,
+                    stderr="",
                 )
 
             process = await asyncio.create_subprocess_exec(
@@ -161,7 +167,8 @@ class ShellCommander:
                 cwd=self.project_root,
             )
             stdout, stderr = await asyncio.wait_for(
-                process.communicate(), timeout=self.timeout
+                process.communicate(),
+                timeout=self.timeout,
             )
 
             stdout_str = stdout.decode("utf-8", errors="replace").strip()
@@ -189,7 +196,7 @@ class ShellCommander:
                 logger.info("Process killed due to timeout.")
             except ProcessLookupError:
                 logger.warning(
-                    "Process already terminated when timeout kill was attempted."
+                    "Process already terminated when timeout kill was attempted.",
                 )
             return ShellCommandResult(return_code=-1, stdout="", stderr=msg)
         except Exception as e:
@@ -201,7 +208,8 @@ def create_shell_command_tool(shell_commander: ShellCommander) -> Tool:
     """Factory function to create the shell command tool."""
 
     async def run_shell_command(
-        command: str, user_confirmed: bool = False
+        command: str,
+        user_confirmed: bool = False,
     ) -> ShellCommandResult:
         """
         Executes a shell command from the approved allowlist only.

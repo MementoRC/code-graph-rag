@@ -24,7 +24,9 @@ def event_handler(mock_updater: MagicMock) -> CodeChangeEventHandler:
 
 
 def test_file_creation_flow(
-    event_handler: CodeChangeEventHandler, mock_updater: MagicMock, temp_repo: Path
+    event_handler: CodeChangeEventHandler,
+    mock_updater: MagicMock,
+    temp_repo: Path,
 ) -> None:
     """Test that creating a new file triggers parsing and ingestion."""
     test_file = temp_repo / "new_file.py"
@@ -39,7 +41,9 @@ def test_file_creation_flow(
 
 
 def test_file_modification_flow(
-    event_handler: CodeChangeEventHandler, mock_updater: MagicMock, temp_repo: Path
+    event_handler: CodeChangeEventHandler,
+    mock_updater: MagicMock,
+    temp_repo: Path,
 ) -> None:
     """Test that modifying a file triggers removal and re-ingestion."""
     test_file = temp_repo / "existing_file.py"
@@ -54,7 +58,9 @@ def test_file_modification_flow(
 
 
 def test_file_deletion_flow(
-    event_handler: CodeChangeEventHandler, mock_updater: MagicMock, temp_repo: Path
+    event_handler: CodeChangeEventHandler,
+    mock_updater: MagicMock,
+    temp_repo: Path,
 ) -> None:
     """Test that deleting a file triggers its removal from the graph."""
     test_file = temp_repo / "deleted_file.py"
@@ -68,7 +74,9 @@ def test_file_deletion_flow(
 
 
 def test_irrelevant_files_are_ignored(
-    event_handler: CodeChangeEventHandler, mock_updater: MagicMock, temp_repo: Path
+    event_handler: CodeChangeEventHandler,
+    mock_updater: MagicMock,
+    temp_repo: Path,
 ) -> None:
     """Test that files in ignored directories are skipped."""
     ignored_dir = temp_repo / ".git"
@@ -85,7 +93,9 @@ def test_irrelevant_files_are_ignored(
 
 
 def test_directory_creation_is_ignored(
-    event_handler: CodeChangeEventHandler, mock_updater: MagicMock, temp_repo: Path
+    event_handler: CodeChangeEventHandler,
+    mock_updater: MagicMock,
+    temp_repo: Path,
 ) -> None:
     """Test that creating a directory does not trigger any graph operations."""
     test_dir = temp_repo / "new_dir"
@@ -99,7 +109,9 @@ def test_directory_creation_is_ignored(
 
 
 def test_unsupported_file_types_are_ignored(
-    event_handler: CodeChangeEventHandler, mock_updater: MagicMock, temp_repo: Path
+    event_handler: CodeChangeEventHandler,
+    mock_updater: MagicMock,
+    temp_repo: Path,
 ) -> None:
     """Test that changing an unsupported file type is ignored after deletion query."""
     unsupported_file = temp_repo / "document.md"
