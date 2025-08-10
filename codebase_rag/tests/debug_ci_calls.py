@@ -119,8 +119,38 @@ def local_func():
                     if capture[1] == "call":  # capture name
                         call_nodes.append(capture[0])  # capture node
         else:
-            print("❌ Neither captures() nor matches() method available")
-            return
+            # This appears to be an older tree-sitter API
+            # Try to use language.query() instead of Query object directly
+            print("Trying alternative API approach...")
+            
+            # Import tree_sitter_python language function
+            import tree_sitter_python
+            PYTHON_LANGUAGE = tree_sitter_python.language()
+            
+            # Try to create query using language.query()
+            try:
+                alt_query = PYTHON_LANGUAGE.query(calls_query_string)
+                print(f"Alternative query created: {type(alt_query)}")
+                print(f"Alternative methods: {[attr for attr in dir(alt_query) if not attr.startswith('_')]}")
+                
+                if hasattr(alt_query, 'captures'):
+                    captures = alt_query.captures(root_node)
+                    print(f"Alternative captures() worked: {len(captures)} captures")
+                    call_nodes = captures.get("call", [])
+                elif hasattr(alt_query, 'matches'):
+                    matches = alt_query.matches(root_node)
+                    print(f"Alternative matches() worked: {len(matches)} matches")
+                    call_nodes = []
+                    for pattern_index, match_captures in matches:
+                        for capture in match_captures:
+                            if len(capture) >= 2 and capture[1] == "call":
+                                call_nodes.append(capture[0])
+                else:
+                    print("❌ Alternative API also lacks captures/matches methods")
+                    return
+            except Exception as e:
+                print(f"❌ Alternative API approach failed: {e}")
+                return
             
         print(f"Found {len(call_nodes)} call nodes")
         
