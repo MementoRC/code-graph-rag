@@ -1,7 +1,6 @@
 import os
-import sys
-import logging
 import platform
+import sys
 from pathlib import Path
 from typing import cast
 from unittest.mock import MagicMock, call
@@ -45,14 +44,14 @@ def test_function_call_relationships_are_created(
     print(f"Python path entries: {len(sys.path)}", file=sys.stderr)
     print(f"Temp project path: {temp_project}", file=sys.stderr)
     print(f"Temp project exists: {temp_project.exists()}", file=sys.stderr)
-    
+
     # List files in temp project
     if temp_project.exists():
         print("Files in temp project:")
         for file_path in temp_project.rglob("*"):
             if file_path.is_file():
                 print(f"  {file_path.relative_to(temp_project)}")
-                
+
     from codebase_rag.parser_loader import load_parsers
 
     # === DEBUGGING: Parser Loading ===
@@ -61,21 +60,21 @@ def test_function_call_relationships_are_created(
         parsers, queries = load_parsers()
         print(f"Successfully loaded parsers: {len(parsers) if parsers else 0}")
         print(f"Successfully loaded queries: {len(queries) if queries else 0}")
-        
+
         if parsers:
             print("Available parser languages:")
             for lang, parser in parsers.items():
                 print(f"  {lang}: {type(parser).__name__}")
         else:
             print("WARNING: No parsers loaded!")
-            
+
         if queries:
             print("Available query languages:")
             for lang, query_set in queries.items():
                 print(f"  {lang}: {len(query_set) if query_set else 0} queries")
         else:
             print("WARNING: No queries loaded!")
-            
+
     except Exception as e:
         print(f"ERROR loading parsers: {e}")
         import traceback
@@ -86,7 +85,7 @@ def test_function_call_relationships_are_created(
     print("\n=== MOCK SETUP VERIFICATION ===")
     print(f"Mock ingestor type: {type(mock_ingestor)}")
     print(f"Mock ingestor methods: {dir(mock_ingestor)}")
-    
+
     # Reset mock to ensure clean state
     mock_ingestor.reset_mock()
     print("Mock ingestor reset completed")
@@ -99,11 +98,11 @@ def test_function_call_relationships_are_created(
         parsers=parsers,
         queries=queries,
     )
-    print(f"GraphUpdater created successfully")
+    print("GraphUpdater created successfully")
     print(f"GraphUpdater repo_path: {updater.repo_path}")
     print(f"GraphUpdater has parsers: {hasattr(updater, 'parsers') and updater.parsers is not None}")
     print(f"GraphUpdater has queries: {hasattr(updater, 'queries') and updater.queries is not None}")
-    
+
     # === DEBUGGING: Run Execution ===
     print("\n=== RUNNING GRAPH UPDATER ===")
     try:
@@ -119,17 +118,17 @@ def test_function_call_relationships_are_created(
     print("\n=== MOCK CALL ANALYSIS ===")
     all_calls = mock_ingestor.method_calls
     print(f"Total mock method calls: {len(all_calls)}")
-    
+
     # Analyze ensure_relationship_batch calls specifically
     relationship_calls = mock_ingestor.ensure_relationship_batch.call_args_list
     print(f"ensure_relationship_batch calls: {len(relationship_calls)}")
-    
+
     print("All ensure_relationship_batch calls:")
     for i, call_obj in enumerate(relationship_calls):
         print(f"  Call {i + 1}: {call_obj}")
         if hasattr(call_obj, 'args') and len(call_obj.args) >= 2:
             print(f"    Relationship type: {call_obj.args[1]}")
-    
+
     # Analyze other mock method calls
     other_method_calls = [call for call in all_calls if 'ensure_relationship_batch' not in str(call)]
     print(f"Other method calls: {len(other_method_calls)}")
@@ -141,7 +140,7 @@ def test_function_call_relationships_are_created(
     util_func_qn = f"{project_name}.utils.util_func"
     local_func_qn = f"{project_name}.main.local_func"
 
-    print(f"\n=== EXPECTED RELATIONSHIP ANALYSIS ===")
+    print("\n=== EXPECTED RELATIONSHIP ANALYSIS ===")
     print(f"Project name: {project_name}")
     print(f"Expected main_func qualified name: {main_func_qn}")
     print(f"Expected util_func qualified name: {util_func_qn}")
@@ -159,7 +158,7 @@ def test_function_call_relationships_are_created(
             ("Function", "qualified_name", local_func_qn),
         ),
     ]
-    
+
     print("Expected calls:")
     for i, expected_call in enumerate(expected_calls):
         print(f"  Expected call {i + 1}: {expected_call}")
@@ -169,22 +168,22 @@ def test_function_call_relationships_are_created(
         for c in cast(MagicMock, mock_ingestor.ensure_relationship_batch).call_args_list
         if c.args[1] == "CALLS"
     ]
-    
-    print(f"\n=== ACTUAL CALLS RELATIONSHIP FILTERING ===")
+
+    print("\n=== ACTUAL CALLS RELATIONSHIP FILTERING ===")
     print(f"Filtered CALLS relationships: {len(actual_calls)}")
     print("Actual CALLS calls:")
     for i, actual_call in enumerate(actual_calls):
         print(f"  Actual call {i + 1}: {actual_call}")
-    
+
     # === DEBUGGING: Assertion Analysis ===
-    print(f"\n=== ASSERTION ANALYSIS ===")
+    print("\n=== ASSERTION ANALYSIS ===")
     print(f"Expected calls count: {len(expected_calls)}")
     print(f"Actual CALLS count: {len(actual_calls)}")
-    
+
     if len(actual_calls) != len(expected_calls):
         print("MISMATCH DETECTED!")
         print("This will cause assertion failure")
-        
+
         # Check if expected calls exist in actual calls
         for i, expected_call in enumerate(expected_calls):
             is_present = expected_call in actual_calls
