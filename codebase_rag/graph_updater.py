@@ -616,25 +616,32 @@ class GraphUpdater:
     ) -> None:
         calls_query = self.queries[language].get("calls")
         if not calls_query:
+            logger.debug(f"No calls query available for language: {language}")
             return
 
         # Use compatibility layer for different tree-sitter API versions
         call_nodes = self._execute_query_with_fallback(calls_query, caller_node, "call")
+        logger.debug(f"Found {len(call_nodes)} call nodes for {caller_qn}")
 
         for call_node in call_nodes:
             if not isinstance(call_node, Node):
+                logger.debug(f"Skipping non-Node call: {type(call_node)}")
                 continue
             call_name = self._get_call_target_name(call_node)
             if not call_name:
+                logger.debug(f"Could not extract call name from node: {call_node.type}")
                 continue
+            
+            logger.debug(f"Processing call: {call_name} from {caller_qn}")
 
             callee_info = self._resolve_function_call(call_name, module_qn)
             if not callee_info:
+                logger.debug(f"Could not resolve function call: {call_name} in module {module_qn}")
                 continue
 
             callee_type, callee_qn = callee_info
-            logger.debug(
-                f"      Found call from {caller_qn} to {call_name} (resolved as {callee_type}:{callee_qn})"
+            logger.info(
+                f"      CREATING CALL RELATIONSHIP: {caller_qn} -> {call_name} (resolved as {callee_type}:{callee_qn})"
             )
 
             self.ingestor.ensure_relationship_batch(
@@ -695,14 +702,18 @@ class GraphUpdater:
         
         This method handles different tree-sitter API versions:
         - Modern API: uses query.captures() method
-        - Older API: uses manual tree traversal as fallback
+        - Alternative API: uses query.matches() method  
+        - Very old API: uses direct iteration over matches
+        - Ultimate fallback: manual tree traversal
         """
         try:
             # Try modern API first
             if hasattr(query, 'captures'):
+                logger.debug(f"Using modern API: query.captures() for '{capture_name}'")
                 captures = query.captures(node)
                 return captures.get(capture_name, [])
             elif hasattr(query, 'matches'):
+                logger.debug(f"Using alternative API: query.matches() for '{capture_name}'")
                 matches = query.matches(node) 
                 captured_nodes = []
                 for pattern_index, match_captures in matches:
@@ -711,7 +722,31 @@ class GraphUpdater:
                             captured_nodes.append(capture[0])
                 return captured_nodes
             else:
-                # Fallback to manual traversal for older tree-sitter versions
+                # Try very old tree-sitter API pattern
+                logger.debug(f"Trying very old API pattern for '{capture_name}'")
+                if hasattr(query, 'capture_count') and hasattr(query, 'pattern_count'):
+                    # This is the very old tree-sitter API
+                    captured_nodes = []
+                    try:
+                        # Try to iterate through matches using the old pattern
+                        # In very old versions, you had to iterate differently
+                        matches_iter = iter(query)  # Some old versions were iterable
+                        for match in matches_iter:
+                            if hasattr(match, 'captures'):
+                                for capture_name_actual, capture_node in match.captures:
+                                    if capture_name_actual == capture_name:
+                                        captured_nodes.append(capture_node)
+                            elif len(match) >= 2:  # match is a tuple/list
+                                capture_node, capture_name_actual = match
+                                if capture_name_actual == capture_name:
+                                    captured_nodes.append(capture_node)
+                        if captured_nodes:
+                            logger.debug(f"Very old API found {len(captured_nodes)} nodes for '{capture_name}'")
+                            return captured_nodes
+                    except Exception as old_api_error:
+                        logger.debug(f"Very old API pattern failed: {old_api_error}")
+                
+                # Final fallback to manual traversal for any older tree-sitter versions
                 logger.debug(f"Using manual traversal fallback for capture '{capture_name}'")
                 return self._manual_traverse_for_capture(node, capture_name)
         except Exception as e:
