@@ -142,8 +142,8 @@ jobs:
           export MEMGRAPH_PORT=7687
           export ENVIRONMENT=ci
           
-          # Run tests with timeout
-          timeout 15m ${{ steps.select-tests.outputs.test_cmd }} || {
+          # Run tests (pytest-timeout handles test timeouts cross-platform)
+          ${{ steps.select-tests.outputs.test_cmd }} || {
             echo "❌ Tests failed or timed out"
             exit 1
           }
