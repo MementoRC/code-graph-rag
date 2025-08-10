@@ -14,7 +14,7 @@ import os
 import sys
 import tempfile
 from pathlib import Path
-from typing import Any
+from typing import Any, Union
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
@@ -31,7 +31,7 @@ def print_diagnostic(title: str, content: Any = None) -> None:
         print(content)
 
 
-def test_debug_calls_detection():
+def test_debug_calls_detection() -> bool:
     """Debug why calls are not detected in CI environment."""
 
     all_tests_passed = True
@@ -51,7 +51,7 @@ def test_debug_calls_detection():
         print(f"Language function type: {type(python_language)}")
     except ImportError as e:
         print(f"❌ Failed to import tree_sitter_python: {e}")
-        return
+        return False
 
     # Step 3: Create parser and language
     print_diagnostic("PARSER SETUP")
@@ -61,7 +61,7 @@ def test_debug_calls_detection():
         print("✅ Parser created successfully")
     except Exception as e:
         print(f"❌ Failed to create parser: {e}")
-        return
+        return False
 
     # Step 4: Test code that should have calls
     test_code = """from utils import util_func
@@ -86,10 +86,11 @@ def local_func():
         print(f"Root node has {root_node.child_count} children")
     except Exception as e:
         print(f"❌ Failed to parse: {e}")
-        return
+        return False
 
     # Step 6: Create and test the calls query
     print_diagnostic("CALLS QUERY")
+    calls_query: Union[Any, None] = None
     try:
         calls_query_string = "(call) @call"
         # Use modern Query constructor instead of deprecated language.query()
@@ -105,10 +106,15 @@ def local_func():
             print(f"✅ Query created with deprecated method: {calls_query_string}")
         except Exception as e2:
             print(f"❌ Failed to create query with deprecated method: {e2}")
-            return
+            return False
+
+    if calls_query is None:
+        print("❌ No query object available")
+        return False
 
     # Step 7: Execute query and find calls
     print_diagnostic("QUERY EXECUTION")
+    call_nodes: list[Node] = []
     try:
         # Check what methods are available on the query object
         print(f"Query object type: {type(calls_query)}")
@@ -129,7 +135,7 @@ def local_func():
             for pattern_index, match_captures in matches:
                 for capture in match_captures:
                     if capture[1] == "call":  # capture name
-                        call_nodes.append(capture[0])  # capture node
+                        call_nodes.append(capture[0])  # type: ignore[arg-type]
         else:
             # This appears to be an older tree-sitter API
             # Try to use the Language object directly to query
@@ -151,22 +157,22 @@ def local_func():
                 if hasattr(root_node, "children") and hasattr(PYTHON_LANGUAGE, "query"):
                     print("Trying direct language query execution...")
                     # This is a guess at the older API pattern
-                    matches = list(
+                    matches_list = list(
                         PYTHON_LANGUAGE.query(calls_query_string).matches(root_node),
                     )
-                    print(f"Direct language query found {len(matches)} matches")
+                    print(f"Direct language query found {len(matches_list)} matches")
                     call_nodes = []
-                    for match in matches:
+                    for match in matches_list:
                         for capture in match:
-                            if len(capture) >= 2 and capture[1] == "call":
-                                call_nodes.append(capture[0])
+                            if len(capture) >= 2 and capture[1] == "call":  # type: ignore[misc,assignment]
+                                call_nodes.append(capture[0])  # type: ignore[arg-type]
                 else:
                     print("❌ Could not determine correct older API pattern")
                     # Fallback: manual tree traversal to find call nodes
                     print("Falling back to manual tree traversal...")
                     call_nodes = []
 
-                    def find_calls(node):
+                    def find_calls(node: Node) -> None:
                         if node.type == "call":
                             call_nodes.append(node)
                         for child in node.children:
@@ -180,7 +186,7 @@ def local_func():
                 print("Falling back to manual tree traversal...")
                 call_nodes = []
 
-                def find_calls(node):
+                def find_calls(node: Node) -> None:
                     if node.type == "call":
                         call_nodes.append(node)
                     for child in node.children:
@@ -217,7 +223,7 @@ def local_func():
         import traceback
 
         traceback.print_exc()
-        return
+        return False
 
     # Step 8: Manual tree traversal to find call nodes
     print_diagnostic("MANUAL TREE TRAVERSAL")
@@ -259,6 +265,7 @@ def local_func():
         root_node = tree.root_node
 
         # Use same compatibility approach as GraphUpdater
+        temp_calls: list[Node] = []
         try:
             if hasattr(calls_query, "captures"):
                 captures = calls_query.captures(root_node)
@@ -269,12 +276,12 @@ def local_func():
                 for pattern_index, match_captures in matches:
                     for capture in match_captures:
                         if len(capture) >= 2 and capture[1] == "call":
-                            temp_calls.append(capture[0])
+                            temp_calls.append(capture[0])  # type: ignore[arg-type]
             else:
                 # Manual fallback
                 temp_calls = []
 
-                def find_calls_temp(node):
+                def find_calls_temp(node: Node) -> None:
                     if node.type == "call":
                         temp_calls.append(node)
                     for child in node.children:
@@ -287,13 +294,13 @@ def local_func():
             # Fallback to manual traversal
             temp_calls = []
 
-            def find_calls_temp(node):
+            def find_calls_temp_fallback(node: Node) -> None:
                 if node.type == "call":
                     temp_calls.append(node)
                 for child in node.children:
-                    find_calls_temp(child)
+                    find_calls_temp_fallback(child)
 
-            find_calls_temp(root_node)
+            find_calls_temp_fallback(root_node)
             print(f"Calls found from temp file (manual fallback): {len(temp_calls)}")
 
     # Step 10: Summary
