@@ -1,4 +1,6 @@
 name: Test Matrix
+# Enhanced with environment validation to prevent integration test failures
+# due to missing dependencies (tree-sitter-python, GraphUpdater functionality)
 
 on:
   push:
@@ -113,6 +115,65 @@ jobs:
           MEMGRAPH_HOST: localhost
           MEMGRAPH_PORT: 7687
 
+      - name: Validate CI Integration Environment
+        if: matrix.test-type == 'integration' || matrix.test-type == 'e2e'
+        run: |
+          echo "🔍 Validating CI Integration Environment for ${{ matrix.test-type }} tests"
+          
+          # Check if we're in the right environment
+          echo "📋 Environment Configuration:"
+          echo "  - Test Type: ${{ matrix.test-type }}"
+          echo "  - OS: ${{ matrix.os }}"
+          echo "  - Python: ${{ matrix.python-version }}"
+          
+          # Validate critical dependencies are available in ci-integration environment
+          echo "🔧 Dependency Validation:"
+          
+          # Test 1: tree-sitter-python availability
+          echo "  Testing tree-sitter-python..."
+          if pixi run -e ci-integration python -c "import tree_sitter; print('✅ tree_sitter imported successfully')"; then
+            echo "  ✅ tree-sitter module available"
+          else
+            echo "  ❌ tree-sitter module failed to import"
+            echo "  🚨 CRITICAL: tree-sitter-python is required for integration tests"
+            exit 1
+          fi
+          
+          # Test 2: tree-sitter parsers loading
+          echo "  Testing tree-sitter parsers loading..."
+          if pixi run -e ci-integration python -c "from codebase_rag.parser_loader import load_parsers; parsers, queries = load_parsers(); print(f'✅ Loaded parsers: {list(parsers.keys())}')"; then
+            echo "  ✅ Parser loading successful"
+          else
+            echo "  ❌ Parser loading failed"
+            echo "  🚨 CRITICAL: Parser loading is required for code analysis"
+            exit 1
+          fi
+          
+          # Test 3: GraphUpdater function call detection (the core failing functionality)
+          echo "  Testing GraphUpdater function call detection..."
+          if pixi run -e ci-integration python tests/debug_ci_calls.py; then
+            echo "  ✅ GraphUpdater function call detection working correctly"
+          else
+            echo "  ❌ GraphUpdater function call detection failed"
+            echo "  🚨 CRITICAL: This is the exact failure we're trying to prevent"
+            echo "  📋 Environment diagnostic output above shows the issue"
+            exit 1
+          fi
+          
+          # Test 4: mgclient (for database integration)
+          echo "  Testing mgclient availability..."
+          if pixi run -e ci-integration python -c "import mgclient; print('✅ mgclient imported successfully')"; then
+            echo "  ✅ mgclient available for database integration"
+          else
+            echo "  ❌ mgclient import failed"
+            echo "  🚨 CRITICAL: mgclient is required for database integration tests"
+            exit 1
+          fi
+          
+          echo "🎯 Environment validation completed successfully!"
+          echo "  All critical dependencies are available and functioning"
+          echo "  Safe to proceed with ${{ matrix.test-type }} tests"
+
       - name: Select tests by marker  
         id: select-tests
         run: |
@@ -141,23 +202,40 @@ jobs:
           echo "🧪 Running ${{ steps.select-tests.outputs.marker }}"
           echo "Command: ${{ steps.select-tests.outputs.test_cmd }}"
           
-          # Debug: Show which environment we're actually using
-          if [[ "${{ steps.select-tests.outputs.test_cmd }}" == *"ci-integration"* ]]; then
-            echo "🔍 Using ci-integration environment - verifying tree-sitter availability:"
-            pixi run -e ci-integration python -c "import tree_sitter; print('✅ tree_sitter imported successfully')" || echo "❌ tree_sitter import failed"
-            pixi run -e ci-integration python -c "import mgclient; print('✅ mgclient imported successfully')" || echo "❌ mgclient import failed"
-          fi
-          
           # Set environment variables for tests
           export MEMGRAPH_HOST=localhost
           export MEMGRAPH_PORT=7687
           export ENVIRONMENT=ci
           
           # Run tests (pytest-timeout handles test timeouts cross-platform)
-          ${{ steps.select-tests.outputs.test_cmd }} || {
-            echo "❌ Tests failed or timed out"
+          if ${{ steps.select-tests.outputs.test_cmd }}; then
+            echo "✅ Tests completed successfully"
+          else
+            echo "❌ Tests failed - Running post-failure diagnostics"
+            
+            # Enhanced debugging for integration/e2e test failures
+            if [[ "${{ matrix.test-type }}" == "integration" || "${{ matrix.test-type }}" == "e2e" ]]; then
+              echo "🔍 Post-Failure Environment Diagnostics:"
+              echo "  Re-checking environment after test failure..."
+              
+              # Re-run environment validation to see what changed
+              echo "  Re-validating tree-sitter:"
+              pixi run -e ci-integration python -c "import tree_sitter; print('✅ tree_sitter still available')" || echo "❌ tree_sitter no longer available"
+              
+              echo "  Re-validating parsers:"
+              pixi run -e ci-integration python -c "from codebase_rag.parser_loader import load_parsers; parsers, queries = load_parsers(); print(f'✅ Parsers still available: {list(parsers.keys())}')" || echo "❌ Parser loading now failing"
+              
+              echo "  Re-validating GraphUpdater:"
+              pixi run -e ci-integration python tests/debug_ci_calls.py || echo "❌ GraphUpdater function call detection now failing"
+              
+              echo "  Re-validating database connection:"
+              pixi run -e ci-integration python -c "import mgclient; print('✅ mgclient still available')" || echo "❌ mgclient no longer available"
+              
+              echo "📋 Environment state after test failure has been captured above"
+            fi
+            
             exit 1
-          }
+          fi
         env:
           PYTHONUNBUFFERED: 1
           MEMGRAPH_HOST: localhost
@@ -198,6 +276,24 @@ jobs:
           echo "| Test Type | ${{ matrix.test-type }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Status | ${{ job.status == 'success' && '✅ PASS' || '❌ FAIL' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Command | \`${{ steps.select-tests.outputs.test_cmd }}\` |" >> $GITHUB_STEP_SUMMARY
+          
+          # Add environment validation status for integration/e2e tests
+          if [[ "${{ matrix.test-type }}" == "integration" || "${{ matrix.test-type }}" == "e2e" ]]; then
+            echo "| Environment Validation | ${{ job.status == 'success' && '✅ PASSED' || steps.Validate.outcome == 'failure' && '❌ ENV FAILED' || '⚠️ TEST FAILED' }} |" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Add additional details for failed tests
+          if [[ "${{ job.status }}" != "success" ]]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### 🔍 Failure Analysis" >> $GITHUB_STEP_SUMMARY
+            if [[ "${{ matrix.test-type }}" == "integration" || "${{ matrix.test-type }}" == "e2e" ]]; then
+              echo "- Environment validation prevents most dependency-related failures" >> $GITHUB_STEP_SUMMARY
+              echo "- Post-failure diagnostics captured in job logs" >> $GITHUB_STEP_SUMMARY
+              echo "- Check tree-sitter and GraphUpdater functionality above" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "- Unit test failure - check test output for specific issues" >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
 
   performance-matrix:
     name: "⚡ Performance Tests (Linux, Python ${{ matrix.python-version }})"
