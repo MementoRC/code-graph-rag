@@ -131,7 +131,7 @@ jobs:
           
           # Test 1: tree-sitter-python availability
           echo "  Testing tree-sitter-python..."
-          if pixi run -e ci-integration python -c "import tree_sitter; print('SUCCESS: tree_sitter imported successfully')"; then
+          if pixi run -e ci-integration python -c 'import tree_sitter; print("SUCCESS: tree_sitter imported successfully")'; then
             echo "  ✅ tree-sitter module available"
           else
             echo "  ❌ tree-sitter module failed to import"
@@ -141,7 +141,7 @@ jobs:
           
           # Test 2: tree-sitter parsers loading
           echo "  Testing tree-sitter parsers loading..."
-          if pixi run -e ci-integration python -c "from codebase_rag.parser_loader import load_parsers; parsers, queries = load_parsers(); print(f'SUCCESS: Loaded parsers: {list(parsers.keys())}')"; then
+          if pixi run -e ci-integration python -c 'from codebase_rag.parser_loader import load_parsers; parsers, queries = load_parsers(); print(f"SUCCESS: Loaded parsers: {list(parsers.keys())}")'; then
             echo "  ✅ Parser loading successful"
           else
             echo "  ❌ Parser loading failed"
@@ -220,10 +220,10 @@ jobs:
               
               # Re-run environment validation to see what changed
               echo "  Re-validating tree-sitter:"
-              pixi run -e ci-integration python -c "import tree_sitter; print('SUCCESS: tree_sitter still available')" || echo "❌ tree_sitter no longer available"
+              pixi run -e ci-integration python -c 'import tree_sitter; print("SUCCESS: tree_sitter still available")' || echo "❌ tree_sitter no longer available"
               
               echo "  Re-validating parsers:"
-              pixi run -e ci-integration python -c "from codebase_rag.parser_loader import load_parsers; parsers, queries = load_parsers(); print(f'SUCCESS: Parsers still available: {list(parsers.keys())}')" || echo "❌ Parser loading now failing"
+              pixi run -e ci-integration python -c 'from codebase_rag.parser_loader import load_parsers; parsers, queries = load_parsers(); print(f"SUCCESS: Parsers still available: {list(parsers.keys())}")' || echo "❌ Parser loading now failing"
               
               echo "  Re-validating GraphUpdater:"
               pixi run -e ci-integration python tests/debug_ci_calls.py || echo "❌ GraphUpdater function call detection now failing"
