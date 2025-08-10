@@ -836,15 +836,28 @@ class GraphUpdater:
         """Manual AST traversal to find nodes of specific type.
         
         This is used as fallback when tree-sitter query API is unavailable.
+        Maps capture names to actual AST node types from language configuration.
         """
         found_nodes = []
         
         def traverse(current_node: Node) -> None:
-            # Map capture names to node types
-            target_type = capture_name  # For most cases, capture name matches node type
+            # Map capture names to actual AST node types
+            if capture_name == "function":
+                # Python functions are 'function_definition' nodes
+                target_types = ["function_definition"]
+            elif capture_name == "class":
+                # Python classes are 'class_definition' nodes  
+                target_types = ["class_definition"]
+            elif capture_name == "call":
+                # Python calls are 'call' nodes (this matches)
+                target_types = ["call"]
+            else:
+                # Fallback: use capture name directly
+                target_types = [capture_name]
             
-            if current_node.type == target_type:
+            if current_node.type in target_types:
                 found_nodes.append(current_node)
+                print(f"🎯 FOUND {capture_name} NODE: {current_node.type} at line {current_node.start_point[0]+1}", file=sys.stderr)
             
             for child in current_node.children:
                 traverse(child)
