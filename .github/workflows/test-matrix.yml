@@ -162,7 +162,7 @@ jobs:
           
           # Test 4: mgclient (for database integration)
           echo "  Testing mgclient availability..."
-          if pixi run -e ci-integration python -c "import mgclient; print('✅ mgclient imported successfully')"; then
+          if pixi run -e ci-integration python -c "import mgclient; print('SUCCESS: mgclient imported successfully')"; then
             echo "  ✅ mgclient available for database integration"
           else
             echo "  ❌ mgclient import failed"
