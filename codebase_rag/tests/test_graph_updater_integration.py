@@ -38,13 +38,13 @@ def test_function_call_relationships_are_created(
     Tests that GraphUpdater correctly identifies and creates CALLS relationships.
     """
     # === DEBUGGING: Environment Information ===
-    print("\n=== ENVIRONMENT DIAGNOSTICS ===")
-    print(f"Platform: {platform.platform()}")
-    print(f"Python version: {sys.version}")
-    print(f"Working directory: {os.getcwd()}")
-    print(f"Python path entries: {len(sys.path)}")
-    print(f"Temp project path: {temp_project}")
-    print(f"Temp project exists: {temp_project.exists()}")
+    print("\n=== ENVIRONMENT DIAGNOSTICS ===", file=sys.stderr)
+    print(f"Platform: {platform.platform()}", file=sys.stderr)
+    print(f"Python version: {sys.version}", file=sys.stderr)
+    print(f"Working directory: {os.getcwd()}", file=sys.stderr)
+    print(f"Python path entries: {len(sys.path)}", file=sys.stderr)
+    print(f"Temp project path: {temp_project}", file=sys.stderr)
+    print(f"Temp project exists: {temp_project.exists()}", file=sys.stderr)
     
     # List files in temp project
     if temp_project.exists():
