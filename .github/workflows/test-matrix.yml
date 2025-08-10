@@ -91,8 +91,12 @@ jobs:
       - name: Install dependencies (pixi)
         run: |
           if [[ "${{ matrix.test-type }}" == "integration" || "${{ matrix.test-type }}" == "e2e" ]]; then
+            echo "🔧 Installing ci-integration environment for ${{ matrix.test-type }} tests"
             pixi install -e ci-integration
+            echo "📦 Checking ci-integration environment packages:"
+            pixi list -e ci-integration | grep -E "(tree-sitter|pymgclient|pytest)" || echo "Key packages not found"
           else
+            echo "🔧 Installing ci-smoke environment for ${{ matrix.test-type }} tests"
             pixi install -e ci-smoke
           fi
 
@@ -136,6 +140,13 @@ jobs:
         run: |
           echo "🧪 Running ${{ steps.select-tests.outputs.marker }}"
           echo "Command: ${{ steps.select-tests.outputs.test_cmd }}"
+          
+          # Debug: Show which environment we're actually using
+          if [[ "${{ steps.select-tests.outputs.test_cmd }}" == *"ci-integration"* ]]; then
+            echo "🔍 Using ci-integration environment - verifying tree-sitter availability:"
+            pixi run -e ci-integration python -c "import tree_sitter; print('✅ tree_sitter imported successfully')" || echo "❌ tree_sitter import failed"
+            pixi run -e ci-integration python -c "import mgclient; print('✅ mgclient imported successfully')" || echo "❌ mgclient import failed"
+          fi
           
           # Set environment variables for tests
           export MEMGRAPH_HOST=localhost
