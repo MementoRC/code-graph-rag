@@ -151,7 +151,7 @@ jobs:
           
           # Test 3: GraphUpdater function call detection (the core failing functionality)
           echo "  Testing GraphUpdater function call detection..."
-          if pixi run -e ci-integration python tests/debug_ci_calls.py; then
+          if pixi run -e ci-integration python codebase_rag/tests/debug_ci_calls.py; then
             echo "  ✅ GraphUpdater function call detection working correctly"
           else
             echo "  ❌ GraphUpdater function call detection failed"
@@ -226,10 +226,10 @@ jobs:
               pixi run -e ci-integration python -c 'from codebase_rag.parser_loader import load_parsers; parsers, queries = load_parsers(); print(f"SUCCESS: Parsers still available: {list(parsers.keys())}")' || echo "❌ Parser loading now failing"
               
               echo "  Re-validating GraphUpdater:"
-              pixi run -e ci-integration python tests/debug_ci_calls.py || echo "❌ GraphUpdater function call detection now failing"
+              pixi run -e ci-integration python codebase_rag/tests/debug_ci_calls.py || echo "❌ GraphUpdater function call detection now failing"
               
               echo "  Re-validating database connection:"
-              pixi run -e ci-integration python -c "import mgclient; print('✅ mgclient still available')" || echo "❌ mgclient no longer available"
+              pixi run -e ci-integration python -c 'import mgclient; print("SUCCESS: mgclient still available")' || echo "❌ mgclient no longer available"
               
               echo "📋 Environment state after test failure has been captured above"
             fi
