@@ -48,6 +48,9 @@ class GraphUpdater:
 
     def run(self) -> None:
         """Orchestrates the parsing and ingestion process."""
+        print("🚀 GRAPHUPDATER.RUN() CALLED - INTEGRATION TEST EXECUTION")
+        logger.critical("🚀 GRAPHUPDATER.RUN() CALLED - INTEGRATION TEST EXECUTION")
+        
         self.ingestor.ensure_node_batch("Project", {"name": self.project_name})
         logger.info(f"Ensuring Project: {self.project_name}")
 
@@ -58,6 +61,11 @@ class GraphUpdater:
             "\n--- Pass 2: Processing Files, Caching ASTs, and Collecting Definitions ---"
         )
         self._process_files()
+
+        logger.critical(f"🔍 INTEGRATION TEST DEBUG: Found {len(self.function_registry)} functions in registry")
+        logger.critical(f"🔍 INTEGRATION TEST DEBUG: AST cache has {len(self.ast_cache)} files") 
+        print(f"🔍 INTEGRATION TEST DEBUG: Found {len(self.function_registry)} functions in registry")
+        print(f"🔍 INTEGRATION TEST DEBUG: AST cache has {len(self.ast_cache)} files")
 
         logger.info(
             f"\n--- Found {len(self.function_registry)} functions/methods in codebase ---"
@@ -477,12 +485,18 @@ class GraphUpdater:
 
     def _process_function_calls(self) -> None:
         """Third pass: Process function calls using the cached ASTs."""
-        logger.info(f"=== STARTING FUNCTION CALL PROCESSING ===")
+        print("🔍 === STARTING FUNCTION CALL PROCESSING ===")
+        logger.critical(f"🔍 === STARTING FUNCTION CALL PROCESSING ===")
         logger.info(f"AST cache has {len(self.ast_cache)} files")
+        print(f"🔍 AST cache has {len(self.ast_cache)} files")
+        
         for file_path, (root_node, language) in self.ast_cache.items():
-            logger.info(f"Processing calls in file: {file_path}")
+            print(f"🔍 Processing calls in file: {file_path}")
+            logger.critical(f"🔍 Processing calls in file: {file_path}")
             self._process_calls_in_file(file_path, root_node, language)
-        logger.info(f"=== COMPLETED FUNCTION CALL PROCESSING ===")
+            
+        print("🔍 === COMPLETED FUNCTION CALL PROCESSING ===")
+        logger.critical(f"🔍 === COMPLETED FUNCTION CALL PROCESSING ===")
 
     def _process_calls_in_file(
         self, file_path: Path, root_node: Node, language: str
@@ -621,14 +635,20 @@ class GraphUpdater:
         module_qn: str,
         language: str,
     ) -> None:
+        print(f"🎯 _ingest_function_calls called for {caller_qn}")
+        logger.critical(f"🎯 _ingest_function_calls called for {caller_qn}")
+        
         calls_query = self.queries[language].get("calls")
         if not calls_query:
-            logger.debug(f"No calls query available for language: {language}")
+            print(f"❌ No calls query available for language: {language}")
+            logger.critical(f"❌ No calls query available for language: {language}")
             return
 
         # Use compatibility layer for different tree-sitter API versions
+        print(f"🔍 About to execute query for calls in {caller_qn}")
         call_nodes = self._execute_query_with_fallback(calls_query, caller_node, "call")
-        logger.info(f"Found {len(call_nodes)} call nodes for {caller_qn}")  # Changed to INFO for CI visibility
+        print(f"🔍 Found {len(call_nodes)} call nodes for {caller_qn}")
+        logger.critical(f"🔍 Found {len(call_nodes)} call nodes for {caller_qn}")
 
         for call_node in call_nodes:
             if not isinstance(call_node, Node):
