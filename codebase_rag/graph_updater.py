@@ -97,6 +97,25 @@ class GraphUpdater:
 
         logger.info("Graph update completed successfully.")
 
+    def parse_and_ingest_file(self, file_path: Path, language_name: str) -> None:
+        """Parse and ingest a single file for realtime updates.
+        
+        This method is used by the realtime updater to process individual files
+        when they are created or modified.
+        """
+        # Process the single file
+        try:
+            self._process_file(file_path)
+            # Ingest the results immediately
+            self._ingest_batch()
+            logger.debug(f"Successfully processed file: {file_path}")
+        except Exception as e:
+            logger.error(f"Error processing file {file_path}: {e}")
+            # Clear any partial data on error
+            self.function_info.clear()
+            self.class_info.clear() 
+            self.call_info.clear()
+
     def _load_config(self) -> dict[str, Any] | None:
         """Load configuration from pyproject.toml."""
         import toml  # type: ignore[import-untyped]
@@ -172,6 +191,19 @@ class GraphUpdater:
         if node_batch:
             # NOTE: Mock compatibility - in real usage, this method signature should match MemgraphIngestor
             self.ingestor.ensure_node_batch(node_batch)  # type: ignore[call-arg,arg-type]
+
+        # Add class-method relationships (DEFINES_METHOD)
+        for class_id, class_info in self.class_info.items():
+            for method_name in class_info.get("methods", []):
+                # Create qualified name for the method
+                method_id = f"{class_id}.{method_name}"
+                relationship_data = {
+                    "file_path": class_info["file_path"],
+                }
+                
+                relationship_batch.append(
+                    (("Class", "qualified_name", class_id), "DEFINES_METHOD", ("Method", "qualified_name", method_id), relationship_data),
+                )
 
         # Add function call relationships
         for call in self.call_info:

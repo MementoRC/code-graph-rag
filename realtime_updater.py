@@ -41,7 +41,7 @@ class CodeChangeEventHandler(FileSystemEventHandler):
         if event.event_type in ["modified", "created"]:
             lang_config = get_language_config(path.suffix)
             if lang_config and lang_config.name in self.updater.parsers:
-                self.updater.parse_and_ingest_file(path, lang_config.name)  # type: ignore[attr-defined]
+                self.updater.parse_and_ingest_file(path, lang_config.name)
 
         self.updater.ingestor.flush_all()
         logger.success(f"Graph updated for: {path.name}")

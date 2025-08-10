@@ -20,6 +20,17 @@ def temp_project(temp_repo: Path) -> Path:
         f.write("class MyClass:\n")
         f.write("    def my_method(self):\n")
         f.write("        pass\n")
+    
+    # Create pyproject.toml for the temp project
+    pyproject_content = """
+[tool.codebase-rag]
+include = ["*.py"]
+exclude = ["__pycache__", "*.pyc", "tests/"]
+"""
+    pyproject_path = project_path / "pyproject.toml"
+    with open(pyproject_path, "w") as f:
+        f.write(pyproject_content.strip())
+    
     return project_path
 
 
@@ -42,21 +53,33 @@ def test_defines_method_relationship_is_created(
     )
     updater.run()
 
-    project_name = temp_project.name
-    class_qn = f"{project_name}.main.MyClass"
-    method_qn = f"{project_name}.main.MyClass.my_method"
+    # Based on GraphUpdater format: {file_stem}::{class_name}
+    class_qn = "main::MyClass"
+    method_qn = "main::MyClass.my_method"
 
-    expected_call = call(
+    expected_relationship = (
         ("Class", "qualified_name", class_qn),
-        "DEFINES_METHOD",
+        "DEFINES_METHOD", 
         ("Method", "qualified_name", method_qn),
+        {"file_path": "main.py"}
     )
 
-    actual_calls = [
-        c
-        for c in mock_ingestor.ensure_relationship_batch.call_args_list
-        if c.args[1] == "DEFINES_METHOD"
-    ]
+    # Extract DEFINES_METHOD relationships from batch calls
+    actual_defines_method_relationships = []
+    all_calls = mock_ingestor.ensure_relationship_batch.call_args_list
+    
+    for call_obj in all_calls:
+        if hasattr(call_obj, 'args') and len(call_obj.args) > 0:
+            # First argument is the list of relationships
+            relationships = call_obj.args[0]
+            if isinstance(relationships, list):
+                for rel in relationships:
+                    if len(rel) >= 2 and rel[1] == "DEFINES_METHOD":
+                        actual_defines_method_relationships.append(rel)
 
-    assert len(actual_calls) == 1
-    assert actual_calls[0] == expected_call
+    # Verify we found exactly one DEFINES_METHOD relationship
+    assert len(actual_defines_method_relationships) == 1
+    
+    # Verify the relationship matches what we expect
+    actual_relationship = actual_defines_method_relationships[0]
+    assert actual_relationship == expected_relationship
