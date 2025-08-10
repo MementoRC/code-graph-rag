@@ -229,14 +229,44 @@ def local_func():
         print(f"Created temp file: {temp_path}")
         print(f"File exists: {temp_path.exists()}")
         
-        # Re-parse from file
+        # Re-parse from file using compatibility approach
         file_content = temp_path.read_bytes()
         tree = parser.parse(file_content)
         root_node = tree.root_node
         
-        captures = calls_query.captures(root_node)
-        temp_calls = captures.get("call", [])
-        print(f"Calls found from temp file: {len(temp_calls)}")
+        # Use same compatibility approach as GraphUpdater
+        try:
+            if hasattr(calls_query, 'captures'):
+                captures = calls_query.captures(root_node)
+                temp_calls = captures.get("call", [])
+            elif hasattr(calls_query, 'matches'):
+                matches = calls_query.matches(root_node)
+                temp_calls = []
+                for pattern_index, match_captures in matches:
+                    for capture in match_captures:
+                        if len(capture) >= 2 and capture[1] == "call":
+                            temp_calls.append(capture[0])
+            else:
+                # Manual fallback
+                temp_calls = []
+                def find_calls_temp(node):
+                    if node.type == "call":
+                        temp_calls.append(node)
+                    for child in node.children:
+                        find_calls_temp(child)
+                find_calls_temp(root_node)
+            print(f"Calls found from temp file: {len(temp_calls)}")
+        except Exception as e:
+            print(f"Temp file test failed with compatibility approach: {e}")
+            # Fallback to manual traversal
+            temp_calls = []
+            def find_calls_temp(node):
+                if node.type == "call":
+                    temp_calls.append(node)
+                for child in node.children:
+                    find_calls_temp(child)
+            find_calls_temp(root_node)
+            print(f"Calls found from temp file (manual fallback): {len(temp_calls)}")
     
     # Step 10: Summary
     print_diagnostic("SUMMARY")
