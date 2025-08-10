@@ -3,14 +3,13 @@ import platform
 import sys
 from pathlib import Path
 from typing import cast
-from unittest.mock import MagicMock, call
+from unittest.mock import MagicMock
 
 import pytest
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
 from codebase_rag.graph_updater import GraphUpdater
-from codebase_rag.services.graph_service import MemgraphIngestor
 
 
 @pytest.fixture
@@ -163,7 +162,7 @@ exclude = ["__pycache__", "*.pyc", "tests/"]
 
     # Check for function call relationships being created
     relationship_calls = cast(MagicMock, mock_ingestor).ensure_relationship_batch.call_args_list
-    
+
     # Find CALLS relationships
     calls_relationships = []
     for call_args in relationship_calls:

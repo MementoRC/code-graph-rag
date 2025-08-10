@@ -1,15 +1,12 @@
 import os
 import sys
-from collections import defaultdict
 from pathlib import Path
-from typing import Any, Union
+from typing import Any
 
 from loguru import logger
 from tree_sitter import Node, Parser, Query
 
 from codebase_rag.services.graph_service import MemgraphIngestor
-
-from .language_config import LanguageConfig, get_language_config
 
 # mypy: disable-error-code=import-untyped
 
@@ -35,7 +32,7 @@ class GraphUpdater:
     def _get_parser_for_file(self, file_path: Path) -> Parser | None:
         """Get the appropriate parser for a file based on its extension."""
         from codebase_rag.language_config import get_language_config
-        
+
         suffix = file_path.suffix
         lang_config = get_language_config(suffix)
         if lang_config:
@@ -45,7 +42,7 @@ class GraphUpdater:
     def _get_query_for_file(self, file_path: Path, query_name: str) -> Any:
         """Get a tree-sitter query for a file based on its extension."""
         from codebase_rag.language_config import get_language_config
-        
+
         suffix = file_path.suffix
         lang_config = get_language_config(suffix)
         if lang_config:
@@ -99,7 +96,7 @@ class GraphUpdater:
 
     def parse_and_ingest_file(self, file_path: Path, language_name: str) -> None:
         """Parse and ingest a single file for realtime updates.
-        
+
         This method is used by the realtime updater to process individual files
         when they are created or modified.
         """
@@ -113,7 +110,7 @@ class GraphUpdater:
             logger.error(f"Error processing file {file_path}: {e}")
             # Clear any partial data on error
             self.function_info.clear()
-            self.class_info.clear() 
+            self.class_info.clear()
             self.call_info.clear()
 
     def _load_config(self) -> dict[str, Any] | None:
@@ -200,7 +197,7 @@ class GraphUpdater:
                 relationship_data = {
                     "file_path": class_info["file_path"],
                 }
-                
+
                 relationship_batch.append(
                     (("Class", "qualified_name", class_id), "DEFINES_METHOD", ("Method", "qualified_name", method_id), relationship_data),
                 )
@@ -482,10 +479,6 @@ class GraphUpdater:
 
     def _is_related_module(self, caller_module_qn: str, registered_qn: str) -> bool:
         """Check if modules are related (same top-level package)."""
-        # Extract just the module name part (before ::)
-        caller_module = caller_module_qn.split("::")[0] if "::" in caller_module_qn else caller_module_qn
-        registered_module = registered_qn.split("::")[0] if "::" in registered_qn else registered_qn
-
         # Check if they share common top-level packages
         caller_parts = caller_module_qn.split(".")
         registered_parts = registered_qn.split(".")
@@ -501,7 +494,7 @@ class GraphUpdater:
 
     def _execute_query_with_fallback(
         self,
-        query: Union[Query, Any],
+        query: Query | Any,
         node: Node,
         capture_name: str,
     ) -> list[Node]:
@@ -599,11 +592,11 @@ class GraphUpdater:
         This is the ultimate fallback for tree-sitter API compatibility issues.
         """
         matched_nodes: list[Node] = []
-        
+
         # Map capture names to node types - this is the key insight
         capture_to_type_mapping = {
             "function": "function_definition",
-            "class": "class_definition", 
+            "class": "class_definition",
             "call": "call",
             "import": "import_statement",
             "import_from": "import_from_statement",
@@ -617,7 +610,7 @@ class GraphUpdater:
             target_type = capture_to_type_mapping.get(capture_name)
             if target_type and current_node.type == target_type:
                 matched_nodes.append(current_node)
-            
+
             # Continue traversing children
             for child in current_node.children:
                 traverse(child)

@@ -14,7 +14,7 @@ import os
 import sys
 import tempfile
 from pathlib import Path
-from typing import Any, Union
+from typing import Any
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
@@ -90,7 +90,7 @@ def local_func():
 
     # Step 6: Create and test the calls query
     print_diagnostic("CALLS QUERY")
-    calls_query: Union[Any, None] = None
+    calls_query: Any | None = None
     try:
         calls_query_string = "(call) @call"
         # Use modern Query constructor instead of deprecated language.query()
