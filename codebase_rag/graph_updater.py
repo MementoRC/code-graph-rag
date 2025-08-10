@@ -477,8 +477,12 @@ class GraphUpdater:
 
     def _process_function_calls(self) -> None:
         """Third pass: Process function calls using the cached ASTs."""
+        logger.info(f"=== STARTING FUNCTION CALL PROCESSING ===")
+        logger.info(f"AST cache has {len(self.ast_cache)} files")
         for file_path, (root_node, language) in self.ast_cache.items():
+            logger.info(f"Processing calls in file: {file_path}")
             self._process_calls_in_file(file_path, root_node, language)
+        logger.info(f"=== COMPLETED FUNCTION CALL PROCESSING ===")
 
     def _process_calls_in_file(
         self, file_path: Path, root_node: Node, language: str
@@ -507,10 +511,13 @@ class GraphUpdater:
     ) -> None:
         lang_queries = self.queries[language]
         lang_config: LanguageConfig = lang_queries["config"]
+        
+        logger.info(f"  Processing function calls in module: {module_qn}")
 
         query = lang_queries["functions"]
         # Use compatibility layer for different tree-sitter API versions
         func_nodes = self._execute_query_with_fallback(query, root_node, "function")
+        logger.info(f"  Found {len(func_nodes)} functions to check for calls")
         for func_node in func_nodes:
             if not isinstance(func_node, Node):
                 continue
@@ -724,9 +731,70 @@ class GraphUpdater:
                 logger.info(f"Alternative API found {len(captured_nodes)} nodes for '{capture_name}'")  # Changed to INFO
                 return captured_nodes
             else:
-                # This shouldn't happen with Query() constructor, but fallback to manual traversal
-                logger.warning(f"Query object has no captures() or matches() methods - using manual traversal for '{capture_name}'")
+                # Handle very old tree-sitter API that has capture_count, pattern_count etc.
+                logger.warning(f"Query object has no captures() or matches() methods - trying old API patterns for '{capture_name}'")
                 logger.warning(f"Available query methods: {[attr for attr in dir(query) if not attr.startswith('_')]}")  # Show available methods
+                
+                # Try different execution patterns for old tree-sitter API
+                try:
+                    # Pattern 1: Try using query as a function with node argument  
+                    if callable(query):
+                        logger.info(f"Query is callable, trying query(node) pattern")
+                        matches = query(node)
+                        captured_nodes = []
+                        for match in matches:
+                            if hasattr(match, 'captures'):
+                                for capture in match.captures:
+                                    if capture[1] == capture_name:  # (node, name) tuple
+                                        captured_nodes.append(capture[0])
+                            elif isinstance(match, tuple) and len(match) >= 2:
+                                if match[1] == capture_name:
+                                    captured_nodes.append(match[0])
+                        if captured_nodes:
+                            logger.info(f"Old API callable pattern found {len(captured_nodes)} nodes")
+                            return captured_nodes
+                    
+                    # Pattern 2: Check if node has a method to execute queries
+                    for method_name in ['query', 'search', 'match']:
+                        if hasattr(node, method_name):
+                            logger.info(f"Trying node.{method_name}(query) pattern")
+                            executor = getattr(node, method_name)
+                            if callable(executor):
+                                matches = executor(query)
+                                captured_nodes = []
+                                for match in matches:
+                                    if isinstance(match, tuple) and len(match) >= 2:
+                                        if match[1] == capture_name:
+                                            captured_nodes.append(match[0])
+                                if captured_nodes:
+                                    logger.info(f"Node method {method_name} found {len(captured_nodes)} nodes")
+                                    return captured_nodes
+                    
+                    # Pattern 3: Maybe there's a global query execution function
+                    import tree_sitter
+                    for func_name in ['query', 'execute_query', 'search']:
+                        if hasattr(tree_sitter, func_name):
+                            logger.info(f"Trying tree_sitter.{func_name}(query, node) pattern")
+                            executor = getattr(tree_sitter, func_name)
+                            if callable(executor):
+                                try:
+                                    matches = executor(query, node)
+                                    captured_nodes = []
+                                    for match in matches:
+                                        if isinstance(match, tuple) and len(match) >= 2:
+                                            if match[1] == capture_name:
+                                                captured_nodes.append(match[0])
+                                    if captured_nodes:
+                                        logger.info(f"Module function {func_name} found {len(captured_nodes)} nodes")
+                                        return captured_nodes
+                                except Exception as e:
+                                    logger.debug(f"Module function {func_name} failed: {e}")
+                                    
+                except Exception as api_error:
+                    logger.warning(f"Old API execution failed: {api_error}")
+                
+                # Final fallback to manual traversal
+                logger.info(f"All query API attempts failed, using manual traversal for '{capture_name}'")
                 result = self._manual_traverse_for_capture(node, capture_name)
                 logger.info(f"Manual traversal fallback found {len(result)} nodes for '{capture_name}'")
                 return result
