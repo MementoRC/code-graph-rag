@@ -34,13 +34,23 @@ class GraphUpdater:
 
     def _get_parser_for_file(self, file_path: Path) -> Parser | None:
         """Get the appropriate parser for a file based on its extension."""
+        from codebase_rag.language_config import get_language_config
+        
         suffix = file_path.suffix
-        return self.parsers.get(suffix)
+        lang_config = get_language_config(suffix)
+        if lang_config:
+            return self.parsers.get(lang_config.name)
+        return None
 
     def _get_query_for_file(self, file_path: Path, query_name: str) -> Any:
         """Get a tree-sitter query for a file based on its extension."""
+        from codebase_rag.language_config import get_language_config
+        
         suffix = file_path.suffix
-        return self.queries.get(suffix, {}).get(query_name)
+        lang_config = get_language_config(suffix)
+        if lang_config:
+            return self.queries.get(lang_config.name, {}).get(query_name)
+        return None
 
     def run(self) -> None:
         """Update the graph by analyzing the codebase."""
