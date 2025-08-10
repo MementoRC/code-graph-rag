@@ -621,7 +621,7 @@ class GraphUpdater:
 
         # Use compatibility layer for different tree-sitter API versions
         call_nodes = self._execute_query_with_fallback(calls_query, caller_node, "call")
-        logger.debug(f"Found {len(call_nodes)} call nodes for {caller_qn}")
+        logger.info(f"Found {len(call_nodes)} call nodes for {caller_qn}")  # Changed to INFO for CI visibility
 
         for call_node in call_nodes:
             if not isinstance(call_node, Node):
@@ -708,26 +708,28 @@ class GraphUpdater:
         try:
             # Try modern API first (should work now with Query constructor)
             if hasattr(query, 'captures'):
-                logger.debug(f"Using modern API: query.captures() for '{capture_name}'")
+                logger.info(f"Using modern API: query.captures() for '{capture_name}'")  # Changed to INFO
                 captures = query.captures(node)
                 result = captures.get(capture_name, [])
-                logger.debug(f"Modern API found {len(result)} nodes for '{capture_name}'")
+                logger.info(f"Modern API found {len(result)} nodes for '{capture_name}'")  # Changed to INFO
                 return result
             elif hasattr(query, 'matches'):
-                logger.debug(f"Using alternative API: query.matches() for '{capture_name}'")
+                logger.info(f"Using alternative API: query.matches() for '{capture_name}'")  # Changed to INFO
                 matches = query.matches(node) 
                 captured_nodes = []
                 for pattern_index, match_captures in matches:
                     for capture in match_captures:
                         if len(capture) >= 2 and capture[1] == capture_name:
                             captured_nodes.append(capture[0])
-                logger.debug(f"Alternative API found {len(captured_nodes)} nodes for '{capture_name}'")
+                logger.info(f"Alternative API found {len(captured_nodes)} nodes for '{capture_name}'")  # Changed to INFO
                 return captured_nodes
             else:
                 # This shouldn't happen with Query() constructor, but fallback to manual traversal
                 logger.warning(f"Query object has no captures() or matches() methods - using manual traversal for '{capture_name}'")
-                logger.debug(f"Available query methods: {[attr for attr in dir(query) if not attr.startswith('_')]}")
-                return self._manual_traverse_for_capture(node, capture_name)
+                logger.warning(f"Available query methods: {[attr for attr in dir(query) if not attr.startswith('_')]}")  # Show available methods
+                result = self._manual_traverse_for_capture(node, capture_name)
+                logger.info(f"Manual traversal fallback found {len(result)} nodes for '{capture_name}'")
+                return result
         except Exception as e:
             logger.warning(f"Query execution failed: {e}, using manual traversal")
             return self._manual_traverse_for_capture(node, capture_name)

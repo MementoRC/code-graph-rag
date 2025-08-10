@@ -91,11 +91,19 @@ def local_func():
     print_diagnostic("CALLS QUERY")
     try:
         calls_query_string = "(call) @call"
-        calls_query = language.query(calls_query_string)
-        print(f"✅ Query created: {calls_query_string}")
+        # Use modern Query constructor instead of deprecated language.query()
+        from tree_sitter import Query
+        calls_query = Query(language, calls_query_string)
+        print(f"✅ Query created with modern constructor: {calls_query_string}")
     except Exception as e:
-        print(f"❌ Failed to create query: {e}")
-        return
+        print(f"❌ Failed to create query with modern constructor: {e}")
+        # Fallback to old method for comparison
+        try:
+            calls_query = language.query(calls_query_string)
+            print(f"✅ Query created with deprecated method: {calls_query_string}")
+        except Exception as e2:
+            print(f"❌ Failed to create query with deprecated method: {e2}")
+            return
     
     # Step 7: Execute query and find calls
     print_diagnostic("QUERY EXECUTION")
