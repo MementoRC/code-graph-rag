@@ -74,12 +74,12 @@ jobs:
         if: github.event_name == 'pull_request'
         run: |
           echo "🔍 Calculating differential coverage for PR"
-          # Install diff-cover if not available
-          pip install diff-cover || echo "diff-cover installation attempted"
-          
+          # Use diff-cover from quality environment (already available in conda-forge)
+          pixi run -e quality-extended diff-cover --version || echo "diff-cover not yet in environment"
+
           # Generate diff coverage report
           if [ -f coverage.xml ]; then
-            diff-cover coverage.xml --compare-branch=origin/${{ github.event.pull_request.base.ref }} \
+            pixi run -e quality-extended diff-cover coverage.xml --compare-branch=origin/${{ github.event.pull_request.base.ref }} \
               --html-report diff-coverage.html \
               --json-report diff-coverage.json || echo "Diff coverage calculated"
           fi
@@ -95,21 +95,21 @@ jobs:
                 data = json.load(f)
             print(f\"{data['totals']['percent_covered']:.1f}\")
             " 2>/dev/null || echo "0.0")
-            
+
             TOTAL_STATEMENTS=$(python -c "
             import json
             with open('coverage.json') as f:
                 data = json.load(f)
             print(data['totals']['num_statements'])
             " 2>/dev/null || echo "0")
-            
+
             COVERED_STATEMENTS=$(python -c "
             import json
             with open('coverage.json') as f:
                 data = json.load(f)
             print(data['totals']['covered_lines'])
             " 2>/dev/null || echo "0")
-            
+
             echo "total_coverage=$TOTAL_COVERAGE" >> $GITHUB_OUTPUT
             echo "total_statements=$TOTAL_STATEMENTS" >> $GITHUB_OUTPUT
             echo "covered_statements=$COVERED_STATEMENTS" >> $GITHUB_OUTPUT
@@ -141,38 +141,38 @@ jobs:
             const coverage = '${{ steps.coverage.outputs.total_coverage }}';
             const statements = '${{ steps.coverage.outputs.total_statements }}';
             const covered = '${{ steps.coverage.outputs.covered_statements }}';
-            
+
             const coverageEmoji = coverage >= 90 ? '🟢' : coverage >= 70 ? '🟡' : '🔴';
-            
+
             const body = `## 📊 Coverage Report
-            
+
             ${coverageEmoji} **Total Coverage: ${coverage}%**
-            
+
             | Metric | Value |
             |--------|-------|
             | Total Statements | ${statements} |
             | Covered Statements | ${covered} |
             | Coverage Percentage | ${coverage}% |
-            
+
             ### Coverage Status
-            ${coverage >= 90 ? '✅ Excellent coverage!' : 
-              coverage >= 70 ? '⚠️ Good coverage, consider improving' : 
+            ${coverage >= 90 ? '✅ Excellent coverage!' :
+              coverage >= 70 ? '⚠️ Good coverage, consider improving' :
               '❌ Low coverage, please add tests'}
-            
+
             [View detailed coverage report in artifacts](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
             `;
-            
+
             // Find existing coverage comment
             const comments = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
             });
-            
-            const existingComment = comments.data.find(comment => 
+
+            const existingComment = comments.data.find(comment =>
               comment.body.includes('## 📊 Coverage Report')
             );
-            
+
             if (existingComment) {
               // Update existing comment
               await github.rest.issues.updateComment({
@@ -200,7 +200,7 @@ jobs:
           echo "| Total Coverage | ${{ steps.coverage.outputs.total_coverage }}% |" >> $GITHUB_STEP_SUMMARY
           echo "| Total Statements | ${{ steps.coverage.outputs.total_statements }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Covered Statements | ${{ steps.coverage.outputs.covered_statements }} |" >> $GITHUB_STEP_SUMMARY
-          
+
           # Coverage status
           COVERAGE="${{ steps.coverage.outputs.total_coverage }}"
           if [ $(echo "$COVERAGE >= 90" | bc -l) -eq 1 ]; then
@@ -242,12 +242,13 @@ jobs:
       - name: Analyze code complexity
         run: |
           echo "🔍 Analyzing code complexity"
-          # Install additional tools for complexity analysis
-          pip install radon xenon || echo "Complexity tools installed"
-          
-          # Generate complexity reports
-          radon cc codebase_rag/ --json > complexity-report.json || echo "Complexity analysis complete"
-          radon mi codebase_rag/ --json > maintainability-report.json || echo "Maintainability analysis complete"
+          # Use complexity analysis tools from quality environment
+          pixi run -e quality-extended radon --version || echo "radon not yet in environment"
+          pixi run -e quality-extended xenon --version || echo "xenon not yet in environment"
+
+          # Generate complexity reports using pixi
+          pixi run -e quality-extended radon cc codebase_rag/ --json > complexity-report.json || echo "Complexity analysis complete"
+          pixi run -e quality-extended radon mi codebase_rag/ --json > maintainability-report.json || echo "Maintainability analysis complete"
 
       - name: Generate quality metrics summary
         run: |
@@ -255,7 +256,7 @@ jobs:
           python << 'EOF'
           import json
           import os
-          
+
           # Initialize metrics
           metrics = {
               "total_files": 0,
@@ -264,7 +265,7 @@ jobs:
               "mypy_issues": 0,
               "complexity_grade": "Unknown"
           }
-          
+
           # Count Python files and lines
           for root, dirs, files in os.walk("codebase_rag"):
               for file in files:
@@ -276,7 +277,7 @@ jobs:
                               metrics["total_lines"] += sum(1 for line in f if line.strip())
                       except:
                           pass
-          
+
           # Parse ruff report
           try:
               with open("ruff-report.json", 'r') as f:
@@ -284,7 +285,7 @@ jobs:
                   metrics["ruff_issues"] = len(ruff_data)
           except:
               pass
-          
+
           # Parse mypy report
           try:
               with open("mypy-report.json", 'r') as f:
@@ -292,11 +293,11 @@ jobs:
                   metrics["mypy_issues"] = len([m for m in mypy_data if m.get("level") == "error"])
           except:
               pass
-          
+
           # Save metrics
           with open("quality-metrics.json", 'w') as f:
               json.dump(metrics, f, indent=2)
-          
+
           print("Quality metrics generated")
           EOF
 
@@ -317,21 +318,21 @@ jobs:
         if: always()
         run: |
           echo "## 📏 Code Quality Metrics" >> $GITHUB_STEP_SUMMARY
-          
+
           if [ -f quality-metrics.json ]; then
             # Extract metrics from JSON
             TOTAL_FILES=$(python -c "import json; print(json.load(open('quality-metrics.json'))['total_files'])" 2>/dev/null || echo "0")
             TOTAL_LINES=$(python -c "import json; print(json.load(open('quality-metrics.json'))['total_lines'])" 2>/dev/null || echo "0")
             RUFF_ISSUES=$(python -c "import json; print(json.load(open('quality-metrics.json'))['ruff_issues'])" 2>/dev/null || echo "0")
             MYPY_ISSUES=$(python -c "import json; print(json.load(open('quality-metrics.json'))['mypy_issues'])" 2>/dev/null || echo "0")
-            
+
             echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
             echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
             echo "| Python Files | $TOTAL_FILES |" >> $GITHUB_STEP_SUMMARY
             echo "| Lines of Code | $TOTAL_LINES |" >> $GITHUB_STEP_SUMMARY
             echo "| Ruff Issues | $RUFF_ISSUES |" >> $GITHUB_STEP_SUMMARY
             echo "| MyPy Issues | $MYPY_ISSUES |" >> $GITHUB_STEP_SUMMARY
-            
+
             # Quality assessment
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "### Quality Assessment" >> $GITHUB_STEP_SUMMARY
@@ -364,10 +365,10 @@ jobs:
       - name: Run comprehensive security analysis
         run: |
           echo "🔒 Running comprehensive security analysis"
-          
+
           # Bandit security scan with JSON output
           pixi run -e security bandit -r codebase_rag/ -f json -o bandit-report.json || echo "Bandit scan complete"
-          
+
           # Safety vulnerability scan
           pixi run -e security safety check --json --output safety-report.json || echo "Safety scan complete"
 
@@ -376,13 +377,13 @@ jobs:
           echo "📊 Analyzing security metrics"
           python << 'EOF'
           import json
-          
+
           security_metrics = {
               "bandit_issues": {"high": 0, "medium": 0, "low": 0},
               "safety_vulnerabilities": 0,
               "security_score": 100
           }
-          
+
           # Parse Bandit report
           try:
               with open("bandit-report.json", 'r') as f:
@@ -393,7 +394,7 @@ jobs:
                           security_metrics["bandit_issues"][severity] += 1
           except:
               pass
-          
+
           # Parse Safety report
           try:
               with open("safety-report.json", 'r') as f:
@@ -401,19 +402,19 @@ jobs:
                   security_metrics["safety_vulnerabilities"] = len(safety_data.get("vulnerabilities", []))
           except:
               pass
-          
+
           # Calculate security score
           high_issues = security_metrics["bandit_issues"]["high"]
           medium_issues = security_metrics["bandit_issues"]["medium"]
           vulnerabilities = security_metrics["safety_vulnerabilities"]
-          
+
           score = 100 - (high_issues * 20) - (medium_issues * 10) - (vulnerabilities * 15)
           security_metrics["security_score"] = max(0, score)
-          
+
           # Save metrics
           with open("security-metrics.json", 'w') as f:
               json.dump(security_metrics, f, indent=2)
-          
+
           print("Security metrics generated")
           EOF
 
@@ -432,7 +433,7 @@ jobs:
         if: always()
         run: |
           echo "## 🔒 Security Analysis Results" >> $GITHUB_STEP_SUMMARY
-          
+
           if [ -f security-metrics.json ]; then
             # Extract security metrics
             HIGH_ISSUES=$(python -c "import json; print(json.load(open('security-metrics.json'))['bandit_issues']['high'])" 2>/dev/null || echo "0")
@@ -440,7 +441,7 @@ jobs:
             LOW_ISSUES=$(python -c "import json; print(json.load(open('security-metrics.json'))['bandit_issues']['low'])" 2>/dev/null || echo "0")
             VULNERABILITIES=$(python -c "import json; print(json.load(open('security-metrics.json'))['safety_vulnerabilities'])" 2>/dev/null || echo "0")
             SECURITY_SCORE=$(python -c "import json; print(json.load(open('security-metrics.json'))['security_score'])" 2>/dev/null || echo "0")
-            
+
             echo "| Metric | Count |" >> $GITHUB_STEP_SUMMARY
             echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
             echo "| High Severity Issues | $HIGH_ISSUES |" >> $GITHUB_STEP_SUMMARY
@@ -448,7 +449,7 @@ jobs:
             echo "| Low Severity Issues | $LOW_ISSUES |" >> $GITHUB_STEP_SUMMARY
             echo "| Known Vulnerabilities | $VULNERABILITIES |" >> $GITHUB_STEP_SUMMARY
             echo "| Security Score | $SECURITY_SCORE/100 |" >> $GITHUB_STEP_SUMMARY
-            
+
             # Security assessment
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "### Security Assessment" >> $GITHUB_STEP_SUMMARY
@@ -476,20 +477,20 @@ jobs:
         run: |
           echo "# 📈 Project Quality Dashboard" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           # Overall health indicator
           echo "## 🎯 Overall Project Health" >> $GITHUB_STEP_SUMMARY
-          
+
           # Create health score based on job results
           COVERAGE_STATUS="${{ needs.coverage-analysis.result }}"
           QUALITY_STATUS="${{ needs.code-quality-metrics.result }}"
           SECURITY_STATUS="${{ needs.security-metrics.result }}"
-          
+
           HEALTH_SCORE=0
           if [ "$COVERAGE_STATUS" = "success" ]; then HEALTH_SCORE=$((HEALTH_SCORE + 33)); fi
           if [ "$QUALITY_STATUS" = "success" ]; then HEALTH_SCORE=$((HEALTH_SCORE + 33)); fi
           if [ "$SECURITY_STATUS" = "success" ]; then HEALTH_SCORE=$((HEALTH_SCORE + 34)); fi
-          
+
           if [ $HEALTH_SCORE -ge 90 ]; then
             echo "🟢 **Excellent** ($HEALTH_SCORE/100) - Project is in great shape!" >> $GITHUB_STEP_SUMMARY
           elif [ $HEALTH_SCORE -ge 70 ]; then
@@ -497,7 +498,7 @@ jobs:
           else
             echo "🔴 **Needs Attention** ($HEALTH_SCORE/100) - Several issues to address" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## 📊 Quality Metrics Overview" >> $GITHUB_STEP_SUMMARY
           echo "| Category | Status | Details |" >> $GITHUB_STEP_SUMMARY
@@ -505,13 +506,13 @@ jobs:
           echo "| Coverage | ${{ needs.coverage-analysis.result == 'success' && '✅ PASS' || '❌ FAIL' }} | Test coverage analysis |" >> $GITHUB_STEP_SUMMARY
           echo "| Code Quality | ${{ needs.code-quality-metrics.result == 'success' && '✅ PASS' || '❌ FAIL' }} | Linting and complexity |" >> $GITHUB_STEP_SUMMARY
           echo "| Security | ${{ needs.security-metrics.result == 'success' && '✅ PASS' || '❌ FAIL' }} | Vulnerability scanning |" >> $GITHUB_STEP_SUMMARY
-          
+
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## 🔗 Available Reports" >> $GITHUB_STEP_SUMMARY
           echo "- 📊 [Coverage Reports](../actions/runs/${{ github.run_id }}) - HTML, XML, JSON formats" >> $GITHUB_STEP_SUMMARY
           echo "- 📏 [Code Quality Metrics](../actions/runs/${{ github.run_id }}) - Linting and complexity analysis" >> $GITHUB_STEP_SUMMARY
           echo "- 🔒 [Security Analysis](../actions/runs/${{ github.run_id }}) - Vulnerability and security scanning" >> $GITHUB_STEP_SUMMARY
-          
+
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## 🎯 Recommendations" >> $GITHUB_STEP_SUMMARY
           if [ "$COVERAGE_STATUS" != "success" ]; then

@@ -97,7 +97,7 @@ relevance_scoring:
     weight: 0.4
     local_extensions: [".py", ".js", ".ts", ".md"]
     core_directories: ["src/", "codebase_rag/", "tests/"]
-  
+
   functionality_impact:
     weight: 0.3
     core_keywords: ["graph", "query", "rag", "database"]

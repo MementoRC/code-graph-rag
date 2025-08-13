@@ -2,7 +2,7 @@
 
 /**
  * Traceability Validation Script for Feature Extraction
- * 
+ *
  * This script validates the complete traceability chain for extracted features,
  * ensuring proper documentation and metadata preservation.
  */
@@ -55,7 +55,7 @@ class TraceabilityValidator {
      */
     validateBranchNaming() {
         const expectedPattern = /^feature\/extracted-([a-zA-Z0-9\-_]+)$/;
-        
+
         if (!this.branchName) {
             this.addError('Branch name not provided');
             return;
@@ -79,7 +79,7 @@ class TraceabilityValidator {
      */
     validateExtractionDocumentation() {
         const assessmentPath = path.join(
-            this.projectRoot, 
+            this.projectRoot,
             'docs/upstream-analysis/extraction/assessments',
             `${this.featureName}.md`
         );
@@ -179,7 +179,7 @@ class TraceabilityValidator {
      */
     validateAnalysisSession() {
         const analysisDir = path.join(this.projectRoot, '.github/analysis-sessions');
-        
+
         if (!fs.existsSync(analysisDir)) {
             this.addWarning('No analysis sessions directory found');
             return;
@@ -199,7 +199,7 @@ class TraceabilityValidator {
         for (const sessionFile of sessionFiles) {
             try {
                 const content = fs.readFileSync(
-                    path.join(analysisDir, sessionFile), 
+                    path.join(analysisDir, sessionFile),
                     'utf8'
                 );
                 if (content.includes(this.featureName)) {
@@ -223,7 +223,7 @@ class TraceabilityValidator {
      */
     validateTaskMasterIntegration() {
         const tasksPath = path.join(this.projectRoot, '.taskmaster/tasks/tasks.json');
-        
+
         if (!fs.existsSync(tasksPath)) {
             this.addWarning('TaskMaster tasks.json not found');
             return;
@@ -235,7 +235,7 @@ class TraceabilityValidator {
 
             // Look for extraction-related tasks
             const extractionTasks = this.findExtractionTasks(tasks, this.featureName);
-            
+
             if (extractionTasks.length > 0) {
                 this.addValidation(`✅ TaskMaster integration found (${extractionTasks.length} tasks)`);
             } else {
@@ -251,14 +251,14 @@ class TraceabilityValidator {
      */
     findExtractionTasks(tasks, featureName) {
         const extractionTasks = [];
-        
+
         if (tasks.tasks) {
             for (const task of tasks.tasks) {
                 // Check task title and description for feature name
                 if (this.taskReferencesFeature(task, featureName)) {
                     extractionTasks.push(task);
                 }
-                
+
                 // Check subtasks
                 if (task.subtasks) {
                     for (const subtask of task.subtasks) {
@@ -269,7 +269,7 @@ class TraceabilityValidator {
                 }
             }
         }
-        
+
         return extractionTasks;
     }
 
@@ -278,8 +278,8 @@ class TraceabilityValidator {
      */
     taskReferencesFeature(task, featureName) {
         const text = `${task.title || ''} ${task.description || ''} ${task.details || ''}`.toLowerCase();
-        return text.includes(featureName.toLowerCase()) || 
-               text.includes('extraction') || 
+        return text.includes(featureName.toLowerCase()) ||
+               text.includes('extraction') ||
                text.includes('extract');
     }
 
@@ -289,7 +289,7 @@ class TraceabilityValidator {
     validateUpstreamReferences() {
         // This would validate that upstream commit refs, PR links, etc. are valid
         // For now, we'll do basic checks
-        
+
         this.addValidation('✅ Basic upstream reference validation completed');
         this.addWarning('Detailed upstream reference validation not yet implemented');
     }
@@ -300,10 +300,10 @@ class TraceabilityValidator {
     validateMetadataIntegrity() {
         // Check for consistent extraction ID usage across documents
         const extractionId = `EXT-${new Date().getFullYear()}-${this.featureName}`;
-        
+
         // This would check that the extraction ID is consistently used
         // across all documentation
-        
+
         this.addValidation('✅ Metadata integrity check completed');
     }
 
@@ -338,18 +338,18 @@ class TraceabilityValidator {
         console.log('\n' + '='.repeat(60));
         console.log('🔗 TRACEABILITY VALIDATION REPORT');
         console.log('='.repeat(60));
-        
+
         console.log(`\n📊 Summary:`);
         console.log(`   • Validations: ${this.validations.length}`);
         console.log(`   • Warnings: ${this.warnings.length}`);
         console.log(`   • Errors: ${this.errors.length}`);
-        
+
         if (this.errors.length === 0) {
             console.log(`\n✅ Overall Status: PASSED`);
         } else {
             console.log(`\n❌ Overall Status: FAILED`);
         }
-        
+
         console.log('\n' + '='.repeat(60));
     }
 }
@@ -358,7 +358,7 @@ class TraceabilityValidator {
 async function main() {
     const args = process.argv.slice(2);
     const options = {};
-    
+
     // Parse command line arguments
     for (let i = 0; i < args.length; i++) {
         const arg = args[i];
@@ -370,21 +370,21 @@ async function main() {
             options.projectRoot = arg.split('=')[1];
         }
     }
-    
+
     if (!options.feature) {
         console.error('❌ Feature name is required. Use --feature=<name>');
         process.exit(1);
     }
-    
+
     if (!options.branch) {
         console.error('❌ Branch name is required. Use --branch=<name>');
         process.exit(1);
     }
-    
+
     try {
         const validator = new TraceabilityValidator(options);
         const result = await validator.validate();
-        
+
         // Exit with appropriate code
         process.exit(result.success ? 0 : 1);
     } catch (error) {

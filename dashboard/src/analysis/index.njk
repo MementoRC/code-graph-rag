@@ -89,7 +89,7 @@ description: Review and track upstream analysis sessions
     <div class="px-6 py-4 border-b border-gray-200">
         <h3 class="text-lg font-semibold text-gray-900">Recent Sessions</h3>
     </div>
-    
+
     {% if collections.analysisDocs.sessions.length > 0 %}
         <div class="divide-y divide-gray-200">
             {% for session in collections.analysisDocs.sessions | sortBy('date') | reverse %}
@@ -104,13 +104,13 @@ description: Review and track upstream analysis sessions
                                 {{ session.date | dateFormat('MMM dd, yyyy') }}
                             </span>
                         </div>
-                        
+
                         {% if session.summary %}
                         <p class="mt-1 text-sm text-gray-600">
                             {{ session.summary }}
                         </p>
                         {% endif %}
-                        
+
                         <div class="mt-3 flex items-center space-x-6 text-sm text-gray-500">
                             <div class="flex items-center">
                                 <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -132,7 +132,7 @@ description: Review and track upstream analysis sessions
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="flex items-center space-x-2">
                         <button class="text-gray-400 hover:text-gray-600">
                             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -147,14 +147,14 @@ description: Review and track upstream analysis sessions
                         </button>
                     </div>
                 </div>
-                
+
                 <!-- Session Details (expandable) -->
                 <div x-data="{ expanded: false }" class="mt-4">
                     <button @click="expanded = !expanded" class="text-sm text-primary-600 hover:text-primary-700">
                         <span x-show="!expanded">Show details</span>
                         <span x-show="expanded">Hide details</span>
                     </button>
-                    
+
                     <div x-show="expanded" x-transition class="mt-3 space-y-4">
                         {% if session.participants.length > 0 %}
                         <div>
@@ -168,7 +168,7 @@ description: Review and track upstream analysis sessions
                             </div>
                         </div>
                         {% endif %}
-                        
+
                         {% if session.decisions.length > 0 %}
                         <div>
                             <h5 class="text-sm font-medium text-gray-900">Key Decisions</h5>
@@ -189,7 +189,7 @@ description: Review and track upstream analysis sessions
                             </ul>
                         </div>
                         {% endif %}
-                        
+
                         {% if session.actionItems.length > 0 %}
                         <div>
                             <h5 class="text-sm font-medium text-gray-900">Action Items</h5>

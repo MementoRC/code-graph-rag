@@ -2,7 +2,7 @@
 
 /**
  * Traceability Webhook Handler
- * 
+ *
  * This service handles real-time updates from GitHub, TaskMaster, and other
  * integrated systems to maintain up-to-date traceability information.
  */
@@ -19,10 +19,10 @@ class TraceabilityWebhookHandler {
         this.port = options.port || process.env.TRACEABILITY_WEBHOOK_PORT || 8080;
         this.secret = options.secret || process.env.TRACEABILITY_WEBHOOK_SECRET || 'default-secret';
         this.projectRoot = options.projectRoot || process.cwd();
-        
+
         this.integration = new TraceabilityIntegration({ projectRoot: this.projectRoot });
         this.server = null;
-        
+
         // Event handlers
         this.handlers = {
             github: this.handleGitHubWebhook.bind(this),
@@ -60,7 +60,7 @@ class TraceabilityWebhookHandler {
         try {
             // Collect request body
             const body = await this.collectRequestBody(req);
-            
+
             // Validate signature if provided
             if (req.headers['x-hub-signature-256']) {
                 if (!this.validateSignature(body, req.headers['x-hub-signature-256'])) {
@@ -103,7 +103,7 @@ class TraceabilityWebhookHandler {
 
         } catch (error) {
             console.error(`❌ Webhook processing error: ${error.message}`);
-            
+
             res.writeHead(500, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({
                 status: 'error',
@@ -118,15 +118,15 @@ class TraceabilityWebhookHandler {
     collectRequestBody(req) {
         return new Promise((resolve, reject) => {
             let body = '';
-            
+
             req.on('data', chunk => {
                 body += chunk.toString();
             });
-            
+
             req.on('end', () => {
                 resolve(body);
             });
-            
+
             req.on('error', error => {
                 reject(error);
             });
@@ -141,9 +141,9 @@ class TraceabilityWebhookHandler {
             .createHmac('sha256', this.secret)
             .update(body)
             .digest('hex');
-        
+
         const providedSignature = signature.replace('sha256=', '');
-        
+
         return crypto.timingSafeEqual(
             Buffer.from(expectedSignature, 'hex'),
             Buffer.from(providedSignature, 'hex')
@@ -158,12 +158,12 @@ class TraceabilityWebhookHandler {
         if (req.headers['x-github-event']) {
             return 'github';
         }
-        
+
         // TaskMaster webhook
         if (req.headers['x-taskmaster-event'] || payload.source === 'taskmaster') {
             return 'taskmaster';
         }
-        
+
         // Custom webhook
         return 'custom';
     }
@@ -186,26 +186,26 @@ class TraceabilityWebhookHandler {
                 case 'pull_request':
                     await this.handlePullRequestEvent(payload, result);
                     break;
-                    
+
                 case 'workflow_run':
                     await this.handleWorkflowRunEvent(payload, result);
                     break;
-                    
+
                 case 'push':
                     await this.handlePushEvent(payload, result);
                     break;
-                    
+
                 case 'issues':
                     await this.handleIssuesEvent(payload, result);
                     break;
-                    
+
                 default:
                     console.log(`ℹ️ Unhandled GitHub event type: ${eventType}`);
             }
-            
+
             result.processed = true;
             console.log(`✅ GitHub webhook processed: ${eventType}`);
-            
+
         } catch (error) {
             console.error(`❌ GitHub webhook processing failed: ${error.message}`);
             result.error = error.message;
@@ -220,7 +220,7 @@ class TraceabilityWebhookHandler {
     async handlePullRequestEvent(payload, result) {
         const { action, pull_request } = payload;
         const branchName = pull_request.head.ref;
-        
+
         // Check if this is an extraction branch
         if (!branchName.startsWith('feature/extracted-')) {
             return;
@@ -243,7 +243,7 @@ class TraceabilityWebhookHandler {
 
         await this.integration.syncWithGitHub(featureId, githubEvent);
         result.featuresUpdated.push(featureId);
-        
+
         console.log(`🔄 Updated traceability for feature ${featureId} from PR ${pull_request.number}`);
     }
 
@@ -253,7 +253,7 @@ class TraceabilityWebhookHandler {
     async handleWorkflowRunEvent(payload, result) {
         const { action, workflow_run } = payload;
         const branchName = workflow_run.head_branch;
-        
+
         // Check if this is an extraction branch
         if (!branchName || !branchName.startsWith('feature/extracted-')) {
             return;
@@ -276,7 +276,7 @@ class TraceabilityWebhookHandler {
 
         await this.integration.syncWithGitHub(featureId, githubEvent);
         result.featuresUpdated.push(featureId);
-        
+
         console.log(`🔄 Updated traceability for feature ${featureId} from workflow ${workflow_run.name}`);
     }
 
@@ -285,7 +285,7 @@ class TraceabilityWebhookHandler {
      */
     async handlePushEvent(payload, result) {
         const branchName = payload.ref.replace('refs/heads/', '');
-        
+
         // Check if this is an extraction branch
         if (!branchName.startsWith('feature/extracted-')) {
             return;
@@ -322,18 +322,18 @@ class TraceabilityWebhookHandler {
      */
     async handleIssuesEvent(payload, result) {
         const { action, issue } = payload;
-        
+
         // Look for extraction references in issue title or body
         const issueText = `${issue.title} ${issue.body}`.toLowerCase();
         const extractionMatches = issueText.match(/(?:ext-|feature\/)([a-z0-9-]+)/gi);
-        
+
         if (!extractionMatches) {
             return;
         }
 
         for (const match of extractionMatches) {
             const featureId = this.normalizeFeatureId(match);
-            
+
             if (action === 'opened' && issue.labels.some(label => label.name === 'bug')) {
                 // Bug reported
                 await this.integration.auditSystem.addBlocker(featureId, {
@@ -348,11 +348,11 @@ class TraceabilityWebhookHandler {
                         eventType: 'issue_opened'
                     }
                 });
-                
+
                 result.featuresUpdated.push(featureId);
                 console.log(`🔄 Added blocker for feature ${featureId} from issue #${issue.number}`);
             }
-            
+
             if (action === 'closed' && issue.labels.some(label => label.name === 'bug')) {
                 // Bug resolved - this would need additional logic to find and resolve the blocker
                 console.log(`ℹ️ Bug issue closed for feature ${featureId}: #${issue.number}`);
@@ -374,14 +374,14 @@ class TraceabilityWebhookHandler {
 
         try {
             const { taskId, status, phase, extractionId } = payload;
-            
+
             if (!extractionId) {
                 console.log('ℹ️ TaskMaster webhook missing extraction ID');
                 return result;
             }
 
             const featureId = this.normalizeFeatureId(extractionId);
-            
+
             const taskUpdate = {
                 taskId,
                 status,
@@ -392,9 +392,9 @@ class TraceabilityWebhookHandler {
             await this.integration.syncWithTaskMaster(featureId, taskUpdate);
             result.featuresUpdated.push(featureId);
             result.processed = true;
-            
+
             console.log(`✅ TaskMaster webhook processed for feature: ${featureId}`);
-            
+
         } catch (error) {
             console.error(`❌ TaskMaster webhook processing failed: ${error.message}`);
             result.error = error.message;
@@ -419,41 +419,41 @@ class TraceabilityWebhookHandler {
             // Handle quality metrics updates
             if (payload.type === 'quality_metrics') {
                 const { featureId, metrics } = payload;
-                
+
                 await this.integration.auditSystem.updateQualityMetrics(featureId, metrics);
                 result.featuresUpdated.push(featureId);
                 result.processed = true;
-                
+
                 console.log(`✅ Quality metrics updated for feature: ${featureId}`);
             }
-            
+
             // Handle manual milestone updates
             if (payload.type === 'milestone') {
                 const { featureId, milestone } = payload;
-                
+
                 await this.integration.auditSystem.addMilestone(featureId, milestone);
                 result.featuresUpdated.push(featureId);
                 result.processed = true;
-                
+
                 console.log(`✅ Milestone added for feature: ${featureId}`);
             }
-            
+
             // Handle blocker updates
             if (payload.type === 'blocker') {
                 const { featureId, blocker, action } = payload;
-                
+
                 if (action === 'add') {
                     await this.integration.auditSystem.addBlocker(featureId, blocker);
                 } else if (action === 'resolve') {
                     await this.integration.auditSystem.resolveBlocker(featureId, blocker.blockerId, blocker.resolution);
                 }
-                
+
                 result.featuresUpdated.push(featureId);
                 result.processed = true;
-                
+
                 console.log(`✅ Blocker ${action} for feature: ${featureId}`);
             }
-            
+
         } catch (error) {
             console.error(`❌ Custom webhook processing failed: ${error.message}`);
             result.error = error.message;
@@ -482,11 +482,11 @@ class TraceabilityWebhookHandler {
         if (input.startsWith('EXT-')) {
             return input;
         }
-        
+
         if (input.startsWith('feature/extracted-')) {
             return input.replace('feature/extracted-', '').toUpperCase();
         }
-        
+
         return input.toUpperCase();
     }
 
@@ -495,19 +495,19 @@ class TraceabilityWebhookHandler {
      */
     determineSeverityFromLabels(labels) {
         const labelNames = labels.map(label => label.name.toLowerCase());
-        
+
         if (labelNames.includes('critical') || labelNames.includes('urgent')) {
             return 'critical';
         }
-        
+
         if (labelNames.includes('high priority') || labelNames.includes('high')) {
             return 'high';
         }
-        
+
         if (labelNames.includes('medium priority') || labelNames.includes('medium')) {
             return 'medium';
         }
-        
+
         return 'low';
     }
 

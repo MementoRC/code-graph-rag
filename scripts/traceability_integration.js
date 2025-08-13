@@ -2,7 +2,7 @@
 
 /**
  * Traceability Integration Layer
- * 
+ *
  * This module provides integration between the traceability audit system
  * and existing components (TaskMaster, GitHub, Documentation system).
  */
@@ -18,7 +18,7 @@ class TraceabilityIntegration {
     constructor(options = {}) {
         this.projectRoot = options.projectRoot || process.cwd();
         this.auditSystem = new TraceabilityAuditSystem({ projectRoot: this.projectRoot });
-        
+
         // Integration configurations
         this.integrations = {
             taskmaster: {
@@ -42,19 +42,19 @@ class TraceabilityIntegration {
     async initializeFromExtractionData(extractionId) {
         try {
             console.log(`🔗 Initializing traceability for extraction: ${extractionId}`);
-            
+
             // Gather data from all integrated systems
             const extractionData = await this.gatherExtractionData(extractionId);
-            
+
             // Initialize feature tracking
             const featureRecord = this.auditSystem.initializeFeatureTracking(extractionData);
-            
+
             // Create integration hooks
             await this.createIntegrationHooks(featureRecord);
-            
+
             console.log(`✅ Traceability initialized for feature: ${featureRecord.featureId}`);
             return featureRecord;
-            
+
         } catch (error) {
             console.error(`❌ Failed to initialize traceability: ${error.message}`);
             throw error;
@@ -85,16 +85,16 @@ class TraceabilityIntegration {
 
         // Try to gather from documentation system
         await this.gatherFromDocumentation(extractionId, extractionData);
-        
+
         // Try to gather from TaskMaster
         await this.gatherFromTaskMaster(extractionId, extractionData);
-        
+
         // Try to gather from GitHub
         await this.gatherFromGitHub(extractionId, extractionData);
-        
+
         // Validate we have minimum required data
         this.validateExtractionData(extractionData);
-        
+
         return extractionData;
     }
 
@@ -106,21 +106,21 @@ class TraceabilityIntegration {
 
         try {
             const docsPath = path.join(this.projectRoot, this.integrations.documentation.docsPath);
-            
+
             // Look for assessment file
             const assessmentPath = path.join(docsPath, 'assessments', `${extractionId}.md`);
             if (fs.existsSync(assessmentPath)) {
                 const assessmentContent = fs.readFileSync(assessmentPath, 'utf8');
                 this.parseAssessmentData(assessmentContent, extractionData);
             }
-            
+
             // Look for implementation plan
             const planPath = path.join(docsPath, 'plans', `${extractionId}.md`);
             if (fs.existsSync(planPath)) {
                 const planContent = fs.readFileSync(planPath, 'utf8');
                 this.parsePlanData(planContent, extractionData);
             }
-            
+
             console.log('📚 Gathered data from documentation system');
         } catch (error) {
             console.warn(`⚠️ Could not gather from documentation: ${error.message}`);
@@ -196,21 +196,21 @@ class TraceabilityIntegration {
             }
 
             const tasksContent = JSON.parse(fs.readFileSync(tasksPath, 'utf8'));
-            
+
             // Search for extraction-related tasks
             const extractionTasks = this.findExtractionTasks(tasksContent, extractionId, extractionData.featureName);
-            
+
             if (extractionTasks.length > 0) {
                 // Use the first matching task as the primary task
                 const primaryTask = extractionTasks[0];
                 extractionData.taskMasterTask = primaryTask.id;
-                
+
                 // If we don't have feature name from docs, try to extract from task
                 if (!extractionData.featureName && primaryTask.title) {
                     extractionData.featureName = this.extractFeatureNameFromTask(primaryTask.title);
                 }
             }
-            
+
             console.log('📋 Gathered data from TaskMaster system');
         } catch (error) {
             console.warn(`⚠️ Could not gather from TaskMaster: ${error.message}`);
@@ -222,11 +222,11 @@ class TraceabilityIntegration {
      */
     findExtractionTasks(tasksData, extractionId, featureName) {
         const allTasks = [];
-        
+
         if (tasksData.tasks) {
             // Add main tasks
             allTasks.push(...tasksData.tasks);
-            
+
             // Add subtasks
             tasksData.tasks.forEach(task => {
                 if (task.subtasks) {
@@ -237,26 +237,26 @@ class TraceabilityIntegration {
                 }
             });
         }
-        
+
         // Filter tasks that match extraction criteria
         return allTasks.filter(task => {
             const taskText = `${task.title || ''} ${task.description || ''} ${task.details || ''}`.toLowerCase();
-            
+
             // Check for extraction ID
             if (taskText.includes(extractionId.toLowerCase())) {
                 return true;
             }
-            
+
             // Check for feature name
             if (featureName && taskText.includes(featureName.toLowerCase())) {
                 return true;
             }
-            
+
             // Check for extraction keywords
             if (taskText.includes('extraction') || taskText.includes('extract') || taskText.includes('upstream')) {
                 return true;
             }
-            
+
             return false;
         });
     }
@@ -271,14 +271,14 @@ class TraceabilityIntegration {
             /implement.+?extracted.+?:?\s*(.+)/i,
             /feature.+?extraction.+?:?\s*(.+)/i
         ];
-        
+
         for (const pattern of patterns) {
             const match = taskTitle.match(pattern);
             if (match) {
                 return match[1].trim();
             }
         }
-        
+
         // Fallback: return the task title
         return taskTitle.trim();
     }
@@ -295,7 +295,7 @@ class TraceabilityIntegration {
             if (extractionBranch) {
                 extractionData.localBranch = extractionBranch;
             }
-            
+
             console.log('🐙 Gathered data from GitHub system');
         } catch (error) {
             console.warn(`⚠️ Could not gather from GitHub: ${error.message}`);
@@ -308,32 +308,32 @@ class TraceabilityIntegration {
     findExtractionBranch(extractionId, featureName) {
         try {
             const { execSync } = require('child_process');
-            
+
             // Get all branches
-            const branches = execSync('git branch -a', { 
-                encoding: 'utf8', 
-                cwd: this.projectRoot 
+            const branches = execSync('git branch -a', {
+                encoding: 'utf8',
+                cwd: this.projectRoot
             }).split('\n').map(b => b.trim().replace(/^\*\s*/, ''));
-            
+
             // Look for extraction branch patterns
             const patterns = [
                 `feature/extracted-${extractionId}`,
                 featureName ? `feature/extracted-${featureName.toLowerCase().replace(/\s+/g, '-')}` : null
             ].filter(Boolean);
-            
+
             for (const pattern of patterns) {
-                const matchingBranch = branches.find(branch => 
+                const matchingBranch = branches.find(branch =>
                     branch.includes(pattern) || branch.endsWith(pattern)
                 );
                 if (matchingBranch) {
                     return matchingBranch.replace(/^(remotes\/)?origin\//, '');
                 }
             }
-            
+
         } catch (error) {
             console.warn(`⚠️ Could not check Git branches: ${error.message}`);
         }
-        
+
         return null;
     }
 
@@ -343,16 +343,16 @@ class TraceabilityIntegration {
     validateExtractionData(extractionData) {
         const required = ['extractionId'];
         const missing = required.filter(field => !extractionData[field]);
-        
+
         if (missing.length > 0) {
             throw new Error(`Missing required extraction data: ${missing.join(', ')}`);
         }
-        
+
         // Set defaults for missing optional fields
         if (!extractionData.featureName) {
             extractionData.featureName = `Feature-${extractionData.extractionId}`;
         }
-        
+
         if (!extractionData.analysisDate) {
             extractionData.analysisDate = new Date().toISOString();
         }
@@ -364,10 +364,10 @@ class TraceabilityIntegration {
     async createIntegrationHooks(featureRecord) {
         // Create GitHub workflow integration
         await this.createGitHubHooks(featureRecord);
-        
+
         // Create TaskMaster integration
         await this.createTaskMasterHooks(featureRecord);
-        
+
         // Create documentation hooks
         await this.createDocumentationHooks(featureRecord);
     }
@@ -379,13 +379,13 @@ class TraceabilityIntegration {
         try {
             // Create a metadata file for GitHub Actions to use
             const metadataPath = path.join(this.projectRoot, '.traceability', 'github-hooks', `${featureRecord.featureId}.json`);
-            
+
             // Ensure directory exists
             const hooksDir = path.dirname(metadataPath);
             if (!fs.existsSync(hooksDir)) {
                 fs.mkdirSync(hooksDir, { recursive: true });
             }
-            
+
             const hookData = {
                 featureId: featureRecord.featureId,
                 extractionId: featureRecord.extractionId,
@@ -394,10 +394,10 @@ class TraceabilityIntegration {
                 trackingEnabled: true,
                 lastSync: new Date().toISOString()
             };
-            
+
             fs.writeFileSync(metadataPath, JSON.stringify(hookData, null, 2));
             console.log('🔗 Created GitHub integration hooks');
-            
+
         } catch (error) {
             console.warn(`⚠️ Could not create GitHub hooks: ${error.message}`);
         }
@@ -410,13 +410,13 @@ class TraceabilityIntegration {
         try {
             // Create a tracking file for TaskMaster integration
             const trackingPath = path.join(this.projectRoot, '.traceability', 'taskmaster-hooks', `${featureRecord.featureId}.json`);
-            
+
             // Ensure directory exists
             const hooksDir = path.dirname(trackingPath);
             if (!fs.existsSync(hooksDir)) {
                 fs.mkdirSync(hooksDir, { recursive: true });
             }
-            
+
             const trackingData = {
                 featureId: featureRecord.featureId,
                 taskId: featureRecord.local.taskMasterTask,
@@ -429,10 +429,10 @@ class TraceabilityIntegration {
                     'deployment': '8.7'  // End-to-End Testing
                 }
             };
-            
+
             fs.writeFileSync(trackingPath, JSON.stringify(trackingData, null, 2));
             console.log('📋 Created TaskMaster integration hooks');
-            
+
         } catch (error) {
             console.warn(`⚠️ Could not create TaskMaster hooks: ${error.message}`);
         }
@@ -445,13 +445,13 @@ class TraceabilityIntegration {
         try {
             // Create a documentation tracking file
             const docTrackingPath = path.join(this.projectRoot, '.traceability', 'docs-hooks', `${featureRecord.featureId}.json`);
-            
+
             // Ensure directory exists
             const hooksDir = path.dirname(docTrackingPath);
             if (!fs.existsSync(hooksDir)) {
                 fs.mkdirSync(hooksDir, { recursive: true });
             }
-            
+
             const docData = {
                 featureId: featureRecord.featureId,
                 assessmentPath: `docs/upstream-analysis/extraction/assessments/${featureRecord.extractionId}.md`,
@@ -459,10 +459,10 @@ class TraceabilityIntegration {
                 trackingEnabled: true,
                 lastSync: new Date().toISOString()
             };
-            
+
             fs.writeFileSync(docTrackingPath, JSON.stringify(docData, null, 2));
             console.log('📚 Created documentation integration hooks');
-            
+
         } catch (error) {
             console.warn(`⚠️ Could not create documentation hooks: ${error.message}`);
         }
@@ -474,7 +474,7 @@ class TraceabilityIntegration {
     async syncWithTaskMaster(featureId, taskUpdate) {
         try {
             console.log(`🔄 Syncing traceability with TaskMaster for feature: ${featureId}`);
-            
+
             // Determine what type of update this is
             if (taskUpdate.status === 'done') {
                 // Mark milestone as achieved
@@ -489,7 +489,7 @@ class TraceabilityIntegration {
                     }
                 });
             }
-            
+
             if (taskUpdate.phase) {
                 // Update lifecycle phase
                 await this.auditSystem.updateFeatureLifecycle(featureId, taskUpdate.phase, 'completed', {
@@ -498,9 +498,9 @@ class TraceabilityIntegration {
                     syncedAt: new Date().toISOString()
                 });
             }
-            
+
             console.log('✅ TaskMaster sync completed');
-            
+
         } catch (error) {
             console.error(`❌ TaskMaster sync failed: ${error.message}`);
         }
@@ -512,7 +512,7 @@ class TraceabilityIntegration {
     async syncWithGitHub(featureId, githubEvent) {
         try {
             console.log(`🔄 Syncing traceability with GitHub for feature: ${featureId}`);
-            
+
             if (githubEvent.type === 'pull_request' && githubEvent.action === 'merged') {
                 // PR merged - mark implementation phase complete
                 await this.auditSystem.updateFeatureLifecycle(featureId, 'implementation', 'completed', {
@@ -521,7 +521,7 @@ class TraceabilityIntegration {
                     mergedAt: githubEvent.mergedAt,
                     syncedAt: new Date().toISOString()
                 });
-                
+
                 // Add milestone
                 await this.auditSystem.addMilestone(featureId, {
                     title: 'Implementation Merged',
@@ -534,7 +534,7 @@ class TraceabilityIntegration {
                     }
                 });
             }
-            
+
             if (githubEvent.type === 'workflow_run' && githubEvent.status === 'failure') {
                 // CI failure - add blocker
                 await this.auditSystem.addBlocker(featureId, {
@@ -550,9 +550,9 @@ class TraceabilityIntegration {
                     }
                 });
             }
-            
+
             console.log('✅ GitHub sync completed');
-            
+
         } catch (error) {
             console.error(`❌ GitHub sync failed: ${error.message}`);
         }
@@ -564,12 +564,12 @@ class TraceabilityIntegration {
     async generateIntegrationReport(featureId) {
         try {
             console.log(`📊 Generating integration report for feature: ${featureId}`);
-            
+
             const feature = this.auditSystem.loadFeatureRecord(featureId);
             if (!feature) {
                 throw new Error(`Feature ${featureId} not found`);
             }
-            
+
             const report = {
                 featureId,
                 generatedAt: new Date().toISOString(),
@@ -586,14 +586,14 @@ class TraceabilityIntegration {
                 },
                 recommendations: this.generateRecommendations(feature)
             };
-            
+
             // Save report
             const reportPath = path.join(this.projectRoot, '.traceability', 'reports', `integration-${featureId}-${Date.now()}.json`);
             fs.writeFileSync(reportPath, JSON.stringify(report, null, 2));
-            
+
             console.log(`✅ Integration report saved: ${reportPath}`);
             return report;
-            
+
         } catch (error) {
             console.error(`❌ Failed to generate integration report: ${error.message}`);
             throw error;
@@ -631,7 +631,7 @@ class TraceabilityIntegration {
         const assessmentExists = fs.existsSync(
             path.join(this.projectRoot, 'docs/upstream-analysis/extraction/assessments', `${feature.extractionId}.md`)
         );
-        
+
         return {
             connected: assessmentExists,
             assessmentPath: `docs/upstream-analysis/extraction/assessments/${feature.extractionId}.md`,
@@ -644,14 +644,14 @@ class TraceabilityIntegration {
      * Get last sync time for integration
      */
     getLastSyncTime(feature, integration) {
-        const syncEvents = feature.auditTrail.filter(event => 
+        const syncEvents = feature.auditTrail.filter(event =>
             event.data && event.data.source === integration
         );
-        
+
         if (syncEvents.length > 0) {
             return syncEvents[syncEvents.length - 1].timestamp;
         }
-        
+
         return null;
     }
 
@@ -684,7 +684,7 @@ class TraceabilityIntegration {
      */
     generateRecommendations(feature) {
         const recommendations = [];
-        
+
         // Check for missing integrations
         if (!feature.local.taskMasterTask) {
             recommendations.push({
@@ -693,7 +693,7 @@ class TraceabilityIntegration {
                 message: 'Consider linking to a TaskMaster task for better project tracking'
             });
         }
-        
+
         if (!feature.local.branch) {
             recommendations.push({
                 type: 'integration',
@@ -701,7 +701,7 @@ class TraceabilityIntegration {
                 message: 'Implementation branch not detected - ensure proper branch naming convention'
             });
         }
-        
+
         // Check audit trail health
         if (feature.auditTrail.length < 3) {
             recommendations.push({
@@ -710,7 +710,7 @@ class TraceabilityIntegration {
                 message: 'Limited audit trail - consider adding more milestone tracking'
             });
         }
-        
+
         // Check quality metrics
         if (!feature.quality.testCoverage) {
             recommendations.push({
@@ -719,7 +719,7 @@ class TraceabilityIntegration {
                 message: 'Test coverage not tracked - implement quality metrics tracking'
             });
         }
-        
+
         return recommendations;
     }
 }
@@ -741,7 +741,7 @@ if (require.main === module) {
                 console.error('❌ Extraction ID required');
                 process.exit(1);
             }
-            
+
             integration.initializeFromExtractionData(extractionId)
                 .then(feature => {
                     console.log(`✅ Traceability initialized for feature: ${feature.featureId}`);
@@ -757,7 +757,7 @@ if (require.main === module) {
                 console.error('❌ Feature ID required for report');
                 process.exit(1);
             }
-            
+
             integration.generateIntegrationReport(extractionId)
                 .then(report => {
                     console.log(`✅ Integration report generated for: ${extractionId}`);

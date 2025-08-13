@@ -35,14 +35,14 @@ A condensed template for rapid reviews including:
 
 - **Overview**: Basic statistics and significance
 - **Top Changes**: Most significant commits
-- **Extraction Candidates**: High-priority items only  
+- **Extraction Candidates**: High-priority items only
 - **Next Actions**: Immediate action items
 
 ### 3. Custom Templates
 
 Additional templates can be created for specific scenarios:
 - **Security-focused sessions**
-- **Performance analysis sessions** 
+- **Performance analysis sessions**
 - **Breaking change analysis**
 - **Documentation reviews**
 
@@ -61,7 +61,7 @@ node generate-template.js session <from-commit> <to-commit> [options]
 
 # Options:
 # -b, --branch          Create analysis branch
-# -d, --date <date>     Branch date (YYYY-MM-DD)  
+# -d, --date <date>     Branch date (YYYY-MM-DD)
 # -l, --lead <name>     Lead analyst name
 # -p, --participants    Comma-separated participant names
 # --duration <time>     Session duration
@@ -110,7 +110,7 @@ Templates use Handlebars syntax for dynamic content generation:
 #### Session Metadata
 ```handlebars
 {{sessionDate}}          # Analysis session date
-{{branchDate}}           # Analysis branch date  
+{{branchDate}}           # Analysis branch date
 {{leadAnalyst}}          # Lead analyst name
 {{participants}}         # Array of participant names
 {{sessionDuration}}      # Duration of analysis session

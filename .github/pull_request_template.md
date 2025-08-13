@@ -27,18 +27,18 @@ Brief description of the changes in this PR.
 
 ---
 
-## ⚡ **EXTRACTED FEATURE PR** 
+## ⚡ **EXTRACTED FEATURE PR**
 
 *For features extracted from upstream repositories using the Feature Extraction Framework*
 
 ### 📋 Extraction Summary
 
-**Feature Name**: `[feature-name]`  
-**Extraction ID**: `EXT-[YYYY]-[NNN]`  
-**Upstream Source**: `[upstream-repo]`  
-**Upstream Commit**: `[commit-sha]`  
-**Analysis Session**: `[analysis/YYYY-MM-DD]`  
-**Implementation Branch**: `feature/extracted-[feature-name]`  
+**Feature Name**: `[feature-name]`
+**Extraction ID**: `EXT-[YYYY]-[NNN]`
+**Upstream Source**: `[upstream-repo]`
+**Upstream Commit**: `[commit-sha]`
+**Analysis Session**: `[analysis/YYYY-MM-DD]`
+**Implementation Branch**: `feature/extracted-[feature-name]`
 
 ### 🎯 Value Assessment
 
@@ -52,16 +52,16 @@ Brief description of the changes in this PR.
 | **Technical Debt Reduction** | | 10% | | |
 | **Strategic Alignment** | | 5% | | |
 
-**Total Value Score**: `[X]/100`  
-**Effort Level**: `[XS/S/M/L/XL]`  
-**ROI Score**: `[X.XX]`  
+**Total Value Score**: `[X]/100`
+**Effort Level**: `[XS/S/M/L/XL]`
+**ROI Score**: `[X.XX]`
 **Implementation Priority**: `[Critical/High/Medium/Low]`
 
 ### 🔍 Implementation Details
 
 #### What Was Extracted
 - **Core Functionality**: [Description of main feature extracted]
-- **Key Components**: 
+- **Key Components**:
   - Component 1: [Description]
   - Component 2: [Description]
   - Component 3: [Description]
@@ -76,7 +76,7 @@ Brief description of the changes in this PR.
 - **Phase 1**: Foundation Setup
   - [ ] [Task 1]
   - [ ] [Task 2]
-- **Phase 2**: Core Implementation  
+- **Phase 2**: Core Implementation
   - [ ] [Task 1]
   - [ ] [Task 2]
 - **Phase 3**: Polish & Integration
@@ -118,7 +118,7 @@ Brief description of the changes in this PR.
 | | H/M/L | H/M/L | | |
 | | H/M/L | H/M/L | | |
 
-#### Business Risks  
+#### Business Risks
 | Risk | Probability | Impact | Mitigation Strategy | Owner |
 |------|-------------|--------|-------------------|-------|
 | | H/M/L | H/M/L | | |
@@ -146,7 +146,7 @@ Brief description of the changes in this PR.
 
 #### Measurement Plan
 - **Pre-launch**: [Metrics to track during development]
-- **Launch**: [Metrics to monitor at launch]  
+- **Launch**: [Metrics to monitor at launch]
 - **Post-launch**: [Ongoing monitoring and analysis plan]
 
 ### 🔗 Traceability & References
@@ -190,7 +190,7 @@ Brief description of the changes in this PR.
 
 #### Required Reviewers
 - [ ] **Technical Lead**: @[username] - Architecture and technical review
-- [ ] **Product Owner**: @[username] - Business logic and requirements review  
+- [ ] **Product Owner**: @[username] - Business logic and requirements review
 - [ ] **Security Team**: @[username] - Security review (if applicable)
 - [ ] **QA Lead**: @[username] - Testing strategy and quality review
 - [ ] **Original Analyst**: @[username] - Extraction fidelity review
@@ -228,7 +228,7 @@ Brief description of the changes in this PR.
 - [ ] **Performance**: No significant performance regressions
 - [ ] **Documentation**: All documentation updated and reviewed
 
-#### Process Requirements  
+#### Process Requirements
 - [ ] **Code Review**: Required reviewers have approved
 - [ ] **QA Approval**: QA team has signed off on testing
 - [ ] **Product Approval**: Product owner has approved functionality
@@ -255,8 +255,8 @@ Brief description of the changes in this PR.
 
 ---
 
-**Template Version**: 1.0  
-**Framework**: Feature Extraction Decision Framework v1.0  
+**Template Version**: 1.0
+**Framework**: Feature Extraction Decision Framework v1.0
 **Integration**: TaskMaster AI, GitHub Workflows, Upstream Analysis Strategy
 
 *🤖 Generated with [Claude Code](https://claude.ai/code)*

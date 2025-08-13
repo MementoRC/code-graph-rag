@@ -133,7 +133,9 @@ exclude = ["__pycache__", "*.pyc", "tests/"]
     print(f"Total mock method calls: {len(all_calls)}")
 
     # Analyze ensure_relationship_batch calls specifically
-    relationship_calls = cast(MagicMock, mock_ingestor).ensure_relationship_batch.call_args_list
+    relationship_calls = cast(
+        MagicMock, mock_ingestor
+    ).ensure_relationship_batch.call_args_list
     print(f"ensure_relationship_batch calls: {len(relationship_calls)}")
 
     print("All ensure_relationship_batch calls:")
@@ -161,13 +163,15 @@ exclude = ["__pycache__", "*.pyc", "tests/"]
     print("✅ Basic method call assertions passed")
 
     # Check for function call relationships being created
-    relationship_calls = cast(MagicMock, mock_ingestor).ensure_relationship_batch.call_args_list
+    relationship_calls = cast(
+        MagicMock, mock_ingestor
+    ).ensure_relationship_batch.call_args_list
 
     # Find CALLS relationships
     calls_relationships = []
     for call_args in relationship_calls:
         # call_args is a Call object with args and kwargs
-        if hasattr(call_args, 'args') and len(call_args.args) >= 1:
+        if hasattr(call_args, "args") and len(call_args.args) >= 1:
             batch_data = call_args.args[0]  # First argument is the batch
             for relationship in batch_data:
                 # relationship is a tuple: ((from_id, to_id), rel_type, (from_id, to_id), rel_data)

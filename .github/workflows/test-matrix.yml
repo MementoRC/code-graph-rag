@@ -62,13 +62,13 @@ jobs:
           # Skip pymgclient-dependent tests on Windows/macOS (package only available for Linux)
           - os: "windows-latest"
             test-type: "integration"
-          - os: "windows-latest" 
+          - os: "windows-latest"
             test-type: "e2e"
           - os: "macos-latest"
             test-type: "integration"
           - os: "macos-latest"
             test-type: "e2e"
-    
+
     services:
       memgraph:
         image: ${{ matrix.os == 'ubuntu-latest' && 'memgraph/memgraph:2.18.1' || '' }}
@@ -119,16 +119,16 @@ jobs:
         if: matrix.test-type == 'integration' || matrix.test-type == 'e2e'
         run: |
           echo "🔍 Validating CI Integration Environment for ${{ matrix.test-type }} tests"
-          
+
           # Check if we're in the right environment
           echo "📋 Environment Configuration:"
           echo "  - Test Type: ${{ matrix.test-type }}"
           echo "  - OS: ${{ matrix.os }}"
           echo "  - Python: ${{ matrix.python-version }}"
-          
+
           # Validate critical dependencies are available in ci-integration environment
           echo "🔧 Dependency Validation:"
-          
+
           # Test 1: tree-sitter-python availability
           echo "  Testing tree-sitter-python..."
           if pixi run -e ci-integration python -c 'import tree_sitter; print("SUCCESS: tree_sitter imported successfully")'; then
@@ -138,7 +138,7 @@ jobs:
             echo "  🚨 CRITICAL: tree-sitter-python is required for integration tests"
             exit 1
           fi
-          
+
           # Test 2: tree-sitter parsers loading
           echo "  Testing tree-sitter parsers loading..."
           if pixi run -e ci-integration python -c 'from codebase_rag.parser_loader import load_parsers; parsers, queries = load_parsers(); print(f"SUCCESS: Loaded parsers: {list(parsers.keys())}")'; then
@@ -148,7 +148,7 @@ jobs:
             echo "  🚨 CRITICAL: Parser loading is required for code analysis"
             exit 1
           fi
-          
+
           # Test 3: GraphUpdater function call detection (the core failing functionality)
           echo "  Testing GraphUpdater function call detection..."
           if pixi run -e ci-integration python codebase_rag/tests/debug_ci_calls.py; then
@@ -159,7 +159,7 @@ jobs:
             echo "  📋 Environment diagnostic output above shows the issue"
             exit 1
           fi
-          
+
           # Test 4: mgclient (for database integration)
           echo "  Testing mgclient availability..."
           if pixi run -e ci-integration python -c 'import mgclient; print("SUCCESS: mgclient imported successfully")'; then
@@ -169,12 +169,12 @@ jobs:
             echo "  🚨 CRITICAL: mgclient is required for database integration tests"
             exit 1
           fi
-          
+
           echo "🎯 Environment validation completed successfully!"
           echo "  All critical dependencies are available and functioning"
           echo "  Safe to proceed with ${{ matrix.test-type }} tests"
 
-      - name: Select tests by marker  
+      - name: Select tests by marker
         id: select-tests
         run: |
           # Map test types to pytest markers and commands
@@ -183,7 +183,7 @@ jobs:
               echo "test_cmd=pixi run -e ci-smoke test-unit-smoke" >> $GITHUB_OUTPUT
               echo "marker=unit tests (fast, no external dependencies)" >> $GITHUB_OUTPUT
               ;;
-            "integration") 
+            "integration")
               echo "test_cmd=pixi run -e ci-integration test-integration" >> $GITHUB_OUTPUT
               echo "marker=integration tests (with Memgraph)" >> $GITHUB_OUTPUT
               ;;
@@ -201,39 +201,39 @@ jobs:
         run: |
           echo "🧪 Running ${{ steps.select-tests.outputs.marker }}"
           echo "Command: ${{ steps.select-tests.outputs.test_cmd }}"
-          
+
           # Set environment variables for tests
           export MEMGRAPH_HOST=localhost
           export MEMGRAPH_PORT=7687
           export ENVIRONMENT=ci
-          
+
           # Run tests (pytest-timeout handles test timeouts cross-platform)
           if ${{ steps.select-tests.outputs.test_cmd }}; then
             echo "✅ Tests completed successfully"
           else
             echo "❌ Tests failed - Running post-failure diagnostics"
-            
+
             # Enhanced debugging for integration/e2e test failures
             if [[ "${{ matrix.test-type }}" == "integration" || "${{ matrix.test-type }}" == "e2e" ]]; then
               echo "🔍 Post-Failure Environment Diagnostics:"
               echo "  Re-checking environment after test failure..."
-              
+
               # Re-run environment validation to see what changed
               echo "  Re-validating tree-sitter:"
               pixi run -e ci-integration python -c 'import tree_sitter; print("SUCCESS: tree_sitter still available")' || echo "❌ tree_sitter no longer available"
-              
+
               echo "  Re-validating parsers:"
               pixi run -e ci-integration python -c 'from codebase_rag.parser_loader import load_parsers; parsers, queries = load_parsers(); print(f"SUCCESS: Parsers still available: {list(parsers.keys())}")' || echo "❌ Parser loading now failing"
-              
+
               echo "  Re-validating GraphUpdater:"
               pixi run -e ci-integration python codebase_rag/tests/debug_ci_calls.py || echo "❌ GraphUpdater function call detection now failing"
-              
+
               echo "  Re-validating database connection:"
               pixi run -e ci-integration python -c 'import mgclient; print("SUCCESS: mgclient still available")' || echo "❌ mgclient no longer available"
-              
+
               echo "📋 Environment state after test failure has been captured above"
             fi
-            
+
             exit 1
           fi
         env:
@@ -246,12 +246,12 @@ jobs:
         run: |
           # Create test results directory
           mkdir -p test-results
-          
+
           # Copy any test artifacts
           if [ -f .coverage ]; then
             cp .coverage test-results/coverage-${{ matrix.python-version }}-${{ matrix.test-type }}
           fi
-          
+
           # Generate test summary file
           echo "Python: ${{ matrix.python-version }}" > test-results/test-summary-${{ matrix.python-version }}-${{ matrix.test-type }}.txt
           echo "Test Type: ${{ matrix.test-type }}" >> test-results/test-summary-${{ matrix.python-version }}-${{ matrix.test-type }}.txt
@@ -276,12 +276,12 @@ jobs:
           echo "| Test Type | ${{ matrix.test-type }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Status | ${{ job.status == 'success' && '✅ PASS' || '❌ FAIL' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Command | \`${{ steps.select-tests.outputs.test_cmd }}\` |" >> $GITHUB_STEP_SUMMARY
-          
+
           # Add environment validation status for integration/e2e tests
           if [[ "${{ matrix.test-type }}" == "integration" || "${{ matrix.test-type }}" == "e2e" ]]; then
             echo "| Environment Validation | ${{ job.status == 'success' && '✅ PASSED' || steps.Validate.outcome == 'failure' && '❌ ENV FAILED' || '⚠️ TEST FAILED' }} |" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           # Add additional details for failed tests
           if [[ "${{ job.status }}" != "success" ]]; then
             echo "" >> $GITHUB_STEP_SUMMARY
@@ -304,7 +304,7 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ["3.12"]  # Run performance tests only on Linux with stable Python version
-    
+
     services:
       memgraph:
         image: memgraph/memgraph:2.18.1
@@ -381,23 +381,23 @@ jobs:
         run: |
           echo "# 🧪 Complete Test Matrix Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           # Test matrix results
           echo "## 📋 Cross-Platform Test Matrix" >> $GITHUB_STEP_SUMMARY
           echo "| OS | Python | Unit | Integration* | E2E* | Performance |" >> $GITHUB_STEP_SUMMARY
           echo "|----|----|------|------------|-----|-------------|" >> $GITHUB_STEP_SUMMARY
-          
-          # Parse results from needs context  
+
+          # Parse results from needs context
           test_status="${{ needs.test-matrix.result == 'success' && '✅' || '❌' }}"
           perf_status="${{ needs.performance-matrix.result == 'success' && '✅' || '❌' }}"
-          
+
           echo "| Linux | 3.12 | $test_status | $test_status | $test_status | $perf_status |" >> $GITHUB_STEP_SUMMARY
-          echo "| Windows | 3.12 | $test_status | ⏭️ Skip | ⏭️ Skip | ⏭️ Skip |" >> $GITHUB_STEP_SUMMARY  
+          echo "| Windows | 3.12 | $test_status | ⏭️ Skip | ⏭️ Skip | ⏭️ Skip |" >> $GITHUB_STEP_SUMMARY
           echo "| macOS | 3.12 | $test_status | ⏭️ Skip | ⏭️ Skip | ⏭️ Skip |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "*Integration and E2E tests require pymgclient (Linux-only)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           # Overall status
           echo "## 🎯 Overall Status" >> $GITHUB_STEP_SUMMARY
           if [[ "${{ needs.test-matrix.result }}" == "success" && "${{ needs.performance-matrix.result }}" == "success" ]]; then
@@ -405,7 +405,7 @@ jobs:
           else
             echo "- ❌ **Some tests failed** - Review failures before proceeding" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           # Artifact summary
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## 📁 Available Artifacts" >> $GITHUB_STEP_SUMMARY

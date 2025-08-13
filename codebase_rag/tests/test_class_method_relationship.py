@@ -61,7 +61,7 @@ def test_defines_method_relationship_is_created(
         ("Class", "qualified_name", class_qn),
         "DEFINES_METHOD",
         ("Method", "qualified_name", method_qn),
-        {"file_path": "main.py"}
+        {"file_path": "main.py"},
     )
 
     # Extract DEFINES_METHOD relationships from batch calls
@@ -69,7 +69,7 @@ def test_defines_method_relationship_is_created(
     all_calls = mock_ingestor.ensure_relationship_batch.call_args_list
 
     for call_obj in all_calls:
-        if hasattr(call_obj, 'args') and len(call_obj.args) > 0:
+        if hasattr(call_obj, "args") and len(call_obj.args) > 0:
             # First argument is the list of relationships
             relationships = call_obj.args[0]
             if isinstance(relationships, list):

@@ -8,7 +8,7 @@ classification_rules:
   feature:
     keywords:
       - "feat"
-      - "feature" 
+      - "feature"
       - "add"
       - "new"
       - "implement"
@@ -74,7 +74,7 @@ classification_rules:
       - "validate"
     file_patterns:
       - "*auth*"
-      - "*security*" 
+      - "*security*"
       - "*login*"
       - "*.py"
       - "*.js"
@@ -236,7 +236,7 @@ relevance_scoring:
     description: "Relevance based on file and directory overlap"
     local_extensions:
       - ".py"
-      - ".js" 
+      - ".js"
       - ".ts"
       - ".md"
       - ".yml"
@@ -319,7 +319,7 @@ advanced_settings:
     model_path: "models/classification-model.json"
     training_threshold: 100
     retrain_interval: 30  # days
-    
+
   # Feedback Learning
   feedback_learning:
     enabled: true
@@ -340,7 +340,7 @@ quality_thresholds:
   high_confidence: 0.8
   minimum_relevance: 0.2
   high_relevance: 0.7
-  
+
   # Auto-approval thresholds
   auto_approve:
     security_fixes: 0.6
@@ -353,7 +353,7 @@ output_settings:
   include_confidence_scores: true
   include_alternative_classifications: false
   max_reasoning_length: 200
-  
+
   # Classification summary
   summary_stats:
     category_distribution: true

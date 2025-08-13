@@ -2,7 +2,7 @@
 
 /**
  * Data Collection Script for Upstream Analysis Dashboard
- * 
+ *
  * This script collects data from various sources:
  * - Git history and statistics
  * - Analysis documentation
@@ -27,7 +27,7 @@ class DataCollector {
     this.octokit = process.env.GITHUB_TOKEN ? new Octokit({
       auth: process.env.GITHUB_TOKEN,
     }) : null;
-    
+
     this.repoOwner = 'MementoRC';
     this.repoName = 'code-graph-rag';
     this.upstreamOwner = 'vitali87';
@@ -40,7 +40,7 @@ class DataCollector {
 
   async collectGitStatistics() {
     console.log('📊 Collecting Git statistics...');
-    
+
     try {
       const log = await this.git.log(['--all', '--since=3 months ago']);
       const status = await this.git.status();
@@ -62,7 +62,7 @@ class DataCollector {
       log.all.forEach(commit => {
         const date = format(parseISO(commit.date), 'yyyy-MM-dd');
         const author = commit.author_name;
-        
+
         // Group by date
         if (!commitsByDate[date]) {
           commitsByDate[date] = [];
@@ -94,10 +94,10 @@ class DataCollector {
 
       // Calculate activity metrics
       const now = new Date();
-      const last7Days = log.all.filter(commit => 
+      const last7Days = log.all.filter(commit =>
         parseISO(commit.date) > subDays(now, 7)
       ).length;
-      const last30Days = log.all.filter(commit => 
+      const last30Days = log.all.filter(commit =>
         parseISO(commit.date) > subDays(now, 30)
       ).length;
 
@@ -147,7 +147,7 @@ class DataCollector {
 
   async collectAnalysisDocumentation() {
     console.log('📚 Collecting analysis documentation...');
-    
+
     try {
       const analysisData = {
         lastUpdated: new Date().toISOString(),
@@ -160,11 +160,11 @@ class DataCollector {
       try {
         const sessionsDir = path.join(REPO_ROOT, 'docs', 'upstream-analysis', 'sessions');
         const sessions = await fs.readdir(sessionsDir).catch(() => []);
-        
+
         for (const sessionFile of sessions.filter(f => f.endsWith('.md'))) {
           const content = await fs.readFile(path.join(sessionsDir, sessionFile), 'utf-8');
           const lines = content.split('\\n');
-          
+
           // Extract session metadata from markdown
           const session = {
             filename: sessionFile,
@@ -175,7 +175,7 @@ class DataCollector {
             decisions: this.extractDecisions(content),
             actionItems: this.extractActionItems(content)
           };
-          
+
           analysisData.sessions.push(session);
         }
       } catch (error) {
@@ -186,10 +186,10 @@ class DataCollector {
       try {
         const extractionDir = path.join(REPO_ROOT, 'docs', 'upstream-analysis', 'extraction');
         const extractions = await fs.readdir(extractionDir).catch(() => []);
-        
+
         for (const extractionFile of extractions.filter(f => f.endsWith('.md'))) {
           const content = await fs.readFile(path.join(extractionDir, extractionFile), 'utf-8');
-          
+
           const extraction = {
             filename: extractionFile,
             title: content.match(/^# (.+)$/m)?.[1] || extractionFile,
@@ -198,7 +198,7 @@ class DataCollector {
             upstreamSource: this.extractUpstreamSource(content),
             estimatedEffort: this.extractEffort(content)
           };
-          
+
           analysisData.extractions.push(extraction);
         }
       } catch (error) {
@@ -225,7 +225,7 @@ class DataCollector {
     }
 
     console.log('🐙 Collecting GitHub data...');
-    
+
     try {
       // Get repository information
       const { data: repo } = await this.octokit.rest.repos.get({
@@ -262,7 +262,7 @@ class DataCollector {
         per_page: 100
       });
 
-      const extractionPulls = pulls.filter(pr => 
+      const extractionPulls = pulls.filter(pr =>
         pr.title.toLowerCase().includes('extraction') ||
         pr.head.ref.startsWith('feature/extracted-')
       );
@@ -325,7 +325,7 @@ class DataCollector {
     }
 
     console.log('🔄 Collecting upstream activity...');
-    
+
     try {
       // Get recent commits from upstream
       const { data: commits } = await this.octokit.rest.repos.listCommits({
@@ -352,11 +352,11 @@ class DataCollector {
       // Process commits by date and author
       const commitsByDate = {};
       const commitsByAuthor = {};
-      
+
       commits.forEach(commit => {
         const date = format(parseISO(commit.commit.author.date), 'yyyy-MM-dd');
         const author = commit.commit.author.name;
-        
+
         if (!commitsByDate[date]) {
           commitsByDate[date] = 0;
         }
@@ -420,7 +420,7 @@ class DataCollector {
   extractDecisions(content) {
     const decisionsSection = content.match(/## Decisions?[\\s\\S]*?(?=##|$)/i);
     if (!decisionsSection) return [];
-    
+
     return decisionsSection[0]
       .split('\\n')
       .filter(line => line.trim().startsWith('-') || line.trim().startsWith('*'))
@@ -431,7 +431,7 @@ class DataCollector {
   extractActionItems(content) {
     const actionSection = content.match(/## Action Items?[\\s\\S]*?(?=##|$)/i);
     if (!actionSection) return [];
-    
+
     return actionSection[0]
       .split('\\n')
       .filter(line => line.trim().startsWith('-') || line.trim().startsWith('*'))
@@ -461,9 +461,9 @@ class DataCollector {
 
   async run() {
     console.log('🚀 Starting data collection for Upstream Analysis Dashboard\\n');
-    
+
     await this.ensureDataDir();
-    
+
     const results = await Promise.allSettled([
       this.collectGitStatistics(),
       this.collectAnalysisDocumentation(),
@@ -492,7 +492,7 @@ class DataCollector {
 
     console.log('\\n📊 Data collection completed!');
     console.log('Summary:', summary);
-    
+
     return summary;
   }
 }

@@ -2,7 +2,7 @@
 
 /**
  * Extraction Branch Automation
- * 
+ *
  * Automates the creation of feature extraction branches with integrated
  * decision framework assessment and template generation.
  */
@@ -18,7 +18,7 @@ class ExtractionBranchAutomation {
         this.templateGenerator = new ExtractionTemplateGenerator();
         this.ghToken = process.env.GITHUB_TOKEN || options.githubToken;
         this.testingFramework = options.testingFramework || 'jest';
-        
+
         if (!this.ghToken) {
             console.warn('⚠️ No GitHub token provided. Branch creation will be local only.');
         }
@@ -36,7 +36,7 @@ class ExtractionBranchAutomation {
         } = options;
 
         console.log(`🚀 Starting feature extraction: ${assessment.title}`);
-        
+
         try {
             // 1. Create branch name
             const branchName = this.generateBranchName(assessment);
@@ -72,7 +72,7 @@ class ExtractionBranchAutomation {
             const metadata = await this.createBranchMetadata(assessment, branchName, upstreamCommit);
 
             console.log(`✅ Feature extraction complete for: ${assessment.title}`);
-            
+
             return {
                 success: true,
                 branchName,
@@ -111,18 +111,18 @@ class ExtractionBranchAutomation {
      */
     async createBranch(branchName, baseBranch = 'main') {
         const { execSync } = require('child_process');
-        
+
         try {
             // Ensure we're on base branch and up to date
             execSync(`git checkout ${baseBranch}`, { cwd: this.repoPath });
             execSync(`git pull origin ${baseBranch}`, { cwd: this.repoPath });
-            
+
             // Create new branch
             execSync(`git checkout -b ${branchName}`, { cwd: this.repoPath });
-            
+
             console.log(`📋 Created and checked out branch: ${branchName}`);
             return branchName;
-            
+
         } catch (error) {
             throw new Error(`Failed to create branch ${branchName}: ${error.message}`);
         }
@@ -140,7 +140,7 @@ class ExtractionBranchAutomation {
 
         // Generate all template types
         const docs = this.templateGenerator.generateAllTemplates(assessment);
-        
+
         // Move generated docs to proper branch location
         const branchDocsDir = path.join(this.repoPath, 'docs', 'feature-extraction', assessment.feature_id);
         if (!fs.existsSync(branchDocsDir)) {
@@ -162,7 +162,7 @@ class ExtractionBranchAutomation {
      */
     async setupTestingScaffolding(assessment, branchName) {
         const testDir = path.join(this.repoPath, 'tests', 'extracted-features', assessment.feature_id);
-        
+
         // Create test directory structure
         if (!fs.existsSync(testDir)) {
             fs.mkdirSync(testDir, { recursive: true });
@@ -170,7 +170,7 @@ class ExtractionBranchAutomation {
 
         // Generate test files based on framework
         const testFiles = await this.generateTestFiles(assessment, testDir);
-        
+
         // Create Jest configuration for extracted feature
         if (this.testingFramework === 'jest') {
             await this.createJestConfig(assessment, testDir);
@@ -192,7 +192,7 @@ class ExtractionBranchAutomation {
         // Unit test template
         const unitTestContent = `/**
  * Unit tests for extracted feature: ${assessment.title}
- * 
+ *
  * Upstream source: ${assessment.upstream_reference}
  * Extraction ID: ${assessment.feature_id}
  * Assessment score: ${assessment.weighted_score?.toFixed(2)}
@@ -281,7 +281,7 @@ describe('${assessment.title} - Integration', () => {
 
         const configPath = path.join(testDir, 'jest.config.js');
         const configContent = `module.exports = ${JSON.stringify(jestConfig, null, 2)};`;
-        
+
         fs.writeFileSync(configPath, configContent, 'utf8');
         return configPath;
     }
@@ -303,7 +303,7 @@ describe('${assessment.title} - Integration', () => {
 
         // Generate phases based on effort score
         const effortScore = assessment.scores?.effort?.raw_score || 2;
-        
+
         if (effortScore <= 1) {
             // Simple implementation
             plan.phases = [
@@ -338,13 +338,13 @@ describe('${assessment.title} - Integration', () => {
 
         // Save implementation plan
         const planPath = path.join(this.repoPath, 'docs', 'feature-extraction', assessment.feature_id, 'implementation-plan.json');
-        
+
         // Ensure directory exists
         const planDir = path.dirname(planPath);
         if (!fs.existsSync(planDir)) {
             fs.mkdirSync(planDir, { recursive: true });
         }
-        
+
         fs.writeFileSync(planPath, JSON.stringify(plan, null, 2), 'utf8');
 
         return plan;
@@ -355,11 +355,11 @@ describe('${assessment.title} - Integration', () => {
      */
     async commitInitialSetup(assessment, branchName) {
         const { execSync } = require('child_process');
-        
+
         try {
             // Add all new files
             execSync('git add .', { cwd: this.repoPath });
-            
+
             // Commit with descriptive message
             const commitMessage = `feat: initialize extraction for ${assessment.title}
 
@@ -378,7 +378,7 @@ Co-Authored-By: Extraction Automation <noreply@memento.dev>`;
 
             execSync(`git commit -m "${commitMessage.replace(/"/g, '\\"')}"`, { cwd: this.repoPath });
             console.log('📝 Initial setup committed');
-            
+
         } catch (error) {
             console.warn(`⚠️ Commit failed (may be no changes): ${error.message}`);
         }
@@ -389,7 +389,7 @@ Co-Authored-By: Extraction Automation <noreply@memento.dev>`;
      */
     async pushBranchToRemote(branchName) {
         const { execSync } = require('child_process');
-        
+
         try {
             execSync(`git push -u origin ${branchName}`, { cwd: this.repoPath });
             console.log(`🌐 Pushed ${branchName} to remote`);

@@ -9,7 +9,7 @@ export default function(eleventyConfig) {
   eleventyConfig.addPassthroughCopy("src/assets");
   eleventyConfig.addPassthroughCopy("src/js");
   eleventyConfig.addPassthroughCopy("src/css");
-  
+
   // Add filters
   eleventyConfig.addFilter("dateFormat", (date, format = "yyyy-MM-dd") => {
     if (!date) return "";
@@ -62,7 +62,7 @@ export default function(eleventyConfig) {
 
   // Add shortcodes
   eleventyConfig.addShortcode("year", () => `${new Date().getFullYear()}`);
-  
+
   eleventyConfig.addShortcode("chartJs", (type, data, options = "{}") => {
     const chartId = `chart-${Math.random().toString(36).substr(2, 9)}`;
     return `
@@ -85,7 +85,7 @@ export default function(eleventyConfig) {
   });
 
   // Don't ignore includes directory - it contains layouts
-  
+
   // Data files in _data directory are automatically available
 
   // Configure directories

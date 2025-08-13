@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 
 from loguru import logger
-from pydantic_ai import Tool
+from pydantic_ai.tools import Tool
 
 
 class DirectoryLister:

@@ -2,7 +2,7 @@
 
 /**
  * Template System Test Script
- * 
+ *
  * Tests the template generation system with mock data
  */
 
@@ -113,13 +113,13 @@ class MockTemplateGenerator extends TemplateGenerator {
       },
       analyzedCommits: []
     };
-    
+
     // Flatten commits for topCommits
     this.mockAnalysisData.summary.topCommits = Object.values(
       this.mockAnalysisData.summary.categories
     ).flatMap(cat => cat.commits)
      .sort((a, b) => b.significance - a.significance);
-    
+
     this.mockAnalysisData.analyzedCommits = this.mockAnalysisData.summary.topCommits;
   }
 
@@ -136,19 +136,19 @@ class MockTemplateGenerator extends TemplateGenerator {
 
 async function runTemplateTests() {
   console.log('🧪 Starting template system tests...\n');
-  
+
   const generator = new MockTemplateGenerator();
-  
+
   try {
     console.log('📋 Test 1: Generator Initialization');
     await generator.initialize();
     console.log('✅ Template generator initialized successfully\n');
-    
+
     console.log('📋 Test 2: Template Files Validation');
     const templatesDir = path.join(__dirname, 'templates');
     const templateFiles = await fs.readdir(templatesDir);
     const expectedTemplates = ['analysis-session.md', 'quick-summary.md'];
-    
+
     let templatesValid = true;
     for (const expected of expectedTemplates) {
       if (!templateFiles.includes(expected)) {
@@ -158,26 +158,26 @@ async function runTemplateTests() {
         console.log(`✅ Found template: ${expected}`);
       }
     }
-    
+
     if (templatesValid) {
       console.log('✅ All expected template files found\n');
     } else {
       console.log('❌ Some template files missing\n');
     }
-    
+
     console.log('📋 Test 3: Template Content Validation');
     for (const templateFile of expectedTemplates) {
       const templatePath = path.join(templatesDir, templateFile);
       const content = await fs.readFile(templatePath, 'utf8');
-      
+
       // Check for required Handlebars variables
       const requiredVars = [
         '{{sessionDate}}',
-        '{{totalCommits}}', 
+        '{{totalCommits}}',
         '{{significanceScore}}',
         '{{changeLevel}}'
       ];
-      
+
       let templateContentValid = true;
       for (const variable of requiredVars) {
         if (!content.includes(variable)) {
@@ -185,13 +185,13 @@ async function runTemplateTests() {
           templateContentValid = false;
         }
       }
-      
+
       if (templateContentValid) {
         console.log(`✅ ${templateFile} contains all required variables`);
       }
     }
     console.log('');
-    
+
     console.log('📋 Test 4: Session Generation with Mock Data');
     const testOptions = {
       branchDate: '2024-01-15',
@@ -200,9 +200,9 @@ async function runTemplateTests() {
       duration: '2 hours',
       createBranch: false  // Don't actually create git branch in test
     };
-    
+
     const result = await generator.generateSession('mock-from', 'mock-to', testOptions);
-    
+
     if (result.success) {
       console.log('✅ Session generation completed successfully');
       console.log(`   • Branch Date: ${result.branchDate}`);
@@ -213,10 +213,10 @@ async function runTemplateTests() {
       console.log('❌ Session generation failed:', result.error);
     }
     console.log('');
-    
+
     console.log('📋 Test 5: Generated File Validation');
     const generatedFiles = Object.values(result.outputs);
-    
+
     let generatedFilesValid = true;
     for (const filePath of generatedFiles) {
       try {
@@ -232,18 +232,18 @@ async function runTemplateTests() {
         generatedFilesValid = false;
       }
     }
-    
+
     if (generatedFilesValid) {
       console.log('✅ All generated files are valid\n');
     } else {
       console.log('❌ Some generated files are invalid\n');
     }
-    
+
     console.log('📋 Test 6: Template Content Rendering');
     // Read one of the generated files to verify content rendering
     const fullAnalysisPath = result.outputs.fullAnalysis;
     const generatedContent = await fs.readFile(fullAnalysisPath, 'utf8');
-    
+
     // Check that variables were replaced
     const contentChecks = [
       { check: !generatedContent.includes('{{sessionDate}}'), desc: 'Session date rendered' },
@@ -252,7 +252,7 @@ async function runTemplateTests() {
       { check: generatedContent.includes('feat: add new authentication'), desc: 'Commit subjects included' },
       { check: generatedContent.includes('security: fix SQL injection'), desc: 'Security commits included' }
     ];
-    
+
     let contentRenderingValid = true;
     for (const { check, desc } of contentChecks) {
       if (check) {
@@ -262,17 +262,17 @@ async function runTemplateTests() {
         contentRenderingValid = false;
       }
     }
-    
+
     if (contentRenderingValid) {
       console.log('✅ Template content rendering successful\n');
     } else {
       console.log('❌ Template content rendering issues detected\n');
     }
-    
+
     console.log('📋 Test 7: CLI Interface Validation');
     // Test that the CLI help works
     const { program } = require('commander');
-    
+
     try {
       // This tests that the CLI is properly configured
       program.configureHelp();
@@ -281,9 +281,9 @@ async function runTemplateTests() {
       console.log('❌ CLI interface configuration error:', error.message);
     }
     console.log('');
-    
+
     console.log('🎉 All template tests completed!');
-    
+
     console.log('\n📊 Test Results Summary:');
     console.log(`   • Generator initialization: ✅`);
     console.log(`   • Template files validation: ${templatesValid ? '✅' : '❌'}`);
@@ -292,7 +292,7 @@ async function runTemplateTests() {
     console.log(`   • Generated files validation: ${generatedFilesValid ? '✅' : '❌'}`);
     console.log(`   • Content rendering: ${contentRenderingValid ? '✅' : '❌'}`);
     console.log(`   • CLI interface: ✅`);
-    
+
     // Cleanup test files
     console.log('\n🧹 Cleaning up test files...');
     for (const filePath of generatedFiles) {
@@ -303,7 +303,7 @@ async function runTemplateTests() {
         console.log(`   • Could not remove: ${path.basename(filePath)}`);
       }
     }
-    
+
     // Output test results for potential CI use
     const testResults = {
       success: true,
@@ -323,31 +323,31 @@ async function runTemplateTests() {
         changeLevel: result.analysisData?.changeLevel
       }
     };
-    
+
     if (process.env.CI || process.argv.includes('--output-json')) {
       await fs.writeFile('template-test-results.json', JSON.stringify(testResults, null, 2));
       console.log('\n📁 Test results written to template-test-results.json');
     }
-    
+
     if (process.argv.includes('--json')) {
       console.log('\n📋 JSON Output:');
       console.log(JSON.stringify(testResults, null, 2));
     }
-    
+
   } catch (error) {
     console.error('\n💥 Template test failed:', error.message);
     console.error(error.stack);
-    
+
     const failureResults = {
       success: false,
       error: error.message,
       stack: error.stack
     };
-    
+
     if (process.env.CI || process.argv.includes('--output-json')) {
       await fs.writeFile('template-test-results.json', JSON.stringify(failureResults, null, 2));
     }
-    
+
     process.exit(1);
   }
 }

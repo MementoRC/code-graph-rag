@@ -5,10 +5,10 @@ scheduling:
   # Weekly schedule (cron format: minute hour day-of-month month day-of-week)
   weekly_schedule: "0 9 * * 1"  # Monday at 9 AM UTC
   timezone: "UTC"
-  
+
   # Manual session settings
   manual_trigger: true
-  
+
   # Session naming
   branch_prefix: "analysis/"
   branch_format: "YYYY-MM-DD-session"  # analysis/2025-01-15-session
@@ -17,11 +17,11 @@ scheduling:
 change_detection:
   # How far back to look for changes (in days)
   lookback_days: 7
-  
+
   # Minimum changes to trigger session
   min_commits: 1
   min_files_changed: 1
-  
+
   # File patterns to include/exclude
   include_patterns:
     - "**/*.py"
@@ -31,7 +31,7 @@ change_detection:
     - "**/*.yml"
     - "**/*.yaml"
     - "**/*.json"
-  
+
   exclude_patterns:
     - "**/node_modules/**"
     - "**/.git/**"
@@ -43,10 +43,10 @@ change_detection:
 document_generation:
   # Template source
   template_path: "docs/upstream-analysis/extraction/templates/quick-assessment.md"
-  
+
   # Output location
   output_path: "tools/analysis-session/session-notes.md"
-  
+
   # Auto-populate sections
   include_commit_details: true
   include_diff_summaries: true
@@ -59,13 +59,13 @@ github:
   upstream_remote: "upstream"
   upstream_branch: "main"
   local_mirror_branch: "upstream-mirror"
-  
+
   # Issue creation
   auto_create_issues: true
   issue_labels:
     - "upstream-analysis"
     - "extraction-candidate"
-  
+
   # PR settings
   auto_create_pr: false  # Manual review preferred
   pr_labels:
@@ -77,11 +77,11 @@ calendar:
   # Google Calendar settings (requires API setup)
   enabled: false  # Set to true when API keys are configured
   calendar_id: "primary"
-  
+
   # Event settings
   event_title: "Upstream Analysis Session"
   event_duration_minutes: 60
-  
+
   # Notification settings
   reminder_minutes: 15
 
@@ -90,11 +90,11 @@ cli:
   # Display settings
   max_commit_display: 20
   max_file_display: 50
-  
+
   # Navigation
   enable_fuzzy_search: true
   enable_diff_preview: true
-  
+
   # Output options
   save_decisions: true
   export_format: "markdown"
@@ -106,12 +106,12 @@ notifications:
     enabled: false
     webhook_url: ""
     channel: "#upstream-analysis"
-  
+
   # Email integration (future enhancement)
   email:
     enabled: false
     recipients: []
-  
+
   # GitHub notifications
   github:
     enabled: true
@@ -123,30 +123,30 @@ analysis:
   # Significance scoring
   high_significance_threshold: 8
   medium_significance_threshold: 5
-  
+
   # File change thresholds
   major_change_lines: 100
   significant_files_count: 10
-  
+
   # Commit message keywords for categorization
   feature_keywords:
     - "feat"
     - "feature"
     - "add"
     - "implement"
-  
+
   bugfix_keywords:
     - "fix"
     - "bug"
     - "patch"
     - "resolve"
-  
+
   refactor_keywords:
     - "refactor"
     - "cleanup"
     - "optimize"
     - "improve"
-  
+
   security_keywords:
     - "security"
     - "vuln"
@@ -159,11 +159,11 @@ quality:
   require_summary: true
   require_categorization: true
   require_impact_assessment: true
-  
+
   # Documentation standards
   min_description_length: 50
   require_action_items: true
-  
+
   # Review requirements
   require_team_review: false  # For automated sessions
   require_stakeholder_signoff: false
@@ -174,11 +174,11 @@ automation:
   auto_fetch_upstream: true
   auto_create_branch: true
   auto_generate_document: true
-  
+
   # During session
   auto_save_progress: true
   backup_frequency_minutes: 5
-  
+
   # Post-session
   auto_commit_notes: true
   auto_push_branch: true

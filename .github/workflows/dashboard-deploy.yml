@@ -57,7 +57,7 @@ jobs:
         run: |
           echo "🔨 Building dashboard..."
           npm run build || echo "⚠️ Build had issues but continuing..."
-          
+
           # If _site doesn't exist, create a functional fallback
           if [ \! -d "_site" ]; then
             echo "📋 Creating fallback static dashboard..."
@@ -136,7 +136,7 @@ jobs:
               echo '</html>'
             } > _site/index.html
           fi
-          
+
           echo "✅ Dashboard build completed"
 
       - name: Setup Pages
@@ -149,7 +149,7 @@ jobs:
         if: steps.setup-pages.outcome == 'success'
         with:
           path: ./dashboard/_site
-          
+
       - name: Pages not configured
         if: steps.setup-pages.outcome != 'success'
         run: |

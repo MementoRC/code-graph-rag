@@ -2,10 +2,10 @@
 
 /**
  * Comprehensive Traceability and Audit System for Feature Extraction
- * 
+ *
  * This system provides complete audit trail tracking for extracted features,
  * from initial analysis through implementation and deployment.
- * 
+ *
  * Features:
  * - Complete lifecycle tracking
  * - Audit event logging with chain integrity
@@ -26,7 +26,7 @@ class TraceabilityAuditSystem {
         this.projectRoot = options.projectRoot || process.cwd();
         this.auditDir = path.join(this.projectRoot, '.traceability');
         this.ensureAuditDirectories();
-        
+
         // Configuration
         this.config = {
             retentionDays: options.retentionDays || 365,
@@ -38,7 +38,7 @@ class TraceabilityAuditSystem {
                 documentation: true
             }
         };
-        
+
         // Initialize tracking state
         this.currentSession = null;
         this.eventChain = [];
@@ -99,7 +99,7 @@ class TraceabilityAuditSystem {
 
         this.currentSession = session;
         this.logEvent('session_created', { sessionId, sessionType });
-        
+
         return sessionId;
     }
 
@@ -115,21 +115,21 @@ class TraceabilityAuditSystem {
         this.currentSession.status = 'completed';
         this.currentSession.summary = summary;
         this.currentSession.performance.endMemory = process.memoryUsage();
-        this.currentSession.performance.duration = 
+        this.currentSession.performance.duration =
             new Date(this.currentSession.endTime) - new Date(this.currentSession.startTime);
 
         // Save session to disk
         this.saveSession(this.currentSession);
-        
-        this.logEvent('session_completed', { 
-            sessionId, 
+
+        this.logEvent('session_completed', {
+            sessionId,
             duration: this.currentSession.performance.duration,
-            operations: this.currentSession.performance.operations 
+            operations: this.currentSession.performance.operations
         });
 
         const completedSession = this.currentSession;
         this.currentSession = null;
-        
+
         return completedSession;
     }
 
@@ -138,12 +138,12 @@ class TraceabilityAuditSystem {
      */
     initializeFeatureTracking(extractionData) {
         const featureId = extractionData.extractionId || this.generateId('EXT');
-        
+
         const featureRecord = {
             featureId,
             featureName: extractionData.featureName,
             extractionId: extractionData.extractionId,
-            
+
             // Upstream traceability
             upstream: {
                 repository: extractionData.upstreamRepository,
@@ -152,7 +152,7 @@ class TraceabilityAuditSystem {
                 pullRequest: extractionData.upstreamPR,
                 analysisSession: extractionData.analysisSession
             },
-            
+
             // Local implementation
             local: {
                 repository: this.getLocalRepository(),
@@ -160,7 +160,7 @@ class TraceabilityAuditSystem {
                 implementationPlan: extractionData.implementationPlan,
                 taskMasterTask: extractionData.taskMasterTask
             },
-            
+
             // Assessment data
             assessment: {
                 valueScore: extractionData.valueScore,
@@ -169,7 +169,7 @@ class TraceabilityAuditSystem {
                 compatibilityScore: extractionData.compatibilityScore,
                 riskLevel: extractionData.riskLevel
             },
-            
+
             // Lifecycle tracking
             lifecycle: {
                 status: 'initialized',
@@ -183,7 +183,7 @@ class TraceabilityAuditSystem {
                 milestones: [],
                 blockers: []
             },
-            
+
             // Quality metrics
             quality: {
                 testCoverage: null,
@@ -191,10 +191,10 @@ class TraceabilityAuditSystem {
                 securityScanResults: null,
                 performanceImpact: null
             },
-            
+
             // Audit trail
             auditTrail: [],
-            
+
             // Metadata
             createdAt: new Date().toISOString(),
             createdBy: process.env.USER || 'system',
@@ -203,7 +203,7 @@ class TraceabilityAuditSystem {
 
         // Save feature record
         this.saveFeatureRecord(featureRecord);
-        
+
         this.logEvent('feature_tracking_initialized', {
             featureId,
             featureName: extractionData.featureName,
@@ -231,7 +231,7 @@ class TraceabilityAuditSystem {
         const oldStatus = feature.lifecycle.phases[phaseIndex].status;
         feature.lifecycle.phases[phaseIndex].status = status;
         feature.lifecycle.phases[phaseIndex].lastUpdated = new Date().toISOString();
-        
+
         if (status === 'completed') {
             feature.lifecycle.phases[phaseIndex].completedAt = new Date().toISOString();
         } else if (status === 'in_progress' && !feature.lifecycle.phases[phaseIndex].startedAt) {
@@ -242,7 +242,7 @@ class TraceabilityAuditSystem {
         const completedPhases = feature.lifecycle.phases.filter(p => p.status === 'completed').length;
         const totalPhases = feature.lifecycle.phases.length;
         const progressPercentage = Math.round((completedPhases / totalPhases) * 100);
-        
+
         feature.lifecycle.status = this.calculateOverallStatus(feature.lifecycle.phases);
         feature.lifecycle.progress = progressPercentage;
         feature.lastUpdated = new Date().toISOString();
@@ -261,12 +261,12 @@ class TraceabilityAuditSystem {
             },
             sessionId: this.currentSession?.sessionId
         };
-        
+
         feature.auditTrail.push(auditEvent);
 
         // Save updated feature
         this.saveFeatureRecord(feature);
-        
+
         this.logEvent('feature_lifecycle_updated', {
             featureId,
             phase,
@@ -312,11 +312,11 @@ class TraceabilityAuditSystem {
             },
             sessionId: this.currentSession?.sessionId
         };
-        
+
         feature.auditTrail.push(auditEvent);
 
         this.saveFeatureRecord(feature);
-        
+
         this.logEvent('milestone_added', {
             featureId,
             milestoneId: milestoneRecord.milestoneId,
@@ -365,11 +365,11 @@ class TraceabilityAuditSystem {
             },
             sessionId: this.currentSession?.sessionId
         };
-        
+
         feature.auditTrail.push(auditEvent);
 
         this.saveFeatureRecord(feature);
-        
+
         this.logEvent('blocker_added', {
             featureId,
             blockerId: blockerRecord.blockerId,
@@ -413,11 +413,11 @@ class TraceabilityAuditSystem {
             },
             sessionId: this.currentSession?.sessionId
         };
-        
+
         feature.auditTrail.push(auditEvent);
 
         this.saveFeatureRecord(feature);
-        
+
         this.logEvent('blocker_resolved', {
             featureId,
             blockerId,
@@ -452,11 +452,11 @@ class TraceabilityAuditSystem {
             },
             sessionId: this.currentSession?.sessionId
         };
-        
+
         feature.auditTrail.push(auditEvent);
 
         this.saveFeatureRecord(feature);
-        
+
         this.logEvent('quality_metrics_updated', {
             featureId,
             updatedFields: Object.keys(metrics)
@@ -496,7 +496,7 @@ class TraceabilityAuditSystem {
                 averageCompletionTime: this.calculateAverageCompletionTime(filteredFeatures),
                 totalMilestones: filteredFeatures.reduce((sum, f) => sum + f.lifecycle.milestones.length, 0),
                 totalBlockers: filteredFeatures.reduce((sum, f) => sum + f.lifecycle.blockers.length, 0),
-                activeBlockers: filteredFeatures.reduce((sum, f) => 
+                activeBlockers: filteredFeatures.reduce((sum, f) =>
                     sum + f.lifecycle.blockers.filter(b => b.status === 'active').length, 0)
             },
             metrics: {
@@ -519,7 +519,7 @@ class TraceabilityAuditSystem {
 
         // Save report
         this.saveReport(report);
-        
+
         this.logEvent('analytics_report_generated', {
             reportId: report.reportId,
             totalFeatures: report.summary.totalFeatures
@@ -543,10 +543,10 @@ class TraceabilityAuditSystem {
 
         // Calculate checksum for integrity
         event.checksum = this.calculateChecksum(event);
-        
+
         // Add to event chain
         this.eventChain.push(event);
-        
+
         // Persist event
         this.saveEvent(event);
 
@@ -596,7 +596,7 @@ class TraceabilityAuditSystem {
         for (let i = 1; i < feature.auditTrail.length; i++) {
             const prevEvent = feature.auditTrail[i - 1];
             const currentEvent = feature.auditTrail[i];
-            
+
             if (new Date(prevEvent.timestamp) > new Date(currentEvent.timestamp)) {
                 validationResults.isValid = false;
                 validationResults.chronologyValidation = false;
@@ -612,7 +612,7 @@ class TraceabilityAuditSystem {
         // Validate completeness
         const requiredEvents = ['lifecycle_update'];
         const eventTypes = feature.auditTrail.map(e => e.eventType);
-        
+
         for (const requiredEvent of requiredEvents) {
             if (!eventTypes.includes(requiredEvent)) {
                 validationResults.isValid = false;
@@ -653,7 +653,7 @@ class TraceabilityAuditSystem {
         // Create a copy without the checksum field
         const objForChecksum = { ...obj };
         delete objForChecksum.checksum;
-        
+
         const dataString = JSON.stringify(objForChecksum, Object.keys(objForChecksum).sort());
         return crypto.createHash('sha256').update(dataString).digest('hex');
     }
@@ -665,7 +665,7 @@ class TraceabilityAuditSystem {
         const hasBlocked = phases.some(p => p.status === 'blocked');
         const hasInProgress = phases.some(p => p.status === 'in_progress');
         const allCompleted = phases.every(p => p.status === 'completed');
-        
+
         if (hasBlocked) return 'blocked';
         if (allCompleted) return 'completed';
         if (hasInProgress) return 'in_progress';
@@ -736,7 +736,7 @@ class TraceabilityAuditSystem {
     getAllFeatures() {
         const featuresDir = path.join(this.auditDir, 'features');
         const featureFiles = fs.readdirSync(featuresDir).filter(f => f.endsWith('.json'));
-        
+
         return featureFiles.map(file => {
             const featurePath = path.join(featuresDir, file);
             return JSON.parse(fs.readFileSync(featurePath, 'utf8'));
@@ -831,7 +831,7 @@ class TraceabilityAuditSystem {
         const metrics = {
             testCoverage: this.calculateAverage(features, 'quality.testCoverage'),
             codeQualityScore: this.calculateAverage(features, 'quality.codeQualityScore'),
-            securityIssues: features.reduce((sum, f) => 
+            securityIssues: features.reduce((sum, f) =>
                 sum + (f.quality.securityScanResults?.issues || 0), 0)
         };
         return metrics;

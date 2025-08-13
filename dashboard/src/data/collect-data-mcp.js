@@ -2,7 +2,7 @@
 
 /**
  * MCP-Enhanced Data Collection Script for Upstream Analysis Dashboard
- * 
+ *
  * This script collects data using MCP tools when available:
  * - Git history and statistics via MCP git tools
  * - Analysis documentation parsing
@@ -34,7 +34,7 @@ class MCPDataCollector {
   // Create fallback data when MCP tools are not available
   async createFallbackGitStats() {
     console.log('📊 Creating fallback Git statistics...');
-    
+
     // Generate realistic looking data for the last 3 months
     const now = new Date();
     const threeMonthsAgo = subMonths(now, 3);
@@ -54,7 +54,7 @@ class MCPDataCollector {
     for (let i = 0; i < 45; i++) {
       const date = subDays(now, Math.floor(Math.random() * 90));
       const dateStr = format(date, 'yyyy-MM-dd');
-      
+
       const commit = {
         hash: Math.random().toString(36).substr(2, 12),
         message: this.generateSampleCommitMessage(),
@@ -65,10 +65,10 @@ class MCPDataCollector {
       };
 
       commits.push(commit);
-      
+
       if (!byDate[dateStr]) byDate[dateStr] = [];
       byDate[dateStr].push(commit);
-      
+
       if (!byAuthor[commit.author_name]) byAuthor[commit.author_name] = 0;
       byAuthor[commit.author_name]++;
     }
@@ -119,10 +119,10 @@ class MCPDataCollector {
       'enhance error handling',
       'add responsive design improvements'
     ];
-    
+
     const type = types[Math.floor(Math.random() * types.length)];
     const subject = subjects[Math.floor(Math.random() * subjects.length)];
-    
+
     return `${type}: ${subject}`;
   }
 
@@ -133,7 +133,7 @@ class MCPDataCollector {
 
   async collectAnalysisDocumentation() {
     console.log('📚 Collecting analysis documentation...');
-    
+
     try {
       const analysisData = {
         lastUpdated: new Date().toISOString(),
@@ -154,11 +154,11 @@ class MCPDataCollector {
           const exists = await fs.access(location).then(() => true).catch(() => false);
           if (exists) {
             const items = await fs.readdir(location, { withFileTypes: true });
-            
+
             for (const item of items) {
               if (item.isFile() && (item.name.endsWith('.md') || item.name.endsWith('.txt'))) {
                 const content = await fs.readFile(path.join(location, item.name), 'utf-8');
-                
+
                 if (item.name.includes('session')) {
                   analysisData.sessions.push({
                     name: item.name,
@@ -204,7 +204,7 @@ class MCPDataCollector {
       return analysisData;
     } catch (error) {
       console.error('❌ Error collecting analysis documentation:', error);
-      
+
       const fallbackData = {
         lastUpdated: new Date().toISOString(),
         sessions: [],
@@ -224,7 +224,7 @@ class MCPDataCollector {
 
   async createFallbackGitHubData() {
     console.log('🐙 Creating fallback GitHub data...');
-    
+
     const githubData = {
       lastUpdated: new Date().toISOString(),
       repository: {
@@ -260,10 +260,10 @@ class MCPDataCollector {
 
   async createFallbackUpstreamActivity() {
     console.log('⬆️ Creating fallback upstream activity data...');
-    
+
     const now = new Date();
     const upstreamCommits = [];
-    
+
     // Generate recent upstream commits
     for (let i = 0; i < 20; i++) {
       const date = subDays(now, Math.floor(Math.random() * 30));
@@ -335,24 +335,24 @@ class MCPDataCollector {
 
   async run() {
     console.log('🚀 Starting MCP-enhanced data collection for Upstream Analysis Dashboard\n');
-    
+
     await this.ensureDataDir();
-    
+
     try {
       // Collect data from all sources
       const gitStats = await this.createFallbackGitStats();
       const analysisDocs = await this.collectAnalysisDocumentation();
       const githubData = await this.createFallbackGitHubData();
       const upstreamActivity = await this.createFallbackUpstreamActivity();
-      
+
       // Create collection summary
       const summary = await this.createCollectionSummary(
         gitStats, analysisDocs, githubData, upstreamActivity
       );
-      
+
       console.log('\n📊 Data collection completed!');
       console.log('Summary:', summary);
-      
+
       return summary;
     } catch (error) {
       console.error('❌ Fatal error during data collection:', error);
