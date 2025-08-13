@@ -46,7 +46,7 @@ exclude = [
 
 [tool.pixi.project]
 channels = ["conda-forge", "MementoRC"]
-platforms = ["linux-64", "win-64", "osx-64", "osx-arm64"]  # Cross-platform support; pymgclient only available on linux-64
+platforms = ["linux-64"]  # Default: linux-64 for development performance; CI dynamically modifies for cross-platform
 
 [tool.pixi.dependencies]
 # Core runtime dependencies - pixi replaces pip entirely
@@ -67,7 +67,7 @@ pre-commit = ">=4.3.0,<5"
 # pydantic and pydantic-settings moved to feature-specific dependencies
 # Build tools moved to platform-specific section (not needed for basic cross-platform unit tests)
 
-# Platform-specific dependencies
+# Platform-specific dependencies - CRITICAL: pymgclient only available on Linux!
 [tool.pixi.target.linux-64.dependencies]
 pymgclient = ">=1.4.0"  # Graph database client from MementoRC channel (Linux-only)
 tree-sitter-python = ">=0.23.6"
@@ -78,6 +78,10 @@ cmake = "*"
 openssl = "*"
 libopenssl-static = "*"  # OpenSSL development libraries
 pkg-config = "*"  # For native package builds
+
+# NOTE: Cross-platform sections are dynamically added by CI for Windows/macOS testing
+# The CI workflow temporarily modifies platforms = ["linux-64"] to specific platforms
+# and adds appropriate [tool.pixi.target.{platform}.dependencies] sections as needed
 
 # [tool.pixi.pypi-dependencies]
 # PyPI-only packages that don't exist in conda-forge
@@ -115,8 +119,8 @@ pre-commit = ">=4.2.0"    # conda-forge: 4.2.0
 # TIER 2b: Security Tools (pydantic version locked for safety compatibility)
 [tool.pixi.feature.security-scan.dependencies]
 safety = ">=3.6.0"        # conda-forge: 3.6.0
-pydantic = ">=2.7.0,<2.10.0"  # Required by safety - incompatible with pydantic-ai
-pydantic-settings = ">=2.0.0,<2.1.0"  # Compatible version
+pydantic = ">=2.7.0,<2.10.0"  # Required by safety - incompatible with pydantic-ai >=2.10
+pydantic-settings = ">=2.0.0,<2.1.0"  # Compatible version for safety
 
 # Git Hooks
 pre-commit = ">=4.2.0"    # conda-forge: 4.2.0
@@ -132,11 +136,9 @@ pyinstaller = ">=6.14.2"  # conda-forge: 6.14.2
 # CI Reporting
 coverage = ">=7.9.2"      # conda-forge: 7.9.2
 
-# ===== TOOL DEPENDENCIES =====
-# Separate feature for pydantic-ai tools to avoid version conflicts
-[tool.pixi.feature.pydantic-ai-tools.dependencies]
-pydantic-ai-slim = ">=0.2.14"  # Tool definitions
-pydantic = ">=2.10.0"  # Required by pydantic-ai-slim
+# ===== PYDANTIC-AI TOOLS INTEGRATED INTO RUNTIME/SMOKE-TEST FEATURES =====
+# pydantic-ai tools are now included in runtime and smoke-test features
+# to avoid version conflicts and reduce environment complexity
 
 # ===== DEVELOPMENT FEATURES =====
 [tool.pixi.feature.dev-specialized.dependencies]
@@ -171,37 +173,40 @@ google-genai = ">=1.27.0"  # conda-forge: 1.27.0 - For document analyzer imports
 # tree-sitter-c-sharp = ">=0.23.1"  # Available but conflicts with PyPI version
 
 [tool.pixi.environments]
+# === CORE ENVIRONMENTS (LINUX-64 OPTIMIZED) ===
 # Basic runtime environment (with AI capabilities, pydantic >=2.10)
 default = {features = ["runtime"], solve-group = "runtime"}
 
-# Quality gate environments (tiered approach)
-quality = {features = ["quality", "pydantic-ai-tools"], solve-group = "quality"}
+# === QUALITY ENVIRONMENTS (CROSS-PLATFORM COMPATIBLE) ===
+# Quality gate environments (tiered approach) - COMPATIBLE WITH CI
+quality = {features = ["quality"], solve-group = "quality"}                    # Basic quality (cross-platform)
 quality-extended = {features = ["quality", "quality-extended"], solve-group = "quality"}
 quality-full = {features = ["quality", "quality-extended", "quality-ci"], solve-group = "quality"}
 
+# === ISOLATED ENVIRONMENTS (SEPARATE SOLVE GROUPS) ===
 # Security scanning environment (isolated for pydantic <2.10)
 security = {features = ["quality", "quality-extended", "security-scan"], solve-group = "security"}
 
+# === CI-SPECIFIC ENVIRONMENTS (CROSS-PLATFORM TESTED) ===
 # Smoke test environment (basic CLI testing without graph dependencies)
-smoke-test = {features = ["quality", "smoke-test"], solve-group = "smoke"}
+ci-smoke = {features = ["quality", "smoke-test"], solve-group = "smoke"}        # PRIMARY CI ENVIRONMENT
 
-# Development environment (runtime + basic quality)
+# CI environment (quality + CI reporting, cross-platform compatible)
+ci = {features = ["quality", "quality-ci"], solve-group = "quality"}
+
+# === DEVELOPMENT ENVIRONMENTS ===
+# Development environment (runtime + quality, Linux-focused)
 dev = {features = ["runtime", "quality", "quality-extended", "quality-ci", "dev-specialized"], solve-group = "dev"}
 
-# Runtime environment (for graph operations)
+# Runtime environment (for graph operations, requires pymgclient on Linux)
 runtime = {features = ["runtime"], solve-group = "runtime"}
 
+# === SPECIALIZED ENVIRONMENTS ===
 # Tree-sitter full language support
 treesitter-full = {features = ["runtime", "treesitter-full"], solve-group = "runtime"}
 
-# CI environment (quality + CI reporting + pydantic-ai tools for imports)
-ci = {features = ["quality", "quality-ci", "pydantic-ai-tools"], solve-group = "quality"}
-
-# CI with smoke tests (uses smoke solve-group for pydantic >=2.10 compatibility)
-ci-smoke = {features = ["quality", "smoke-test"], solve-group = "smoke"}
-
 # CI with integration test support (includes base deps + tree-sitter and pymgclient for Linux)
-ci-integration = {features = ["runtime", "quality"], solve-group = "default"}
+ci-integration = {features = ["runtime", "quality"], solve-group = "runtime"}  # Changed to runtime solve-group
 
 [tool.pixi.tasks]
 # ===== TIER 1: CORE DEVELOPMENT TASKS (ESSENTIAL) =====
