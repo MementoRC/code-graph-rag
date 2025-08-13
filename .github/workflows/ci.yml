@@ -9,7 +9,7 @@ on:
 
 env:
   PYTHONUNBUFFERED: 1
-  PIXI_VERSION: v0.49.0
+  PIXI_VERSION: v0.50.2
   ENVIRONMENT: ci
   CLAUDECODE: 0
 
@@ -412,46 +412,46 @@ jobs:
           echo "| 📚 Docs | ${{ needs.changes.outputs.docs == 'true' && '✅ Yes' || '❌ No' }} | \`docs/**, *.md\` |" >> $GITHUB_STEP_SUMMARY
           echo "| 🔧 CI/CD | ${{ needs.changes.outputs.ci == 'true' && '✅ Yes' || '❌ No' }} | \`.github/workflows/**\` |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           echo "## ⚙️ Pipeline Execution Strategy" >> $GITHUB_STEP_SUMMARY
           echo "| Check Category | Status | Reason |" >> $GITHUB_STEP_SUMMARY
           echo "|---------------|--------|---------|" >> $GITHUB_STEP_SUMMARY
-          
+
           # Quality Gates
           if [ "${{ needs.changes.outputs.python }}" == "true" ] || [ "${{ needs.changes.outputs.ci }}" == "true" ]; then
             echo "| 🚨 Quality Gates | ${{ needs.quality-gates.result == 'success' && '✅ Passed' || needs.quality-gates.result == 'failure' && '❌ Failed' || '⏭️ Skipped' }} | Python or CI changes detected |" >> $GITHUB_STEP_SUMMARY
           else
             echo "| 🚨 Quality Gates | ⏭️ Skipped | No Python/CI changes |" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           # Testing
           if [ "${{ needs.changes.outputs.python }}" == "true" ] || [ "${{ needs.changes.outputs.tests }}" == "true" ]; then
             echo "| 🧪 Testing | ${{ needs.comprehensive-testing.result == 'success' && '✅ Passed' || needs.comprehensive-testing.result == 'failure' && '❌ Failed' || '⏭️ Skipped' }} | Python or test changes detected |" >> $GITHUB_STEP_SUMMARY
           else
             echo "| 🧪 Testing | ⏭️ Skipped | No Python/test changes |" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           # Security
           if [ "${{ needs.changes.outputs.python }}" == "true" ] || [ "${{ needs.changes.outputs.ci }}" == "true" ]; then
             echo "| 🔒 Security | ${{ needs.security-compliance.result == 'success' && '✅ Passed' || needs.security-compliance.result == 'failure' && '❌ Failed' || '⏭️ Skipped' }} | Python or CI changes detected |" >> $GITHUB_STEP_SUMMARY
           else
             echo "| 🔒 Security | ⏭️ Skipped | No Python/CI changes |" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           # Performance
           if [ "${{ needs.changes.outputs.python }}" == "true" ]; then
             echo "| ⚡ Performance | ${{ needs.performance-testing.result == 'success' && '✅ Passed' || needs.performance-testing.result == 'failure' && '❌ Failed' || '⏭️ Skipped' }} | Python changes detected |" >> $GITHUB_STEP_SUMMARY
           else
             echo "| ⚡ Performance | ⏭️ Skipped | No Python changes |" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           # Cross-platform
           if [ "${{ needs.changes.outputs.python }}" == "true" ]; then
             echo "| 🌍 Cross-Platform | ${{ needs.cross-platform.result == 'success' && '✅ Passed' || needs.cross-platform.result == 'failure' && '❌ Failed' || '⏭️ Skipped' }} | Python changes detected |" >> $GITHUB_STEP_SUMMARY
           else
             echo "| 🌍 Cross-Platform | ⏭️ Skipped | No Python changes |" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## 💡 Why Are Checks Skipped?" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -476,19 +476,19 @@ jobs:
               repo: context.repo.repo,
               pull_number: context.issue.number
             });
-            
+
             // Build CI analysis section
             const pythonChanges = '${{ needs.changes.outputs.python }}' === 'true';
             const testChanges = '${{ needs.changes.outputs.tests }}' === 'true';
             const docsChanges = '${{ needs.changes.outputs.docs }}' === 'true';
             const ciChanges = '${{ needs.changes.outputs.ci }}' === 'true';
-            
+
             const ciAnalysis = `
-            
+
             ---
-            
+
             ## 🔍 CI Pipeline Analysis
-            
+
             ### 📁 Change Detection
             | Type | Detected | Checks |
             |------|----------|--------|
@@ -496,26 +496,26 @@ jobs:
             | 🧪 Tests | ${testChanges ? '✅ Yes' : '❌ No'} | ${testChanges ? 'Testing suite' : 'Skipped'} |
             | 📚 Docs | ${docsChanges ? '✅ Yes' : '❌ No'} | ${docsChanges ? 'Documentation checks' : 'Skipped'} |
             | 🔧 CI/CD | ${ciChanges ? '✅ Yes' : '❌ No'} | ${ciChanges ? 'Quality gates, Security' : 'Skipped'} |
-            
+
             ### ⚙️ Why Are Some Checks Skipped?
             Our CI system uses **intelligent path filtering** to only run relevant checks:
             - 🧪 **Testing** only runs when Python code or tests change
-            - ⚡ **Performance** only runs when Python code changes  
+            - ⚡ **Performance** only runs when Python code changes
             - 🌍 **Cross-platform** only runs when Python code changes
             - 🔒 **Security** runs for Python or CI changes
-            
+
             ✅ **This saves compute resources and speeds up your workflow!**
-            
+
             *🤖 This analysis is automatically updated on each push*`;
-            
+
             // Remove existing CI analysis if present
             let newBody = pr.body || '';
             const ciSectionRegex = /---\s*\n\s*## 🔍 CI Pipeline Analysis[\s\S]*?(?=\n\n(?:##|$)|$)/;
             newBody = newBody.replace(ciSectionRegex, '');
-            
+
             // Add new CI analysis
             newBody = newBody.trim() + ciAnalysis;
-            
+
             // Update PR description
             await github.rest.pulls.update({
               owner: context.repo.owner,

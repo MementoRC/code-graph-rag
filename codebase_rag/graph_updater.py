@@ -128,9 +128,13 @@ class GraphUpdater:
                 config: dict[str, Any] = toml.load(f)
 
             # Look for codebase-rag configuration
-            codebase_config: dict[str, Any] = config.get("tool", {}).get("codebase-rag", {})
+            codebase_config: dict[str, Any] = config.get("tool", {}).get(
+                "codebase-rag", {}
+            )
             if not codebase_config:
-                logger.error("No [tool.codebase-rag] configuration found in pyproject.toml")
+                logger.error(
+                    "No [tool.codebase-rag] configuration found in pyproject.toml"
+                )
                 return None
 
             return codebase_config
@@ -199,7 +203,12 @@ class GraphUpdater:
                 }
 
                 relationship_batch.append(
-                    (("Class", "qualified_name", class_id), "DEFINES_METHOD", ("Method", "qualified_name", method_id), relationship_data),
+                    (
+                        ("Class", "qualified_name", class_id),
+                        "DEFINES_METHOD",
+                        ("Method", "qualified_name", method_id),
+                        relationship_data,
+                    ),
                 )
 
         # Add function call relationships
@@ -212,7 +221,12 @@ class GraphUpdater:
             }
 
             relationship_batch.append(
-                ((caller_id, target_id), "CALLS", (caller_id, target_id), relationship_data),
+                (
+                    ("Function", "qualified_name", caller_id),
+                    "CALLS",
+                    ("Function", "qualified_name", target_id),
+                    relationship_data,
+                ),
             )
 
         # Process relationships in batches
@@ -225,7 +239,9 @@ class GraphUpdater:
         self.class_info.clear()
         self.call_info.clear()
 
-        logger.info(f"Ingested {len(node_batch)} nodes and {len(relationship_batch)} relationships")
+        logger.info(
+            f"Ingested {len(node_batch)} nodes and {len(relationship_batch)} relationships"
+        )
 
     def _process_file(self, file_path: Path) -> None:
         """Process a single file."""
@@ -262,7 +278,9 @@ class GraphUpdater:
             return
 
         try:
-            function_nodes = self._execute_query_with_fallback(functions_query, root_node, "function")
+            function_nodes = self._execute_query_with_fallback(
+                functions_query, root_node, "function"
+            )
 
             for func_node in function_nodes:
                 func_info = self._parse_function_node(func_node, file_path)
@@ -280,7 +298,9 @@ class GraphUpdater:
             return
 
         try:
-            class_nodes = self._execute_query_with_fallback(classes_query, root_node, "class")
+            class_nodes = self._execute_query_with_fallback(
+                classes_query, root_node, "class"
+            )
 
             for class_node in class_nodes:
                 class_info = self._parse_class_node(class_node, file_path)
@@ -291,14 +311,18 @@ class GraphUpdater:
         except Exception as e:
             logger.error(f"Error extracting classes from {file_path}: {e}")
 
-    def _extract_function_calls(self, file_path: Path, root_node: Node, content: str) -> None:
+    def _extract_function_calls(
+        self, file_path: Path, root_node: Node, content: str
+    ) -> None:
         """Extract function call information from the AST."""
         calls_query = self._get_query_for_file(file_path, "calls")
         if not calls_query:
             return
 
         try:
-            call_nodes = self._execute_query_with_fallback(calls_query, root_node, "call")
+            call_nodes = self._execute_query_with_fallback(
+                calls_query, root_node, "call"
+            )
 
             for call_node in call_nodes:
                 call_info = self._parse_call_node(call_node, file_path, content)
@@ -308,7 +332,9 @@ class GraphUpdater:
         except Exception as e:
             logger.error(f"Error extracting function calls from {file_path}: {e}")
 
-    def _parse_function_node(self, func_node: Node, file_path: Path) -> dict[str, Any] | None:
+    def _parse_function_node(
+        self, func_node: Node, file_path: Path
+    ) -> dict[str, Any] | None:
         """Parse a function node to extract metadata."""
         try:
             name_node = func_node.child_by_field_name("name")
@@ -348,7 +374,9 @@ class GraphUpdater:
             logger.error(f"Error parsing function node: {e}")
             return None
 
-    def _parse_class_node(self, class_node: Node, file_path: Path) -> dict[str, Any] | None:
+    def _parse_class_node(
+        self, class_node: Node, file_path: Path
+    ) -> dict[str, Any] | None:
         """Parse a class node to extract metadata."""
         try:
             name_node = class_node.child_by_field_name("name")
@@ -385,7 +413,9 @@ class GraphUpdater:
             logger.error(f"Error parsing class node: {e}")
             return None
 
-    def _parse_call_node(self, call_node: Node, file_path: Path, content: str) -> dict[str, Any] | None:
+    def _parse_call_node(
+        self, call_node: Node, file_path: Path, content: str
+    ) -> dict[str, Any] | None:
         """Parse a function call node to extract call information."""
         try:
             # Get the function being called
@@ -567,7 +597,10 @@ class GraphUpdater:
                     for pattern_id, node_capture_pairs in query.matches(node):
                         for capture_info in node_capture_pairs:
                             if len(capture_info) >= 2:  # type: ignore[misc]
-                                captured_node, captured_name = capture_info[0], capture_info[1]  # type: ignore[misc]
+                                captured_node, captured_name = (
+                                    capture_info[0],
+                                    capture_info[1],
+                                )  # type: ignore[misc]
                                 if captured_name == capture_name:
                                     old_api_nodes.append(captured_node)  # type: ignore[arg-type]
                     if old_api_nodes:
@@ -583,7 +616,9 @@ class GraphUpdater:
                 return self._manual_traverse_for_capture(node, capture_name)
 
         except Exception as e:
-            logger.error(f"Query execution failed: {e}, falling back to manual traversal")
+            logger.error(
+                f"Query execution failed: {e}, falling back to manual traversal"
+            )
             return self._manual_traverse_for_capture(node, capture_name)
 
     def _manual_traverse_for_capture(self, node: Node, capture_name: str) -> list[Node]:
@@ -603,7 +638,7 @@ class GraphUpdater:
             "assignment": "assignment",
             "if": "if_statement",
             "for": "for_statement",
-            "while": "while_statement"
+            "while": "while_statement",
         }
 
         def traverse(current_node: Node) -> None:
