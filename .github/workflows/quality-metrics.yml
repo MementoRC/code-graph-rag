@@ -36,12 +36,23 @@ jobs:
         with:
           fetch-depth: 0  # Need full history for coverage comparison
 
-      - name: Setup pixi
-        uses: prefix-dev/setup-pixi@v0.8.14
+      - name: Setup pixi (primary method)
+        id: setup-pixi-coverage
+        continue-on-error: true
+        uses: prefix-dev/setup-pixi@v0.9.0
         with:
           pixi-version: ${{ env.PIXI_VERSION }}
           cache: true
           manifest-path: pyproject.toml
+
+      - name: Manual pixi installation (failover)
+        if: steps.setup-pixi-coverage.outcome == 'failure'
+        run: |
+          echo "⚠️ setup-pixi action failed, falling back to manual installation"
+          curl -fsSL https://pixi.sh/install.sh | bash -s -- --version ${{ env.PIXI_VERSION }}
+          echo "$HOME/.pixi/bin" >> $GITHUB_PATH
+          # Verify pixi installation
+          pixi --version
 
       - name: Install dependencies
         run: pixi install -e dev
@@ -218,12 +229,23 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup pixi
-        uses: prefix-dev/setup-pixi@v0.8.14
+      - name: Setup pixi (primary method)
+        id: setup-pixi-quality
+        continue-on-error: true
+        uses: prefix-dev/setup-pixi@v0.9.0
         with:
           pixi-version: ${{ env.PIXI_VERSION }}
           cache: true
           manifest-path: pyproject.toml
+
+      - name: Manual pixi installation (failover)
+        if: steps.setup-pixi-quality.outcome == 'failure'
+        run: |
+          echo "⚠️ setup-pixi action failed, falling back to manual installation"
+          curl -fsSL https://pixi.sh/install.sh | bash -s -- --version ${{ env.PIXI_VERSION }}
+          echo "$HOME/.pixi/bin" >> $GITHUB_PATH
+          # Verify pixi installation
+          pixi --version
 
       - name: Install quality tools
         run: pixi install -e quality-extended
@@ -352,12 +374,23 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup pixi
-        uses: prefix-dev/setup-pixi@v0.8.14
+      - name: Setup pixi (primary method)
+        id: setup-pixi-security
+        continue-on-error: true
+        uses: prefix-dev/setup-pixi@v0.9.0
         with:
           pixi-version: ${{ env.PIXI_VERSION }}
           cache: true
           manifest-path: pyproject.toml
+
+      - name: Manual pixi installation (failover)
+        if: steps.setup-pixi-security.outcome == 'failure'
+        run: |
+          echo "⚠️ setup-pixi action failed, falling back to manual installation"
+          curl -fsSL https://pixi.sh/install.sh | bash -s -- --version ${{ env.PIXI_VERSION }}
+          echo "$HOME/.pixi/bin" >> $GITHUB_PATH
+          # Verify pixi installation
+          pixi --version
 
       - name: Install security tools
         run: pixi install -e security
