@@ -594,7 +594,7 @@ class GraphUpdater:
 
                 # Pattern 1: Try iterating over query directly if it's iterable
                 try:
-                    for pattern_id, node_capture_pairs in query.matches(node):  # type: ignore[attr-defined]
+                    for pattern_id, node_capture_pairs in query.matches(node):  # type: ignore[union-attr]
                         for capture_info in node_capture_pairs:
                             if len(capture_info) >= 2:  # type: ignore[misc]
                                 captured_node, captured_name = (
