@@ -39,7 +39,7 @@ jobs:
       - name: Setup pixi (primary method)
         id: setup-pixi-coverage
         continue-on-error: true
-        uses: prefix-dev/setup-pixi@v0.9.0
+        uses: prefix-dev/setup-pixi@v0.8.14
         with:
           pixi-version: ${{ env.PIXI_VERSION }}
           cache: true
@@ -55,7 +55,7 @@ jobs:
           pixi --version
 
       - name: Install dependencies
-        run: pixi install -e dev
+        run: pixi install -e ci
 
       - name: Run comprehensive test coverage
         run: |
@@ -86,11 +86,11 @@ jobs:
         run: |
           echo "🔍 Calculating differential coverage for PR"
           # Use diff-cover from quality environment (already available in conda-forge)
-          pixi run -e quality-extended diff-cover --version || echo "diff-cover not yet in environment"
+          pixi run -e ci diff-cover --version || echo "diff-cover not yet in environment"
 
           # Generate diff coverage report
           if [ -f coverage.xml ]; then
-            pixi run -e quality-extended diff-cover coverage.xml --compare-branch=origin/${{ github.event.pull_request.base.ref }} \
+            pixi run -e ci diff-cover coverage.xml --compare-branch=origin/${{ github.event.pull_request.base.ref }} \
               --html-report diff-coverage.html \
               --json-report diff-coverage.json || echo "Diff coverage calculated"
           fi
@@ -232,7 +232,7 @@ jobs:
       - name: Setup pixi (primary method)
         id: setup-pixi-quality
         continue-on-error: true
-        uses: prefix-dev/setup-pixi@v0.9.0
+        uses: prefix-dev/setup-pixi@v0.8.14
         with:
           pixi-version: ${{ env.PIXI_VERSION }}
           cache: true
@@ -248,29 +248,29 @@ jobs:
           pixi --version
 
       - name: Install quality tools
-        run: pixi install -e quality-extended
+        run: pixi install -e ci
 
       - name: Run comprehensive linting
         run: |
           echo "📏 Running comprehensive code quality analysis"
           # Full ruff check (not just F,E9)
-          pixi run -e quality-extended ruff check codebase_rag/ --output-format=json > ruff-report.json || echo "Ruff analysis complete"
+          pixi run -e ci ruff check codebase_rag/ --output-format=json > ruff-report.json || echo "Ruff analysis complete"
 
       - name: Run type checking with detailed output
         run: |
           echo "📝 Running detailed type analysis"
-          pixi run -e quality-extended mypy codebase_rag/ --json-report mypy-report.json || echo "MyPy analysis complete"
+          pixi run -e ci mypy codebase_rag/ --json-report mypy-report.json || echo "MyPy analysis complete"
 
       - name: Analyze code complexity
         run: |
           echo "🔍 Analyzing code complexity"
           # Use complexity analysis tools from quality environment
-          pixi run -e quality-extended radon --version || echo "radon not yet in environment"
-          pixi run -e quality-extended xenon --version || echo "xenon not yet in environment"
+          pixi run -e ci radon --version || echo "radon not yet in environment"
+          pixi run -e ci xenon --version || echo "xenon not yet in environment"
 
           # Generate complexity reports using pixi
-          pixi run -e quality-extended radon cc codebase_rag/ --json > complexity-report.json || echo "Complexity analysis complete"
-          pixi run -e quality-extended radon mi codebase_rag/ --json > maintainability-report.json || echo "Maintainability analysis complete"
+          pixi run -e ci radon cc codebase_rag/ --json > complexity-report.json || echo "Complexity analysis complete"
+          pixi run -e ci radon mi codebase_rag/ --json > maintainability-report.json || echo "Maintainability analysis complete"
 
       - name: Generate quality metrics summary
         run: |
@@ -377,7 +377,7 @@ jobs:
       - name: Setup pixi (primary method)
         id: setup-pixi-security
         continue-on-error: true
-        uses: prefix-dev/setup-pixi@v0.9.0
+        uses: prefix-dev/setup-pixi@v0.8.14
         with:
           pixi-version: ${{ env.PIXI_VERSION }}
           cache: true
@@ -393,17 +393,17 @@ jobs:
           pixi --version
 
       - name: Install security tools
-        run: pixi install -e security
+        run: pixi install -e ci
 
       - name: Run comprehensive security analysis
         run: |
           echo "🔒 Running comprehensive security analysis"
 
           # Bandit security scan with JSON output
-          pixi run -e security bandit -r codebase_rag/ -f json -o bandit-report.json || echo "Bandit scan complete"
+          pixi run -e ci bandit -r codebase_rag/ -f json -o bandit-report.json || echo "Bandit scan complete"
 
           # Safety vulnerability scan
-          pixi run -e security safety check --json --output safety-report.json || echo "Safety scan complete"
+          pixi run -e ci safety check --json --output safety-report.json || echo "Safety scan complete"
 
       - name: Analyze security metrics
         run: |
