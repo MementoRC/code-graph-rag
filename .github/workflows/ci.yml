@@ -81,7 +81,7 @@ jobs:
             echo "⚠️ ci-smoke failed, using tier 2: ci environment"
             echo "PIXI_ENV=ci" >> $GITHUB_ENV
           elif pixi install -e quality; then
-            echo "⚠️ ci failed, using tier 3: quality environment" 
+            echo "⚠️ ci failed, using tier 3: quality environment"
             echo "PIXI_ENV=quality" >> $GITHUB_ENV
           else
             echo "🚨 CRITICAL: All PIXI environments failed - CI environment contaminated"
@@ -118,21 +118,21 @@ jobs:
           echo "## 🚨 Quality Gates Report (Environment: ${PIXI_ENV:-unknown})" >> $GITHUB_STEP_SUMMARY
           echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
-          
+
           # Lint check with PIXI environment
           if [ -n "$PIXI_ENV" ] && pixi run -e $PIXI_ENV ruff check codebase_rag/ --select=F,E9 --quiet 2>/dev/null; then
             echo "| Lint (F,E9) | ✅ PASS |" >> $GITHUB_STEP_SUMMARY
           else
             echo "| Lint (F,E9) | ❌ FAIL |" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           # Type check with PIXI environment
           if [ -n "$PIXI_ENV" ] && pixi run -e $PIXI_ENV mypy codebase_rag/ --quiet 2>/dev/null; then
             echo "| Type Check | ✅ PASS |" >> $GITHUB_STEP_SUMMARY
           else
             echo "| Type Check | ❌ FAIL |" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           echo "| PIXI Environment | ✅ ${PIXI_ENV:-❌ NONE} |" >> $GITHUB_STEP_SUMMARY
 
   comprehensive-testing:
