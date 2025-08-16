@@ -72,13 +72,10 @@ jobs:
 
       - name: Install dependencies
         run: |
-          # 3-tier PIXI environment fallback: ci-smoke → ci → quality
-          echo "🔄 Attempting PIXI environment setup (tier 1: ci-smoke)"
-          if pixi install -e ci-smoke; then
-            echo "✅ PIXI ci-smoke environment ready"
-            echo "PIXI_ENV=ci-smoke" >> $GITHUB_ENV
-          elif pixi install -e ci; then
-            echo "⚠️ ci-smoke failed, using tier 2: ci environment"
+          # Single CI environment setup
+          echo "🔄 Installing PIXI CI environment"
+          if pixi install -e ci; then
+            echo "✅ PIXI ci environment ready"
             echo "PIXI_ENV=ci" >> $GITHUB_ENV
           elif pixi install -e quality; then
             echo "⚠️ ci failed, using tier 3: quality environment"
@@ -167,7 +164,7 @@ jobs:
           pixi --version
 
       - name: Install dependencies
-        run: pixi install -e ci-smoke
+        run: pixi install -e ci
 
       - name: Wait for Memgraph to be ready
         run: |
@@ -184,7 +181,7 @@ jobs:
       - name: Run comprehensive tests
         run: |
           echo "🧪 Running comprehensive test suite"
-          pixi run -e ci-smoke test-unit-smoke || echo '⚠️ Some tests require pymgclient - this is expected'
+          pixi run -e ci test-unit-smoke || echo '⚠️ Some tests require pymgclient - this is expected'
         env:
           MEMGRAPH_HOST: localhost
           MEMGRAPH_PORT: 7687
@@ -361,16 +358,16 @@ jobs:
           pixi --version
 
       - name: Install dependencies (without --locked for cross-platform resolution)
-        run: pixi install -e ci-smoke
+        run: pixi install -e ci
 
       - name: Run basic tests (Unix)
         if: runner.os != 'Windows'
-        run: pixi run -e ci-smoke test-unit-smoke || echo '⚠️ Some tests require pymgclient - this is expected'
+        run: pixi run -e ci test-unit-smoke || echo '⚠️ Some tests require pymgclient - this is expected'
 
       - name: Run basic tests (Windows)
         if: runner.os == 'Windows'
         run: |
-          pixi run -e ci-smoke test-unit-smoke
+          pixi run -e ci test-unit-smoke
           if ($LASTEXITCODE -ne 0) {
             Write-Output '⚠️ Some tests require pymgclient - this is expected'
           }

@@ -104,13 +104,13 @@ jobs:
       - name: Install dependencies (pixi)
         run: |
           if [[ "${{ matrix.test-type }}" == "integration" || "${{ matrix.test-type }}" == "e2e" ]]; then
-            echo "🔧 Installing ci-integration environment for ${{ matrix.test-type }} tests"
-            pixi install -e ci-integration
-            echo "📦 Checking ci-integration environment packages:"
-            pixi list -e ci-integration | grep -E "(tree-sitter|pymgclient|pytest)" || echo "Key packages not found"
+            echo "🔧 Installing ci environment for ${{ matrix.test-type }} tests"
+            pixi install -e ci
+            echo "📦 Checking ci environment packages:"
+            pixi list -e ci | grep -E "(tree-sitter|pymgclient|pytest)" || echo "Key packages not found"
           else
-            echo "🔧 Installing ci-smoke environment for ${{ matrix.test-type }} tests"
-            pixi install -e ci-smoke
+            echo "🔧 Installing ci environment for ${{ matrix.test-type }} tests"
+            pixi install -e ci
           fi
 
       - name: Install dev dependencies
@@ -137,12 +137,12 @@ jobs:
           echo "  - OS: ${{ matrix.os }}"
           echo "  - Python: ${{ matrix.python-version }}"
 
-          # Validate critical dependencies are available in ci-integration environment
+          # Validate critical dependencies are available in ci environment
           echo "🔧 Dependency Validation:"
 
           # Test 1: tree-sitter-python availability
           echo "  Testing tree-sitter-python..."
-          if pixi run -e ci-integration python -c 'import tree_sitter; print("SUCCESS: tree_sitter imported successfully")'; then
+          if pixi run -e ci python -c 'import tree_sitter; print("SUCCESS: tree_sitter imported successfully")'; then
             echo "  ✅ tree-sitter module available"
           else
             echo "  ❌ tree-sitter module failed to import"
@@ -152,7 +152,7 @@ jobs:
 
           # Test 2: tree-sitter parsers loading
           echo "  Testing tree-sitter parsers loading..."
-          if pixi run -e ci-integration python -c 'from codebase_rag.parser_loader import load_parsers; parsers, queries = load_parsers(); print(f"SUCCESS: Loaded parsers: {list(parsers.keys())}")'; then
+          if pixi run -e ci python -c 'from codebase_rag.parser_loader import load_parsers; parsers, queries = load_parsers(); print(f"SUCCESS: Loaded parsers: {list(parsers.keys())}")'; then
             echo "  ✅ Parser loading successful"
           else
             echo "  ❌ Parser loading failed"
@@ -162,7 +162,7 @@ jobs:
 
           # Test 3: GraphUpdater function call detection (the core failing functionality)
           echo "  Testing GraphUpdater function call detection..."
-          if pixi run -e ci-integration python codebase_rag/tests/debug_ci_calls.py; then
+          if pixi run -e ci python codebase_rag/tests/debug_ci_calls.py; then
             echo "  ✅ GraphUpdater function call detection working correctly"
           else
             echo "  ❌ GraphUpdater function call detection failed"
@@ -173,7 +173,7 @@ jobs:
 
           # Test 4: mgclient (for database integration)
           echo "  Testing mgclient availability..."
-          if pixi run -e ci-integration python -c 'import mgclient; print("SUCCESS: mgclient imported successfully")'; then
+          if pixi run -e ci python -c 'import mgclient; print("SUCCESS: mgclient imported successfully")'; then
             echo "  ✅ mgclient available for database integration"
           else
             echo "  ❌ mgclient import failed"
@@ -191,19 +191,19 @@ jobs:
           # Map test types to pytest markers and commands
           case "${{ matrix.test-type }}" in
             "unit")
-              echo "test_cmd=pixi run -e ci-smoke test-unit-smoke" >> $GITHUB_OUTPUT
+              echo "test_cmd=pixi run -e ci test-unit-smoke" >> $GITHUB_OUTPUT
               echo "marker=unit tests (fast, no external dependencies)" >> $GITHUB_OUTPUT
               ;;
             "integration")
-              echo "test_cmd=pixi run -e ci-integration test-integration" >> $GITHUB_OUTPUT
+              echo "test_cmd=pixi run -e ci test-integration" >> $GITHUB_OUTPUT
               echo "marker=integration tests (with Memgraph)" >> $GITHUB_OUTPUT
               ;;
             "e2e")
-              echo "test_cmd=pixi run -e ci-integration test" >> $GITHUB_OUTPUT
+              echo "test_cmd=pixi run -e ci test" >> $GITHUB_OUTPUT
               echo "marker=end-to-end tests (full system)" >> $GITHUB_OUTPUT
               ;;
             *)
-              echo "test_cmd=pixi run -e ci-smoke test" >> $GITHUB_OUTPUT
+              echo "test_cmd=pixi run -e ci test" >> $GITHUB_OUTPUT
               echo "marker=all tests" >> $GITHUB_OUTPUT
               ;;
           esac
@@ -231,16 +231,16 @@ jobs:
 
               # Re-run environment validation to see what changed
               echo "  Re-validating tree-sitter:"
-              pixi run -e ci-integration python -c 'import tree_sitter; print("SUCCESS: tree_sitter still available")' || echo "❌ tree_sitter no longer available"
+              pixi run -e ci python -c 'import tree_sitter; print("SUCCESS: tree_sitter still available")' || echo "❌ tree_sitter no longer available"
 
               echo "  Re-validating parsers:"
-              pixi run -e ci-integration python -c 'from codebase_rag.parser_loader import load_parsers; parsers, queries = load_parsers(); print(f"SUCCESS: Parsers still available: {list(parsers.keys())}")' || echo "❌ Parser loading now failing"
+              pixi run -e ci python -c 'from codebase_rag.parser_loader import load_parsers; parsers, queries = load_parsers(); print(f"SUCCESS: Parsers still available: {list(parsers.keys())}")' || echo "❌ Parser loading now failing"
 
               echo "  Re-validating GraphUpdater:"
-              pixi run -e ci-integration python codebase_rag/tests/debug_ci_calls.py || echo "❌ GraphUpdater function call detection now failing"
+              pixi run -e ci python codebase_rag/tests/debug_ci_calls.py || echo "❌ GraphUpdater function call detection now failing"
 
               echo "  Re-validating database connection:"
-              pixi run -e ci-integration python -c 'import mgclient; print("SUCCESS: mgclient still available")' || echo "❌ mgclient no longer available"
+              pixi run -e ci python -c 'import mgclient; print("SUCCESS: mgclient still available")' || echo "❌ mgclient no longer available"
 
               echo "📋 Environment state after test failure has been captured above"
             fi

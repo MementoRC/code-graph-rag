@@ -60,7 +60,7 @@ jobs:
       - name: Run comprehensive test coverage
         run: |
           echo "📊 Running comprehensive coverage analysis"
-          pixi run -e ci-smoke test-smoke || echo '⚠️ Coverage collection requires pymgclient - this is expected'
+          pixi run -e ci test-smoke || echo '⚠️ Coverage collection requires pymgclient - this is expected'
         env:
           MEMGRAPH_HOST: localhost
           MEMGRAPH_PORT: 7687
