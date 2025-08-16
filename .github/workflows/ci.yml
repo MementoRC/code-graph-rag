@@ -52,60 +52,202 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup pixi (primary method)
-        id: setup-pixi
-        continue-on-error: true
-        uses: prefix-dev/setup-pixi@v0.8.14
-        with:
-          pixi-version: ${{ env.PIXI_VERSION }}
-          cache: true
-          manifest-path: pyproject.toml
-
-      - name: Manual pixi installation (failover)
-        if: steps.setup-pixi.outcome == 'failure'
+      - name: System diagnostics
         run: |
-          echo "⚠️ setup-pixi action failed, falling back to manual installation"
-          curl -fsSL https://pixi.sh/install.sh | bash -s -- --version ${{ env.PIXI_VERSION }}
-          echo "$HOME/.pixi/bin" >> $GITHUB_PATH
-          # Verify pixi installation
-          pixi --version
+          echo "🔍 System Diagnostics"
+          echo "OS: $(uname -a)"
+          echo "Shell: $SHELL"
+          echo "PATH: $PATH"
+          echo "Home: $HOME"
+          echo "Python: $(which python3 || echo 'not found')"
+          echo "Curl: $(which curl || echo 'not found')"
+          echo "Available disk space:"
+          df -h || echo "df command failed"
+          echo "Memory info:"
+          free -h || echo "free command failed (likely non-Linux)"
 
-      - name: Install dependencies
+      - name: Robust pixi installation with comprehensive fallbacks
         run: |
-          # Single CI environment setup
-          echo "🔄 Installing PIXI CI environment"
-          if pixi install -e ci; then
-            echo "✅ PIXI ci environment ready"
-            echo "PIXI_ENV=ci" >> $GITHUB_ENV
-          elif pixi install -e dev; then
-            echo "⚠️ ci failed, using tier 3: dev environment"
-            echo "PIXI_ENV=dev" >> $GITHUB_ENV
+          echo "🚀 Installing pixi manually with robust error handling"
+          
+          # Function to verify pixi installation
+          verify_pixi() {
+            if command -v pixi >/dev/null 2>&1; then
+              echo "✅ pixi found at: $(which pixi)"
+              pixi --version
+              return 0
+            else
+              echo "❌ pixi not found in PATH"
+              return 1
+            fi
+          }
+          
+          # Function to add pixi to PATH
+          add_pixi_to_path() {
+            echo "📝 Adding pixi to PATH"
+            if [ -f "$HOME/.pixi/bin/pixi" ]; then
+              echo "$HOME/.pixi/bin" >> $GITHUB_PATH
+              export PATH="$HOME/.pixi/bin:$PATH"
+              echo "✅ Added $HOME/.pixi/bin to PATH"
+            else
+              echo "❌ pixi binary not found at expected location"
+              return 1
+            fi
+          }
+          
+          # Method 1: Standard installation
+          echo "📦 Attempting standard pixi installation"
+          if curl -fsSL https://pixi.sh/install.sh | bash -s -- --version ${{ env.PIXI_VERSION }}; then
+            echo "✅ Standard installation completed"
+            add_pixi_to_path
+            if verify_pixi; then
+              echo "✅ Method 1 successful"
+              exit 0
+            fi
+          fi
+          
+          echo "⚠️ Standard installation failed, trying alternative methods"
+          
+          # Method 2: Download and install manually
+          echo "📦 Attempting manual download installation"
+          PIXI_VERSION_CLEAN=$(echo ${{ env.PIXI_VERSION }} | sed 's/^v//')
+          if [ "$(uname)" = "Linux" ]; then
+            PLATFORM="linux-64"
+          elif [ "$(uname)" = "Darwin" ]; then
+            PLATFORM="osx-64"
           else
-            echo "🚨 CRITICAL: All PIXI environments failed - CI environment contaminated"
-            echo "This indicates a fundamental PIXI configuration issue"
+            PLATFORM="win-64"
+          fi
+          
+          DOWNLOAD_URL="https://github.com/prefix-dev/pixi/releases/download/${{ env.PIXI_VERSION }}/pixi-${PLATFORM}"
+          
+          echo "📥 Downloading from: $DOWNLOAD_URL"
+          mkdir -p "$HOME/.pixi/bin"
+          
+          if curl -fsSL -o "$HOME/.pixi/bin/pixi" "$DOWNLOAD_URL"; then
+            chmod +x "$HOME/.pixi/bin/pixi"
+            echo "✅ Manual download completed"
+            add_pixi_to_path
+            if verify_pixi; then
+              echo "✅ Method 2 successful"
+              exit 0
+            fi
+          fi
+          
+          echo "⚠️ Manual download failed, trying conda installation"
+          
+          # Method 3: Use conda/mamba if available
+          if command -v conda >/dev/null 2>&1; then
+            echo "📦 Attempting conda installation"
+            if conda install -c conda-forge pixi=$PIXI_VERSION_CLEAN -y; then
+              echo "✅ Conda installation completed"
+              if verify_pixi; then
+                echo "✅ Method 3 successful"
+                exit 0
+              fi
+            fi
+          fi
+          
+          echo "🚨 All pixi installation methods failed"
+          echo "Debug information:"
+          echo "- Current PATH: $PATH"
+          echo "- Files in HOME: $(ls -la $HOME/ | head -10)"
+          echo "- Files in .pixi: $(ls -la $HOME/.pixi/ 2>/dev/null || echo 'No .pixi directory')"
+          exit 1
+
+      - name: Validate pixi installation and install dependencies
+        run: |
+          echo "🔍 Validating pixi installation"
+          
+          # Verify pixi is working
+          if ! command -v pixi >/dev/null 2>&1; then
+            echo "🚨 CRITICAL: pixi not found in PATH after installation"
+            echo "PATH: $PATH"
             exit 1
           fi
+          
+          echo "✅ pixi found: $(which pixi)"
+          echo "📋 pixi version: $(pixi --version)"
+          
+          # Validate project configuration
+          echo "🔍 Validating project configuration"
+          if ! pixi info >/dev/null 2>&1; then
+            echo "🚨 CRITICAL: pixi project configuration invalid"
+            echo "pyproject.toml status:"
+            ls -la pyproject.toml || echo "pyproject.toml not found"
+            exit 1
+          fi
+          
+          echo "✅ Project configuration valid"
+          
+          # Install dependencies with comprehensive error handling
+          echo "🔄 Installing dependencies with tiered fallback strategy"
+          
+          # Attempt CI environment first (primary)
+          if pixi install -e ci; then
+            echo "✅ CI environment ready"
+            echo "PIXI_ENV=ci" >> $GITHUB_ENV
+          # Fallback to dev environment
+          elif pixi install -e dev; then
+            echo "⚠️ CI environment failed, using dev environment"
+            echo "PIXI_ENV=dev" >> $GITHUB_ENV
+          # Fallback to default environment
+          elif pixi install; then
+            echo "⚠️ Both CI and dev failed, using default environment"
+            echo "PIXI_ENV=default" >> $GITHUB_ENV
+          else
+            echo "🚨 CRITICAL: All pixi environments failed"
+            echo "Available environments:"
+            pixi info --json 2>/dev/null | jq '.environments' || echo "Unable to detect environments"
+            echo "Project info:"
+            pixi info || echo "pixi info failed"
+            exit 1
+          fi
+          
+          echo "✅ Dependencies installed successfully with environment: $PIXI_ENV"
 
-      - name: Run essential quality gates
+      - name: Run essential quality gates with enhanced error handling
         run: |
           echo "🚨 Running Zero-Tolerance Quality Gates with environment: $PIXI_ENV"
-          if [ -n "$PIXI_ENV" ] && pixi info -e $PIXI_ENV >/dev/null 2>&1; then
-            echo "✅ Using PIXI environment: $PIXI_ENV"
-            pixi run -e $PIXI_ENV quality 2>/dev/null || pixi run -e $PIXI_ENV ruff check codebase_rag/ --select=F,E9
-          else
-            echo "🚨 CRITICAL: PIXI environment verification failed"
+          
+          # Verify environment exists and is usable
+          if [ -z "$PIXI_ENV" ]; then
+            echo "🚨 CRITICAL: No PIXI environment set"
+            exit 1
+          fi
+          
+          echo "🔍 Validating environment: $PIXI_ENV"
+          if ! pixi run -e $PIXI_ENV python --version >/dev/null 2>&1; then
+            echo "🚨 CRITICAL: Environment $PIXI_ENV is not functional"
             echo "Available environments:"
-            pixi info --json 2>/dev/null | grep -o '"[^"]*"' | head -10 || echo "Unable to detect environments"
+            pixi info 2>/dev/null || echo "pixi info failed"
+            exit 1
+          fi
+          
+          echo "✅ Environment $PIXI_ENV is functional"
+          
+          # Run critical lint checks (F,E9 only for reliability)
+          echo "🔍 Running critical lint checks (F,E9)"
+          if pixi run -e $PIXI_ENV ruff check codebase_rag/ --select=F,E9 --no-fix; then
+            echo "✅ Critical lint checks passed"
+          else
+            echo "❌ Critical lint checks failed"
+            echo "Showing first 10 violations:"
+            pixi run -e $PIXI_ENV ruff check codebase_rag/ --select=F,E9 --no-fix | head -20
             exit 1
           fi
 
-      - name: Check code formatting
+      - name: Check code formatting with fallbacks
         run: |
-          echo "🔍 Running format check with environment: $PIXI_ENV"
-          if [ -n "$PIXI_ENV" ] && pixi info -e $PIXI_ENV >/dev/null 2>&1; then
-            pixi run -e $PIXI_ENV format-check 2>/dev/null || pixi run -e $PIXI_ENV ruff format --check codebase_rag/
+          echo "🎨 Running format check with environment: $PIXI_ENV"
+          
+          # Attempt format check with fallbacks
+          if pixi run -e $PIXI_ENV ruff format --check codebase_rag/; then
+            echo "✅ Code formatting check passed"
           else
-            echo "🚨 CRITICAL: PIXI environment not available for formatting check"
+            echo "❌ Code formatting check failed"
+            echo "Showing formatting differences (first 20 lines):"
+            pixi run -e $PIXI_ENV ruff format --diff codebase_rag/ | head -20
             exit 1
           fi
 
@@ -146,25 +288,63 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup pixi
-        id: setup-pixi-testing
-        continue-on-error: true
-        uses: prefix-dev/setup-pixi@v0.8.14
-        with:
-          pixi-version: ${{ env.PIXI_VERSION }}
-          cache: true
-          manifest-path: pyproject.toml
-
-      - name: Manual pixi installation (failover)
-        if: steps.setup-pixi-testing.outcome == 'failure'
+      - name: Robust pixi installation (testing environment)
         run: |
-          echo "⚠️ setup-pixi action failed, falling back to manual installation"
-          curl -fsSL https://pixi.sh/install.sh | bash -s -- --version ${{ env.PIXI_VERSION }}
-          echo "$HOME/.pixi/bin" >> $GITHUB_PATH
-          pixi --version
+          echo "🚀 Installing pixi for testing environment"
+          
+          # Function to verify pixi installation
+          verify_pixi() {
+            if command -v pixi >/dev/null 2>&1; then
+              echo "✅ pixi found at: $(which pixi)"
+              pixi --version
+              return 0
+            else
+              echo "❌ pixi not found in PATH"
+              return 1
+            fi
+          }
+          
+          # Function to add pixi to PATH
+          add_pixi_to_path() {
+            if [ -f "$HOME/.pixi/bin/pixi" ]; then
+              echo "$HOME/.pixi/bin" >> $GITHUB_PATH
+              export PATH="$HOME/.pixi/bin:$PATH"
+              echo "✅ Added $HOME/.pixi/bin to PATH"
+            else
+              echo "❌ pixi binary not found at expected location"
+              return 1
+            fi
+          }
+          
+          # Standard installation
+          if curl -fsSL https://pixi.sh/install.sh | bash -s -- --version ${{ env.PIXI_VERSION }}; then
+            add_pixi_to_path
+            if verify_pixi; then
+              echo "✅ Pixi installation successful"
+              exit 0
+            fi
+          fi
+          
+          echo "🚨 Pixi installation failed"
+          exit 1
 
-      - name: Install dependencies
-        run: pixi install -e ci
+      - name: Install dependencies with validation
+        run: |
+          echo "🔄 Installing dependencies for testing"
+          
+          # Validate pixi is working
+          if ! command -v pixi >/dev/null 2>&1; then
+            echo "🚨 CRITICAL: pixi not available"
+            exit 1
+          fi
+          
+          # Install with fallback strategy
+          if pixi install -e ci; then
+            echo "✅ CI environment ready for testing"
+          else
+            echo "🚨 CRITICAL: Failed to install test dependencies"
+            exit 1
+          fi
 
       - name: Wait for Memgraph to be ready
         run: |
@@ -220,15 +400,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup pixi
-        uses: prefix-dev/setup-pixi@v0.8.14
-        with:
-          pixi-version: ${{ env.PIXI_VERSION }}
-          cache: true
-          manifest-path: pyproject.toml
-
-      - name: Install security tools
-        run: pixi install -e ci
+      - name: Install pixi and security tools
+        run: |
+          echo "🔒 Setting up security scanning environment"
+          # Install pixi
+          curl -fsSL https://pixi.sh/install.sh | bash -s -- --version ${{ env.PIXI_VERSION }}
+          echo "$HOME/.pixi/bin" >> $GITHUB_PATH
+          export PATH="$HOME/.pixi/bin:$PATH"
+          
+          # Verify and install
+          pixi --version
+          pixi install -e ci
 
       - name: Run security scanning
         run: |
@@ -263,15 +445,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup pixi
-        uses: prefix-dev/setup-pixi@v0.8.14
-        with:
-          pixi-version: ${{ env.PIXI_VERSION }}
-          cache: true
-          manifest-path: pyproject.toml
-
-      - name: Install dependencies
-        run: pixi install -e ci
+      - name: Install pixi and dependencies
+        run: |
+          echo "⚡ Setting up performance testing environment"
+          # Install pixi
+          curl -fsSL https://pixi.sh/install.sh | bash -s -- --version ${{ env.PIXI_VERSION }}
+          echo "$HOME/.pixi/bin" >> $GITHUB_PATH
+          export PATH="$HOME/.pixi/bin:$PATH"
+          
+          # Verify and install
+          pixi --version
+          pixi install -e ci
 
       - name: Wait for Memgraph to be ready
         run: |
@@ -311,15 +495,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup pixi
-        uses: prefix-dev/setup-pixi@v0.8.14
-        with:
-          pixi-version: ${{ env.PIXI_VERSION }}
-          cache: true
-          manifest-path: pyproject.toml
-
-      - name: Install dependencies
-        run: pixi install -e ci
+      - name: Install pixi and dependencies
+        run: |
+          echo "🏗️ Setting up build environment"
+          # Install pixi
+          curl -fsSL https://pixi.sh/install.sh | bash -s -- --version ${{ env.PIXI_VERSION }}
+          echo "$HOME/.pixi/bin" >> $GITHUB_PATH
+          export PATH="$HOME/.pixi/bin:$PATH"
+          
+          # Verify and install
+          pixi --version
+          pixi install -e ci
 
       - name: Build package
         run: |
@@ -353,15 +539,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup pixi
-        uses: prefix-dev/setup-pixi@v0.8.14
-        with:
-          pixi-version: ${{ env.PIXI_VERSION }}
-          cache: true
-          manifest-path: pyproject.toml
-
-      - name: Install dependencies
-        run: pixi install -e ci
+      - name: Install pixi and dependencies
+        run: |
+          echo "🔍 Setting up comprehensive quality check environment"
+          # Install pixi
+          curl -fsSL https://pixi.sh/install.sh | bash -s -- --version ${{ env.PIXI_VERSION }}
+          echo "$HOME/.pixi/bin" >> $GITHUB_PATH
+          export PATH="$HOME/.pixi/bin:$PATH"
+          
+          # Verify and install
+          pixi --version
+          pixi install -e ci
 
       - name: Run comprehensive quality checks
         run: |

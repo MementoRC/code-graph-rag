@@ -84,33 +84,163 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup pixi (primary method)
-        id: setup-pixi-matrix
-        continue-on-error: true
-        uses: prefix-dev/setup-pixi@v0.8.14
-        with:
-          pixi-version: ${{ env.PIXI_VERSION }}
-          cache: true
-
-      - name: Manual pixi installation (failover)
-        if: steps.setup-pixi-matrix.outcome == 'failure'
+      - name: Cross-platform pixi installation with enhanced fallbacks
         run: |
-          echo "⚠️ setup-pixi action failed, falling back to manual installation"
-          curl -fsSL https://pixi.sh/install.sh | bash -s -- --version ${{ env.PIXI_VERSION }}
-          echo "$HOME/.pixi/bin" >> $GITHUB_PATH
-          # Verify pixi installation
-          pixi --version
-
-      - name: Install dependencies (pixi)
-        run: |
-          if [[ "${{ matrix.test-type }}" == "integration" || "${{ matrix.test-type }}" == "e2e" ]]; then
-            echo "🔧 Installing ci environment for ${{ matrix.test-type }} tests"
-            pixi install -e ci
-            echo "📦 Checking ci environment packages:"
-            pixi list -e ci | grep -E "(tree-sitter|pymgclient|pytest)" || echo "Key packages not found"
+          echo "🚀 Installing pixi on ${{ matrix.os }} with comprehensive error handling"
+          
+          # Platform detection and setup
+          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            echo "💻 Windows platform detected"
+            PIXI_SUFFIX="-x86_64-pc-windows-msvc.exe"
+            INSTALL_METHOD="powershell"
+          elif [[ "${{ matrix.os }}" == "macos-latest" ]]; then
+            echo "🍏 macOS platform detected"
+            PIXI_SUFFIX="-x86_64-apple-darwin"
+            INSTALL_METHOD="bash"
           else
-            echo "🔧 Installing ci environment for ${{ matrix.test-type }} tests"
-            pixi install -e ci
+            echo "🐧 Linux platform detected"
+            PIXI_SUFFIX="-x86_64-unknown-linux-musl"
+            INSTALL_METHOD="bash"
+          fi
+          
+          # Function to verify pixi installation
+          verify_pixi() {
+            if command -v pixi >/dev/null 2>&1; then
+              echo "✅ pixi found at: $(which pixi)"
+              pixi --version
+              return 0
+            else
+              echo "❌ pixi not found in PATH"
+              return 1
+            fi
+          }
+          
+          # Function to add pixi to PATH (cross-platform)
+          add_pixi_to_path() {
+            if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+              if [ -f "$HOME/.pixi/bin/pixi.exe" ]; then
+                echo "$HOME/.pixi/bin" >> $GITHUB_PATH
+                export PATH="$HOME/.pixi/bin:$PATH"
+                echo "✅ Added pixi to Windows PATH"
+              else
+                echo "❌ pixi.exe not found at expected location"
+                return 1
+              fi
+            else
+              if [ -f "$HOME/.pixi/bin/pixi" ]; then
+                echo "$HOME/.pixi/bin" >> $GITHUB_PATH
+                export PATH="$HOME/.pixi/bin:$PATH"
+                echo "✅ Added pixi to Unix PATH"
+              else
+                echo "❌ pixi binary not found at expected location"
+                return 1
+              fi
+            fi
+          }
+          
+          # Method 1: Standard installation script
+          echo "📦 Attempting standard pixi installation"
+          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            # Windows PowerShell installation
+            powershell -Command "iwr -useb https://pixi.sh/install.ps1 | iex"
+          else
+            # Unix bash installation
+            curl -fsSL https://pixi.sh/install.sh | bash -s -- --version ${{ env.PIXI_VERSION }}
+          fi
+          
+          add_pixi_to_path
+          if verify_pixi; then
+            echo "✅ Standard installation successful"
+            exit 0
+          fi
+          
+          echo "⚠️ Standard installation failed, trying manual download"
+          
+          # Method 2: Manual download (cross-platform)
+          echo "📦 Attempting manual download installation"
+          PIXI_VERSION_CLEAN=$(echo ${{ env.PIXI_VERSION }} | sed 's/^v//')
+          DOWNLOAD_URL="https://github.com/prefix-dev/pixi/releases/download/${{ env.PIXI_VERSION }}/pixi${PIXI_SUFFIX}"
+          
+          echo "📥 Downloading from: $DOWNLOAD_URL"
+          mkdir -p "$HOME/.pixi/bin"
+          
+          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            if curl -fsSL -o "$HOME/.pixi/bin/pixi.exe" "$DOWNLOAD_URL"; then
+              chmod +x "$HOME/.pixi/bin/pixi.exe"
+              echo "✅ Windows manual download completed"
+            else
+              echo "❌ Windows manual download failed"
+            fi
+          else
+            if curl -fsSL -o "$HOME/.pixi/bin/pixi" "$DOWNLOAD_URL"; then
+              chmod +x "$HOME/.pixi/bin/pixi"
+              echo "✅ Unix manual download completed"
+            else
+              echo "❌ Unix manual download failed"
+            fi
+          fi
+          
+          add_pixi_to_path
+          if verify_pixi; then
+            echo "✅ Manual download installation successful"
+            exit 0
+          fi
+          
+          echo "🚨 All pixi installation methods failed on ${{ matrix.os }}"
+          echo "Debug information:"
+          echo "- Current PATH: $PATH"
+          echo "- Home directory: $HOME"
+          ls -la "$HOME/.pixi/bin/" 2>/dev/null || echo "No .pixi/bin directory found"
+          exit 1
+
+      - name: Install dependencies with comprehensive validation
+        run: |
+          echo "🔧 Installing dependencies for ${{ matrix.test-type }} tests on ${{ matrix.os }}"
+          
+          # Verify pixi is functional
+          if ! command -v pixi >/dev/null 2>&1; then
+            echo "🚨 CRITICAL: pixi not available after installation"
+            exit 1
+          fi
+          
+          echo "✅ pixi available: $(pixi --version)"
+          
+          # Validate project configuration
+          if ! pixi info >/dev/null 2>&1; then
+            echo "🚨 CRITICAL: pixi project configuration invalid"
+            echo "Project files:"
+            ls -la pyproject.toml pixi.* 2>/dev/null || echo "Project files not found"
+            exit 1
+          fi
+          
+          echo "✅ Project configuration valid"
+          
+          # Install with platform-specific handling
+          echo "📦 Installing CI environment..."
+          if pixi install -e ci; then
+            echo "✅ CI environment installed successfully"
+          else
+            echo "❌ CI environment installation failed, trying fallbacks"
+            
+            # Try dev environment as fallback
+            if pixi install -e dev; then
+              echo "⚠️ Using dev environment as fallback"
+            # Try default environment as last resort
+            elif pixi install; then
+              echo "⚠️ Using default environment as last resort"
+            else
+              echo "🚨 CRITICAL: All environment installations failed"
+              echo "Available environments:"
+              pixi info 2>/dev/null || echo "Unable to get environment info"
+              exit 1
+            fi
+          fi
+          
+          # Validate key packages for integration/e2e tests
+          if [[ "${{ matrix.test-type }}" == "integration" || "${{ matrix.test-type }}" == "e2e" ]]; then
+            echo "🔍 Validating packages for ${{ matrix.test-type }} tests"
+            echo "Key packages in environment:"
+            pixi list -e ci 2>/dev/null | grep -E "(tree-sitter|pymgclient|pytest)" || echo "Some key packages may not be listed"
           fi
 
       - name: Install dev dependencies
@@ -331,25 +461,32 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup pixi (primary method)
-        id: setup-pixi-performance
-        continue-on-error: true
-        uses: prefix-dev/setup-pixi@v0.8.14
-        with:
-          pixi-version: ${{ env.PIXI_VERSION }}
-          cache: true
-
-      - name: Manual pixi installation (failover)
-        if: steps.setup-pixi-performance.outcome == 'failure'
+      - name: Robust pixi installation for performance tests
         run: |
-          echo "⚠️ setup-pixi action failed, falling back to manual installation"
+          echo "🚀 Installing pixi for performance testing"
+          
+          # Install pixi with verification
           curl -fsSL https://pixi.sh/install.sh | bash -s -- --version ${{ env.PIXI_VERSION }}
           echo "$HOME/.pixi/bin" >> $GITHUB_PATH
-          # Verify pixi installation
-          pixi --version
+          export PATH="$HOME/.pixi/bin:$PATH"
+          
+          # Verify installation
+          if command -v pixi >/dev/null 2>&1; then
+            echo "✅ pixi installed successfully: $(pixi --version)"
+          else
+            echo "🚨 CRITICAL: pixi installation failed"
+            exit 1
+          fi
 
-      - name: Install dependencies
-        run: pixi install -e ci
+      - name: Install performance test dependencies
+        run: |
+          echo "⚡ Installing dependencies for performance testing"
+          if pixi install -e ci; then
+            echo "✅ Performance test dependencies installed successfully"
+          else
+            echo "🚨 CRITICAL: Failed to install performance test dependencies"
+            exit 1
+          fi
 
       - name: Verify Memgraph connection
         run: |

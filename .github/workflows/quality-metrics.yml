@@ -36,26 +36,32 @@ jobs:
         with:
           fetch-depth: 0  # Need full history for coverage comparison
 
-      - name: Setup pixi (primary method)
-        id: setup-pixi-coverage
-        continue-on-error: true
-        uses: prefix-dev/setup-pixi@v0.8.14
-        with:
-          pixi-version: ${{ env.PIXI_VERSION }}
-          cache: true
-          manifest-path: pyproject.toml
-
-      - name: Manual pixi installation (failover)
-        if: steps.setup-pixi-coverage.outcome == 'failure'
+      - name: Robust pixi installation for quality metrics
         run: |
-          echo "⚠️ setup-pixi action failed, falling back to manual installation"
+          echo "🚀 Installing pixi for quality metrics analysis"
+          
+          # Install pixi with verification
           curl -fsSL https://pixi.sh/install.sh | bash -s -- --version ${{ env.PIXI_VERSION }}
           echo "$HOME/.pixi/bin" >> $GITHUB_PATH
-          # Verify pixi installation
-          pixi --version
+          export PATH="$HOME/.pixi/bin:$PATH"
+          
+          # Verify installation
+          if command -v pixi >/dev/null 2>&1; then
+            echo "✅ pixi installed successfully: $(pixi --version)"
+          else
+            echo "🚨 CRITICAL: pixi installation failed"
+            exit 1
+          fi
 
-      - name: Install dependencies
-        run: pixi install -e ci
+      - name: Install quality analysis dependencies
+        run: |
+          echo "📊 Installing quality analysis dependencies"
+          if pixi install -e ci; then
+            echo "✅ Quality analysis dependencies installed successfully"
+          else
+            echo "🚨 CRITICAL: Failed to install quality analysis dependencies"
+            exit 1
+          fi
 
       - name: Run comprehensive test coverage
         run: |
@@ -229,26 +235,32 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup pixi (primary method)
-        id: setup-pixi-quality
-        continue-on-error: true
-        uses: prefix-dev/setup-pixi@v0.8.14
-        with:
-          pixi-version: ${{ env.PIXI_VERSION }}
-          cache: true
-          manifest-path: pyproject.toml
-
-      - name: Manual pixi installation (failover)
-        if: steps.setup-pixi-quality.outcome == 'failure'
+      - name: Robust pixi installation for code quality
         run: |
-          echo "⚠️ setup-pixi action failed, falling back to manual installation"
+          echo "🚀 Installing pixi for code quality analysis"
+          
+          # Install pixi with verification
           curl -fsSL https://pixi.sh/install.sh | bash -s -- --version ${{ env.PIXI_VERSION }}
           echo "$HOME/.pixi/bin" >> $GITHUB_PATH
-          # Verify pixi installation
-          pixi --version
+          export PATH="$HOME/.pixi/bin:$PATH"
+          
+          # Verify installation
+          if command -v pixi >/dev/null 2>&1; then
+            echo "✅ pixi installed successfully: $(pixi --version)"
+          else
+            echo "🚨 CRITICAL: pixi installation failed"
+            exit 1
+          fi
 
-      - name: Install quality tools
-        run: pixi install -e ci
+      - name: Install code quality tools
+        run: |
+          echo "📏 Installing code quality tools"
+          if pixi install -e ci; then
+            echo "✅ Code quality tools installed successfully"
+          else
+            echo "🚨 CRITICAL: Failed to install code quality tools"
+            exit 1
+          fi
 
       - name: Run comprehensive linting
         run: |
@@ -374,26 +386,32 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup pixi (primary method)
-        id: setup-pixi-security
-        continue-on-error: true
-        uses: prefix-dev/setup-pixi@v0.8.14
-        with:
-          pixi-version: ${{ env.PIXI_VERSION }}
-          cache: true
-          manifest-path: pyproject.toml
-
-      - name: Manual pixi installation (failover)
-        if: steps.setup-pixi-security.outcome == 'failure'
+      - name: Robust pixi installation for security metrics
         run: |
-          echo "⚠️ setup-pixi action failed, falling back to manual installation"
+          echo "🚀 Installing pixi for security metrics analysis"
+          
+          # Install pixi with verification
           curl -fsSL https://pixi.sh/install.sh | bash -s -- --version ${{ env.PIXI_VERSION }}
           echo "$HOME/.pixi/bin" >> $GITHUB_PATH
-          # Verify pixi installation
-          pixi --version
+          export PATH="$HOME/.pixi/bin:$PATH"
+          
+          # Verify installation
+          if command -v pixi >/dev/null 2>&1; then
+            echo "✅ pixi installed successfully: $(pixi --version)"
+          else
+            echo "🚨 CRITICAL: pixi installation failed"
+            exit 1
+          fi
 
-      - name: Install security tools
-        run: pixi install -e ci
+      - name: Install security analysis tools
+        run: |
+          echo "🔒 Installing security analysis tools"
+          if pixi install -e ci; then
+            echo "✅ Security analysis tools installed successfully"
+          else
+            echo "🚨 CRITICAL: Failed to install security analysis tools"
+            exit 1
+          fi
 
       - name: Run comprehensive security analysis
         run: |
