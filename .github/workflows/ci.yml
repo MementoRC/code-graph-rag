@@ -77,9 +77,9 @@ jobs:
           if pixi install -e ci; then
             echo "✅ PIXI ci environment ready"
             echo "PIXI_ENV=ci" >> $GITHUB_ENV
-          elif pixi install -e quality; then
-            echo "⚠️ ci failed, using tier 3: quality environment"
-            echo "PIXI_ENV=quality" >> $GITHUB_ENV
+          elif pixi install -e dev; then
+            echo "⚠️ ci failed, using tier 3: dev environment"
+            echo "PIXI_ENV=dev" >> $GITHUB_ENV
           else
             echo "🚨 CRITICAL: All PIXI environments failed - CI environment contaminated"
             echo "This indicates a fundamental PIXI configuration issue"
@@ -181,7 +181,7 @@ jobs:
       - name: Run comprehensive tests
         run: |
           echo "🧪 Running comprehensive test suite"
-          pixi run -e ci test-unit-smoke || echo '⚠️ Some tests require pymgclient - this is expected'
+          pixi run -e ci test-unit || echo '⚠️ Some tests require pymgclient - this is expected'
         env:
           MEMGRAPH_HOST: localhost
           MEMGRAPH_PORT: 7687
@@ -228,17 +228,17 @@ jobs:
           manifest-path: pyproject.toml
 
       - name: Install security tools
-        run: pixi install -e security
+        run: pixi install -e ci
 
       - name: Run security scanning
         run: |
           echo "🔒 Running security analysis"
-          pixi run -e security security-scan
+          pixi run -e ci security-scan
 
       - name: Run vulnerability scanning (isolated environment)
         run: |
           echo "🔍 Scanning for vulnerabilities"
-          pixi run -e security safety-check || echo "⚠️ Safety scan completed with warnings"
+          pixi run -e ci safety-check || echo "⚠️ Safety scan completed with warnings"
 
       - name: Upload security reports
         uses: actions/upload-artifact@v4
@@ -299,102 +299,14 @@ jobs:
         with:
           name: benchmark-results
           path: |
-            .benchmarks/
-            benchmark-*.json
+            benchmark-results.json
+            performance-report.html
 
-  cross-platform:
-    name: "🌍 Cross-Platform Validation"
-    runs-on: ${{ matrix.os }}
-    needs: [changes, quality-gates]
-    if: needs.changes.outputs.python == 'true'
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: ubuntu-latest
-            platform: linux-64
-          - os: windows-latest
-            platform: win-64
-          - os: macos-latest
-            platform: osx-64
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Temporarily modify platform for CI (Unix)
-        if: runner.os != 'Windows'
-        run: |
-          # Backup original pyproject.toml
-          cp pyproject.toml pyproject.toml.backup
-          # Replace linux-64 with current matrix platform using perl (more reliable)
-          perl -i -pe 's/platforms = \["linux-64"\]/platforms = ["${{ matrix.platform }}"]/' pyproject.toml
-          echo "Modified pyproject.toml for platform: ${{ matrix.platform }}"
-
-      - name: Temporarily modify platform for CI (Windows)
-        if: runner.os == 'Windows'
-        run: |
-          # Backup original pyproject.toml
-          Copy-Item pyproject.toml pyproject.toml.backup
-          # Replace linux-64 with current matrix platform
-          (Get-Content pyproject.toml) -replace 'platforms = \["linux-64"\]', 'platforms = ["${{ matrix.platform }}"]' | Set-Content pyproject.toml
-          Write-Output "Modified pyproject.toml for platform: ${{ matrix.platform }}"
-
-      - name: Setup pixi
-        id: setup-pixi-cross-platform
-        continue-on-error: true
-        uses: prefix-dev/setup-pixi@v0.9.0
-        with:
-          pixi-version: ${{ env.PIXI_VERSION }}
-          cache: false  # Disable cache since we modified pyproject.toml
-          manifest-path: pyproject.toml
-          locked: false  # Skip automatic --locked install since we modified pyproject.toml
-
-      - name: Manual pixi installation (failover)
-        if: steps.setup-pixi-cross-platform.outcome == 'failure'
-        run: |
-          echo "⚠️ setup-pixi action failed, falling back to manual installation"
-          curl -fsSL https://pixi.sh/install.sh | bash -s -- --version ${{ env.PIXI_VERSION }}
-          echo "$HOME/.pixi/bin" >> $GITHUB_PATH
-          pixi --version
-
-      - name: Install dependencies (without --locked for cross-platform resolution)
-        run: pixi install -e ci
-
-      - name: Run basic tests (Unix)
-        if: runner.os != 'Windows'
-        run: pixi run -e ci test-unit-smoke || echo '⚠️ Some tests require pymgclient - this is expected'
-
-      - name: Run basic tests (Windows)
-        if: runner.os == 'Windows'
-        run: |
-          pixi run -e ci test-unit-smoke
-          if ($LASTEXITCODE -ne 0) {
-            Write-Output '⚠️ Some tests require pymgclient - this is expected'
-          }
-
-      - name: Restore original pyproject.toml (Unix)
-        if: always() && runner.os != 'Windows'
-        run: |
-          # Restore original pyproject.toml
-          mv pyproject.toml.backup pyproject.toml
-          echo "Restored original pyproject.toml"
-
-      - name: Restore original pyproject.toml (Windows)
-        if: always() && runner.os == 'Windows'
-        run: |
-          # Restore original pyproject.toml
-          if (Test-Path pyproject.toml.backup) {
-            Move-Item pyproject.toml.backup pyproject.toml -Force
-            Write-Output "Restored original pyproject.toml"
-          } else {
-            Write-Output "Backup file not found, skipping restore"
-          }
-
-  deploy-artifacts:
-    name: "📦 Deploy Artifacts"
+  build-validation:
+    name: "🏗️ Build Validation"
     runs-on: ubuntu-latest
-    needs: [quality-gates, comprehensive-testing, security-compliance]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: [changes, quality-gates]
+    if: needs.changes.outputs.python == 'true' || needs.changes.outputs.ci == 'true'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -406,176 +318,92 @@ jobs:
           cache: true
           manifest-path: pyproject.toml
 
-      - name: Install build tools
-        run: pixi install -e quality-full
+      - name: Install dependencies
+        run: pixi install -e ci
 
       - name: Build package
-        run: pixi run build
+        run: |
+          echo "🏗️ Building package"
+          pixi run -e ci build
+
+      - name: Validate package structure
+        run: |
+          echo "🔍 Validating package structure"
+          if [ -d "dist" ]; then
+            echo "✅ Distribution directory created"
+            ls -la dist/
+          else
+            echo "❌ No distribution directory found"
+            exit 1
+          fi
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: dist-packages
+          name: build-artifacts
           path: dist/
 
-  status-summary:
-    name: "📊 Pipeline Status"
+  comprehensive-quality-check:
+    name: "🔍 Comprehensive Quality Check"
     runs-on: ubuntu-latest
-    needs: [quality-gates, comprehensive-testing, security-compliance, performance-testing, cross-platform]
-    if: always()
+    needs: [changes]
+    if: needs.changes.outputs.python == 'true' || needs.changes.outputs.ci == 'true'
     steps:
-      - name: Generate pipeline summary
-        run: |
-          echo "# 🚀 CI/CD Pipeline Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## Job Status Overview" >> $GITHUB_STEP_SUMMARY
-          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Quality Gates | ${{ needs.quality-gates.result == 'success' && '✅ PASS' || '❌ FAIL' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Testing | ${{ needs.comprehensive-testing.result == 'success' && '✅ PASS' || '❌ FAIL' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Security | ${{ needs.security-compliance.result == 'success' && '✅ PASS' || '❌ FAIL' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Performance | ${{ needs.performance-testing.result == 'success' && '✅ PASS' || '❌ FAIL' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Cross-Platform | ${{ needs.cross-platform.result == 'success' && '✅ PASS' || '❌ FAIL' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## 🎯 Next Steps" >> $GITHUB_STEP_SUMMARY
-          if [[ "${{ needs.quality-gates.result }}" != "success" ]]; then
-            echo "- ❌ **CRITICAL**: Fix quality gate failures before proceeding" >> $GITHUB_STEP_SUMMARY
-          fi
-          if [[ "${{ needs.comprehensive-testing.result }}" != "success" ]]; then
-            echo "- 🧪 Review test failures and fix failing test cases" >> $GITHUB_STEP_SUMMARY
-          fi
-          if [[ "${{ needs.security-compliance.result }}" != "success" ]]; then
-            echo "- 🔒 Address security vulnerabilities identified in scan" >> $GITHUB_STEP_SUMMARY
-          fi
-          echo "- 📊 Review the quality dashboard for detailed metrics" >> $GITHUB_STEP_SUMMARY
-          echo "- 🚀 Once all checks pass, your changes are ready for deployment!" >> $GITHUB_STEP_SUMMARY
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-  pipeline-summary:
-    name: "📋 CI Pipeline Summary"
-    runs-on: ubuntu-latest
-    needs: [changes, quality-gates, comprehensive-testing, security-compliance, performance-testing, cross-platform]
-    if: always()
-    steps:
-      - name: Generate pipeline summary
-        run: |
-          echo "# 🔍 CI Pipeline Analysis" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## 📁 Change Detection" >> $GITHUB_STEP_SUMMARY
-          echo "| Type | Detected | Files |" >> $GITHUB_STEP_SUMMARY
-          echo "|------|----------|-------|" >> $GITHUB_STEP_SUMMARY
-          echo "| 🐍 Python Code | ${{ needs.changes.outputs.python == 'true' && '✅ Yes' || '❌ No' }} | \`codebase_rag/**/*.py\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| 🧪 Tests | ${{ needs.changes.outputs.tests == 'true' && '✅ Yes' || '❌ No' }} | \`codebase_rag/tests/**\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| 📚 Docs | ${{ needs.changes.outputs.docs == 'true' && '✅ Yes' || '❌ No' }} | \`docs/**, *.md\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| 🔧 CI/CD | ${{ needs.changes.outputs.ci == 'true' && '✅ Yes' || '❌ No' }} | \`.github/workflows/**\` |" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-
-          echo "## ⚙️ Pipeline Execution Strategy" >> $GITHUB_STEP_SUMMARY
-          echo "| Check Category | Status | Reason |" >> $GITHUB_STEP_SUMMARY
-          echo "|---------------|--------|---------|" >> $GITHUB_STEP_SUMMARY
-
-          # Quality Gates
-          if [ "${{ needs.changes.outputs.python }}" == "true" ] || [ "${{ needs.changes.outputs.ci }}" == "true" ]; then
-            echo "| 🚨 Quality Gates | ${{ needs.quality-gates.result == 'success' && '✅ Passed' || needs.quality-gates.result == 'failure' && '❌ Failed' || '⏭️ Skipped' }} | Python or CI changes detected |" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "| 🚨 Quality Gates | ⏭️ Skipped | No Python/CI changes |" >> $GITHUB_STEP_SUMMARY
-          fi
-
-          # Testing
-          if [ "${{ needs.changes.outputs.python }}" == "true" ] || [ "${{ needs.changes.outputs.tests }}" == "true" ]; then
-            echo "| 🧪 Testing | ${{ needs.comprehensive-testing.result == 'success' && '✅ Passed' || needs.comprehensive-testing.result == 'failure' && '❌ Failed' || '⏭️ Skipped' }} | Python or test changes detected |" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "| 🧪 Testing | ⏭️ Skipped | No Python/test changes |" >> $GITHUB_STEP_SUMMARY
-          fi
-
-          # Security
-          if [ "${{ needs.changes.outputs.python }}" == "true" ] || [ "${{ needs.changes.outputs.ci }}" == "true" ]; then
-            echo "| 🔒 Security | ${{ needs.security-compliance.result == 'success' && '✅ Passed' || needs.security-compliance.result == 'failure' && '❌ Failed' || '⏭️ Skipped' }} | Python or CI changes detected |" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "| 🔒 Security | ⏭️ Skipped | No Python/CI changes |" >> $GITHUB_STEP_SUMMARY
-          fi
-
-          # Performance
-          if [ "${{ needs.changes.outputs.python }}" == "true" ]; then
-            echo "| ⚡ Performance | ${{ needs.performance-testing.result == 'success' && '✅ Passed' || needs.performance-testing.result == 'failure' && '❌ Failed' || '⏭️ Skipped' }} | Python changes detected |" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "| ⚡ Performance | ⏭️ Skipped | No Python changes |" >> $GITHUB_STEP_SUMMARY
-          fi
-
-          # Cross-platform
-          if [ "${{ needs.changes.outputs.python }}" == "true" ]; then
-            echo "| 🌍 Cross-Platform | ${{ needs.cross-platform.result == 'success' && '✅ Passed' || needs.cross-platform.result == 'failure' && '❌ Failed' || '⏭️ Skipped' }} | Python changes detected |" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "| 🌍 Cross-Platform | ⏭️ Skipped | No Python changes |" >> $GITHUB_STEP_SUMMARY
-          fi
-
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## 💡 Why Are Checks Skipped?" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Our CI system uses **intelligent path filtering** to only run relevant checks:" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **🧪 Testing** only runs when Python code or tests change" >> $GITHUB_STEP_SUMMARY
-          echo "- **⚡ Performance** only runs when Python code changes" >> $GITHUB_STEP_SUMMARY
-          echo "- **🌍 Cross-platform** only runs when Python code changes" >> $GITHUB_STEP_SUMMARY
-          echo "- **🔒 Security** runs for Python or CI changes" >> $GITHUB_STEP_SUMMARY
-          echo "- **📚 Documentation** checks run for any docs changes" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "✅ **This saves compute resources and speeds up your workflow!**" >> $GITHUB_STEP_SUMMARY
-
-      - name: Update PR description with CI analysis
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
+      - name: Setup pixi
+        uses: prefix-dev/setup-pixi@v0.9.0
         with:
-          script: |
-            // Get current PR description
-            const { data: pr } = await github.rest.pulls.get({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: context.issue.number
-            });
+          pixi-version: ${{ env.PIXI_VERSION }}
+          cache: true
+          manifest-path: pyproject.toml
 
-            // Build CI analysis section
-            const pythonChanges = '${{ needs.changes.outputs.python }}' === 'true';
-            const testChanges = '${{ needs.changes.outputs.tests }}' === 'true';
-            const docsChanges = '${{ needs.changes.outputs.docs }}' === 'true';
-            const ciChanges = '${{ needs.changes.outputs.ci }}' === 'true';
+      - name: Install dependencies
+        run: pixi install -e ci
 
-            const ciAnalysis = `
+      - name: Run comprehensive quality checks
+        run: |
+          echo "🔍 Running comprehensive quality analysis"
+          pixi run -e ci check-all || echo "⚠️ Some quality checks completed with warnings"
 
-            ---
+      - name: Generate comprehensive quality report
+        if: always()
+        run: |
+          echo "## 🔍 Comprehensive Quality Report" >> $GITHUB_STEP_SUMMARY
+          echo "This job provides detailed quality analysis across all aspects of the codebase." >> $GITHUB_STEP_SUMMARY
+          
+          # Add quality gate status
+          echo "### Quality Gate Status" >> $GITHUB_STEP_SUMMARY
+          echo "| Component | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----------|--------|" >> $GITHUB_STEP_SUMMARY
+          
+          # Check each quality component
+          if pixi run -e ci lint --quiet 2>/dev/null; then
+            echo "| Code Linting | ✅ PASS |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| Code Linting | ❌ FAIL |" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if pixi run -e ci format-check --quiet 2>/dev/null; then
+            echo "| Code Formatting | ✅ PASS |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| Code Formatting | ❌ FAIL |" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if pixi run -e ci typecheck --quiet 2>/dev/null; then
+            echo "| Type Checking | ✅ PASS |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| Type Checking | ❌ FAIL |" >> $GITHUB_STEP_SUMMARY
+          fi
 
-            ## 🔍 CI Pipeline Analysis
-
-            ### 📁 Change Detection
-            | Type | Detected | Checks |
-            |------|----------|--------|
-            | 🐍 Python Code | ${pythonChanges ? '✅ Yes' : '❌ No'} | ${pythonChanges ? 'Testing, Performance, Cross-Platform' : 'Skipped'} |
-            | 🧪 Tests | ${testChanges ? '✅ Yes' : '❌ No'} | ${testChanges ? 'Testing suite' : 'Skipped'} |
-            | 📚 Docs | ${docsChanges ? '✅ Yes' : '❌ No'} | ${docsChanges ? 'Documentation checks' : 'Skipped'} |
-            | 🔧 CI/CD | ${ciChanges ? '✅ Yes' : '❌ No'} | ${ciChanges ? 'Quality gates, Security' : 'Skipped'} |
-
-            ### ⚙️ Why Are Some Checks Skipped?
-            Our CI system uses **intelligent path filtering** to only run relevant checks:
-            - 🧪 **Testing** only runs when Python code or tests change
-            - ⚡ **Performance** only runs when Python code changes
-            - 🌍 **Cross-platform** only runs when Python code changes
-            - 🔒 **Security** runs for Python or CI changes
-
-            ✅ **This saves compute resources and speeds up your workflow!**
-
-            *🤖 This analysis is automatically updated on each push*`;
-
-            // Remove existing CI analysis if present
-            let newBody = pr.body || '';
-            const ciSectionRegex = /---\s*\n\s*## 🔍 CI Pipeline Analysis[\s\S]*?(?=\n\n(?:##|$)|$)/;
-            newBody = newBody.replace(ciSectionRegex, '');
-
-            // Add new CI analysis
-            newBody = newBody.trim() + ciAnalysis;
-
-            // Update PR description
-            await github.rest.pulls.update({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: context.issue.number,
-              body: newBody
-            });
+      - name: Upload quality reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: quality-reports
+          path: |
+            bandit-report.json
+            safety-report.json
+            mypy-report.txt

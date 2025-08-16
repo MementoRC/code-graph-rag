@@ -191,7 +191,7 @@ jobs:
           # Map test types to pytest markers and commands
           case "${{ matrix.test-type }}" in
             "unit")
-              echo "test_cmd=pixi run -e ci test-unit-smoke" >> $GITHUB_OUTPUT
+              echo "test_cmd=pixi run -e ci test-unit" >> $GITHUB_OUTPUT
               echo "marker=unit tests (fast, no external dependencies)" >> $GITHUB_OUTPUT
               ;;
             "integration")
