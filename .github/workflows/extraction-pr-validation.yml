@@ -132,22 +132,47 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup pixi (primary method)
-        id: setup-pixi-extraction-quality
-        continue-on-error: true
-        uses: prefix-dev/setup-pixi@v0.8.14
-        with:
-          pixi-version: v0.50.2
-          cache: true
-
-      - name: Manual pixi installation (failover)
-        if: steps.setup-pixi-extraction-quality.outcome == 'failure'
+      - name: Robust pixi installation for extraction quality
         run: |
-          echo "⚠️ setup-pixi action failed, falling back to manual installation"
-          curl -fsSL https://pixi.sh/install.sh | bash -s -- --version v0.50.2
-          echo "$HOME/.pixi/bin" >> $GITHUB_PATH
-          # Verify pixi installation
-          pixi --version
+          echo "🚀 Installing pixi for extraction quality validation"
+          
+          # Function to verify pixi installation
+          verify_pixi() {
+            if command -v pixi >/dev/null 2>&1; then
+              echo "✅ pixi found at: $(which pixi)"
+              pixi --version
+              return 0
+            else
+              echo "❌ pixi not found in PATH"
+              return 1
+            fi
+          }
+          
+          # Function to add pixi to PATH
+          add_pixi_to_path() {
+            if [ -f "$HOME/.pixi/bin/pixi" ]; then
+              echo "$HOME/.pixi/bin" >> $GITHUB_PATH
+              export PATH="$HOME/.pixi/bin:$PATH"
+              echo "✅ Added $HOME/.pixi/bin to PATH"
+            else
+              echo "❌ pixi binary not found at expected location"
+              return 1
+            fi
+          }
+          
+          # Standard installation
+          echo "📦 Attempting standard pixi installation"
+          if curl -fsSL https://pixi.sh/install.sh | bash -s -- --version v0.50.2; then
+            echo "✅ Standard installation completed"
+            add_pixi_to_path
+            if verify_pixi; then
+              echo "✅ Pixi installation successful"
+              exit 0
+            fi
+          fi
+          
+          echo "🚨 Pixi installation failed"
+          exit 1
 
       - name: Install dependencies
         run: pixi install -e ci
@@ -214,22 +239,47 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup pixi (primary method)
-        id: setup-pixi-extraction-performance
-        continue-on-error: true
-        uses: prefix-dev/setup-pixi@v0.8.14
-        with:
-          pixi-version: v0.50.2
-          cache: true
-
-      - name: Manual pixi installation (failover)
-        if: steps.setup-pixi-extraction-performance.outcome == 'failure'
+      - name: Robust pixi installation for extraction performance
         run: |
-          echo "⚠️ setup-pixi action failed, falling back to manual installation"
-          curl -fsSL https://pixi.sh/install.sh | bash -s -- --version v0.50.2
-          echo "$HOME/.pixi/bin" >> $GITHUB_PATH
-          # Verify pixi installation
-          pixi --version
+          echo "🚀 Installing pixi for extraction performance validation"
+          
+          # Function to verify pixi installation
+          verify_pixi() {
+            if command -v pixi >/dev/null 2>&1; then
+              echo "✅ pixi found at: $(which pixi)"
+              pixi --version
+              return 0
+            else
+              echo "❌ pixi not found in PATH"
+              return 1
+            fi
+          }
+          
+          # Function to add pixi to PATH
+          add_pixi_to_path() {
+            if [ -f "$HOME/.pixi/bin/pixi" ]; then
+              echo "$HOME/.pixi/bin" >> $GITHUB_PATH
+              export PATH="$HOME/.pixi/bin:$PATH"
+              echo "✅ Added $HOME/.pixi/bin to PATH"
+            else
+              echo "❌ pixi binary not found at expected location"
+              return 1
+            fi
+          }
+          
+          # Standard installation
+          echo "📦 Attempting standard pixi installation"
+          if curl -fsSL https://pixi.sh/install.sh | bash -s -- --version v0.50.2; then
+            echo "✅ Standard installation completed"
+            add_pixi_to_path
+            if verify_pixi; then
+              echo "✅ Pixi installation successful"
+              exit 0
+            fi
+          fi
+          
+          echo "🚨 Pixi installation failed"
+          exit 1
 
       - name: Performance impact assessment
         run: |
