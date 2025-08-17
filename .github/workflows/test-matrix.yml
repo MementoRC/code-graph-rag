@@ -84,113 +84,282 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Cross-platform pixi installation with enhanced fallbacks
+      - name: Cross-platform enhanced pixi installation with exponential backoff
         run: |
-          echo "🚀 Installing pixi on ${{ matrix.os }} with comprehensive error handling"
+          echo "🚀 Installing pixi on ${{ matrix.os }} with enhanced retry mechanisms and comprehensive fallbacks"
           
-          # Platform detection and setup
-          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-            echo "💻 Windows platform detected"
-            PIXI_SUFFIX="-x86_64-pc-windows-msvc.exe"
-            INSTALL_METHOD="powershell"
-          elif [[ "${{ matrix.os }}" == "macos-latest" ]]; then
-            echo "🍏 macOS platform detected"
-            PIXI_SUFFIX="-x86_64-apple-darwin"
-            INSTALL_METHOD="bash"
-          else
-            echo "🐧 Linux platform detected"
-            PIXI_SUFFIX="-x86_64-unknown-linux-musl"
-            INSTALL_METHOD="bash"
-          fi
+          # Enhanced logging function
+          log_status() {
+            local level="$1"
+            local message="$2"
+            echo "[$level] $(date -u '+%Y-%m-%d %H:%M:%S UTC') [${{ matrix.os }}] - $message"
+          }
           
-          # Function to verify pixi installation
+          # Platform-specific configuration
+          setup_platform_config() {
+            log_status "INFO" "Setting up platform-specific configuration"
+            
+            case "${{ matrix.os }}" in
+              "windows-latest")
+                export PIXI_SUFFIX="-x86_64-pc-windows-msvc.exe"
+                export PIXI_BINARY_NAME="pixi.exe"
+                export INSTALL_METHOD="powershell"
+                log_status "INFO" "Windows platform configured"
+                ;;
+              "macos-latest")
+                export PIXI_SUFFIX="-x86_64-apple-darwin"
+                export PIXI_BINARY_NAME="pixi"
+                export INSTALL_METHOD="bash"
+                log_status "INFO" "macOS platform configured"
+                ;;
+              *)
+                export PIXI_SUFFIX="-x86_64-unknown-linux-musl"
+                export PIXI_BINARY_NAME="pixi"
+                export INSTALL_METHOD="bash"
+                log_status "INFO" "Linux platform configured"
+                ;;
+            esac
+          }
+          
+          # Enhanced pixi verification with functionality testing
           verify_pixi() {
+            log_status "INFO" "Verifying pixi installation"
+            
             if command -v pixi >/dev/null 2>&1; then
-              echo "✅ pixi found at: $(which pixi)"
-              pixi --version
-              return 0
+              local pixi_path=$(which pixi)
+              local pixi_version=$(pixi --version 2>/dev/null || echo "version check failed")
+              log_status "SUCCESS" "pixi found at: $pixi_path"
+              log_status "INFO" "pixi version: $pixi_version"
+              
+              # Test basic functionality
+              if pixi --help >/dev/null 2>&1; then
+                log_status "SUCCESS" "pixi functionality verified"
+                return 0
+              else
+                log_status "ERROR" "pixi found but not functional"
+                return 1
+              fi
             else
-              echo "❌ pixi not found in PATH"
+              log_status "ERROR" "pixi not found in PATH: $PATH"
               return 1
             fi
           }
           
-          # Function to add pixi to PATH (cross-platform)
+          # Enhanced PATH management with multiple search locations
           add_pixi_to_path() {
+            log_status "INFO" "Adding pixi to PATH with enhanced search"
+            
+            local search_paths=(
+              "$HOME/.pixi/bin/$PIXI_BINARY_NAME"
+              "$HOME/.cargo/bin/$PIXI_BINARY_NAME"
+              "/usr/local/bin/$PIXI_BINARY_NAME"
+            )
+            
+            # Windows-specific paths
             if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-              if [ -f "$HOME/.pixi/bin/pixi.exe" ]; then
-                echo "$HOME/.pixi/bin" >> $GITHUB_PATH
-                export PATH="$HOME/.pixi/bin:$PATH"
-                echo "✅ Added pixi to Windows PATH"
+              search_paths+=(
+                "$HOME/AppData/Local/pixi/bin/$PIXI_BINARY_NAME"
+                "/c/tools/pixi/$PIXI_BINARY_NAME"
+              )
+            fi
+            
+            for pixi_path in "${search_paths[@]}"; do
+              if [ -f "$pixi_path" ] && [ -x "$pixi_path" ]; then
+                local bin_dir=$(dirname "$pixi_path")
+                echo "$bin_dir" >> $GITHUB_PATH
+                export PATH="$bin_dir:$PATH"
+                log_status "SUCCESS" "Added $bin_dir to PATH"
+                return 0
+              fi
+            done
+            
+            log_status "ERROR" "No pixi binary found in any expected location"
+            return 1
+          }
+          
+          # Exponential backoff retry function
+          retry_with_backoff() {
+            local max_attempts="$1"
+            local base_delay="$2"
+            local max_delay="$3"
+            shift 3
+            
+            local attempt=1
+            local delay="$base_delay"
+            
+            while [ $attempt -le $max_attempts ]; do
+              log_status "INFO" "Attempt $attempt/$max_attempts: $*"
+              
+              if "$@"; then
+                log_status "SUCCESS" "Command succeeded on attempt $attempt"
+                return 0
+              fi
+              
+              if [ $attempt -lt $max_attempts ]; then
+                log_status "WARN" "Attempt $attempt failed, retrying in ${delay}s"
+                sleep "$delay"
+                # Simple exponential backoff (compatible with all platforms)
+                delay=$((delay * 2))
+                if [ $delay -gt $max_delay ]; then
+                  delay=$max_delay
+                fi
               else
-                echo "❌ pixi.exe not found at expected location"
-                return 1
+                log_status "ERROR" "All $max_attempts attempts failed"
+              fi
+              
+              attempt=$((attempt + 1))
+            done
+            
+            return 1
+          }
+          
+          # Pre-installation environment validation
+          validate_environment() {
+            log_status "INFO" "Performing pre-installation environment validation"
+            
+            # Platform-specific network test
+            if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+              if ! curl -sf --connect-timeout 10 https://pixi.sh >/dev/null 2>&1; then
+                log_status "WARN" "Network connectivity to pixi.sh may be limited on Windows"
+              else
+                log_status "SUCCESS" "Network connectivity verified on Windows"
               fi
             else
-              if [ -f "$HOME/.pixi/bin/pixi" ]; then
-                echo "$HOME/.pixi/bin" >> $GITHUB_PATH
-                export PATH="$HOME/.pixi/bin:$PATH"
-                echo "✅ Added pixi to Unix PATH"
+              if ! curl -sf --connect-timeout 10 https://pixi.sh >/dev/null 2>&1; then
+                log_status "WARN" "Network connectivity to pixi.sh may be limited"
               else
-                echo "❌ pixi binary not found at expected location"
-                return 1
+                log_status "SUCCESS" "Network connectivity verified"
               fi
+            fi
+            
+            # Check available space (platform-specific)
+            if command -v df >/dev/null 2>&1; then
+              local available_space=$(df -BM "$HOME" 2>/dev/null | awk 'NR==2 {print $4}' | sed 's/M//' || echo "1000")
+              if [ "$available_space" -lt 100 ]; then
+                log_status "WARN" "Low disk space: ${available_space}MB available"
+              else
+                log_status "SUCCESS" "Sufficient disk space: ${available_space}MB available"
+              fi
+            else
+              log_status "INFO" "Disk space check not available on this platform"
             fi
           }
           
-          # Method 1: Standard installation script
-          echo "📦 Attempting standard pixi installation"
-          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-            # Windows PowerShell installation
-            powershell -Command "iwr -useb https://pixi.sh/install.ps1 | iex"
-          else
-            # Unix bash installation
-            curl -fsSL https://pixi.sh/install.sh | bash -s -- --version ${{ env.PIXI_VERSION }}
-          fi
-          
-          add_pixi_to_path
-          if verify_pixi; then
-            echo "✅ Standard installation successful"
-            exit 0
-          fi
-          
-          echo "⚠️ Standard installation failed, trying manual download"
-          
-          # Method 2: Manual download (cross-platform)
-          echo "📦 Attempting manual download installation"
-          PIXI_VERSION_CLEAN=$(echo ${{ env.PIXI_VERSION }} | sed 's/^v//')
-          DOWNLOAD_URL="https://github.com/prefix-dev/pixi/releases/download/${{ env.PIXI_VERSION }}/pixi${PIXI_SUFFIX}"
-          
-          echo "📥 Downloading from: $DOWNLOAD_URL"
-          mkdir -p "$HOME/.pixi/bin"
-          
-          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-            if curl -fsSL -o "$HOME/.pixi/bin/pixi.exe" "$DOWNLOAD_URL"; then
-              chmod +x "$HOME/.pixi/bin/pixi.exe"
-              echo "✅ Windows manual download completed"
+          # Platform-specific standard installation
+          install_standard() {
+            log_status "INFO" "Attempting standard installation for ${{ matrix.os }}"
+            
+            if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+              # Windows PowerShell installation with retry
+              powershell -Command "try { iwr -useb https://pixi.sh/install.ps1 | iex } catch { exit 1 }"
             else
-              echo "❌ Windows manual download failed"
+              # Unix bash installation
+              curl -fsSL --connect-timeout 30 --retry 3 https://pixi.sh/install.sh | bash -s -- --version ${{ env.PIXI_VERSION }}
             fi
-          else
-            if curl -fsSL -o "$HOME/.pixi/bin/pixi" "$DOWNLOAD_URL"; then
-              chmod +x "$HOME/.pixi/bin/pixi"
-              echo "✅ Unix manual download completed"
+          }
+          
+          # Enhanced manual download with platform-specific handling
+          install_manual() {
+            log_status "INFO" "Attempting manual download for ${{ matrix.os }}"
+            
+            local version_clean=$(echo ${{ env.PIXI_VERSION }} | sed 's/^v//')
+            local download_url="https://github.com/prefix-dev/pixi/releases/download/${{ env.PIXI_VERSION }}/pixi${PIXI_SUFFIX}"
+            
+            log_status "INFO" "Downloading from: $download_url"
+            mkdir -p "$HOME/.pixi/bin"
+            
+            local target_path="$HOME/.pixi/bin/$PIXI_BINARY_NAME"
+            
+            if curl -fsSL --connect-timeout 30 --retry 3 -o "$target_path" "$download_url"; then
+              chmod +x "$target_path"
+              log_status "SUCCESS" "Manual download completed for ${{ matrix.os }}"
+              return 0
             else
-              echo "❌ Unix manual download failed"
+              log_status "ERROR" "Manual download failed for ${{ matrix.os }}"
+              return 1
             fi
+          }
+          
+          # Conda fallback (primarily for Linux/macOS)
+          install_conda_fallback() {
+            if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+              log_status "INFO" "Skipping conda fallback on Windows"
+              return 1
+            fi
+            
+            log_status "INFO" "Attempting conda fallback installation"
+            
+            # Install miniconda if conda is not available
+            if ! command -v conda >/dev/null 2>&1; then
+              log_status "INFO" "Installing miniconda for pixi fallback"
+              
+              local conda_installer
+              if [[ "${{ matrix.os }}" == "macos-latest" ]]; then
+                conda_installer="Miniconda3-latest-MacOSX-x86_64.sh"
+              else
+                conda_installer="Miniconda3-latest-Linux-x86_64.sh"
+              fi
+              
+              curl -fsSL --connect-timeout 30 --retry 3 -o miniconda.sh "https://repo.anaconda.com/miniconda/$conda_installer"
+              bash miniconda.sh -b -p "$HOME/miniconda"
+              export PATH="$HOME/miniconda/bin:$PATH"
+              echo "$HOME/miniconda/bin" >> $GITHUB_PATH
+            fi
+            
+            if command -v conda >/dev/null 2>&1; then
+              local version_clean=$(echo ${{ env.PIXI_VERSION }} | sed 's/^v//')
+              conda install -c conda-forge pixi="$version_clean" -y
+            else
+              return 1
+            fi
+          }
+          
+          # Execute installation sequence
+          setup_platform_config
+          validate_environment
+          
+          log_status "INFO" "Starting pixi installation sequence for ${{ matrix.os }}"
+          
+          # Method 1: Standard installation with retry
+          if retry_with_backoff 3 2 8 install_standard; then
+            add_pixi_to_path && verify_pixi && {
+              log_status "SUCCESS" "Standard installation successful"
+              exit 0
+            }
           fi
           
-          add_pixi_to_path
-          if verify_pixi; then
-            echo "✅ Manual download installation successful"
-            exit 0
+          log_status "WARN" "Standard installation failed, trying manual download"
+          
+          # Method 2: Manual download with retry
+          if retry_with_backoff 3 2 8 install_manual; then
+            add_pixi_to_path && verify_pixi && {
+              log_status "SUCCESS" "Manual installation successful"
+              exit 0
+            }
           fi
           
-          echo "🚨 All pixi installation methods failed on ${{ matrix.os }}"
-          echo "Debug information:"
+          log_status "WARN" "Manual installation failed, trying conda fallback"
+          
+          # Method 3: Conda fallback (non-Windows only)
+          if retry_with_backoff 2 3 10 install_conda_fallback; then
+            verify_pixi && {
+              log_status "SUCCESS" "Conda fallback successful"
+              exit 0
+            }
+          fi
+          
+          # Final failure with comprehensive diagnostics
+          log_status "ERROR" "All pixi installation methods failed on ${{ matrix.os }}"
+          log_status "INFO" "Comprehensive diagnostics:"
+          echo "- Platform: ${{ matrix.os }}"
           echo "- Current PATH: $PATH"
           echo "- Home directory: $HOME"
-          ls -la "$HOME/.pixi/bin/" 2>/dev/null || echo "No .pixi/bin directory found"
+          echo "- Expected binary: $PIXI_BINARY_NAME"
+          echo "- Expected suffix: $PIXI_SUFFIX"
+          echo "- Network test: $(curl -Is --connect-timeout 5 https://github.com | head -1 || echo 'Network check failed')"
+          echo "- Files in .pixi/bin: $(ls -la $HOME/.pixi/bin/ 2>/dev/null || echo 'No .pixi/bin directory')"
+          echo "- Files in .cargo/bin: $(ls -la $HOME/.cargo/bin/ 2>/dev/null || echo 'No .cargo/bin directory')"
+          
           exit 1
 
       - name: Install dependencies with comprehensive validation

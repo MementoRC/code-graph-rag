@@ -58,30 +58,117 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Robust pixi installation for PR checks
+      - name: Enhanced pixi installation for PR checks with comprehensive fallbacks
         run: |
-          echo "🚀 Installing pixi for PR quality checks"
+          echo "🚀 Installing pixi for PR quality checks with enhanced reliability"
           
-          # Install pixi with verification
-          curl -fsSL https://pixi.sh/install.sh | bash -s -- --version ${{ env.PIXI_VERSION }}
-          echo "$HOME/.pixi/bin" >> $GITHUB_PATH
-          export PATH="$HOME/.pixi/bin:$PATH"
+          # Enhanced logging function
+          log_status() {
+            local level="$1"
+            local message="$2"
+            echo "[$level] $(date -u '+%Y-%m-%d %H:%M:%S UTC') [PR-CHECK] - $message"
+          }
           
-          # Verify installation
-          if command -v pixi >/dev/null 2>&1; then
-            echo "✅ pixi installed successfully: $(pixi --version)"
+          # Enhanced pixi verification
+          verify_pixi() {
+            if command -v pixi >/dev/null 2>&1; then
+              local pixi_version=$(pixi --version 2>/dev/null || echo "version unknown")
+              log_status "SUCCESS" "pixi installed: $pixi_version"
+              # Test basic functionality
+              if pixi --help >/dev/null 2>&1; then
+                return 0
+              else
+                log_status "ERROR" "pixi found but not functional"
+                return 1
+              fi
+            else
+              log_status "ERROR" "pixi not found in PATH"
+              return 1
+            fi
+          }
+          
+          # Retry mechanism for installation
+          install_with_retry() {
+            local attempts=3
+            local delay=2
+            
+            for attempt in $(seq 1 $attempts); do
+              log_status "INFO" "Installation attempt $attempt/$attempts"
+              
+              if curl -fsSL --connect-timeout 30 --retry 3 https://pixi.sh/install.sh | bash -s -- --version ${{ env.PIXI_VERSION }}; then
+                echo "$HOME/.pixi/bin" >> $GITHUB_PATH
+                export PATH="$HOME/.pixi/bin:$PATH"
+                
+                if verify_pixi; then
+                  log_status "SUCCESS" "Installation successful on attempt $attempt"
+                  return 0
+                fi
+              fi
+              
+              if [ $attempt -lt $attempts ]; then
+                log_status "WARN" "Attempt $attempt failed, retrying in ${delay}s"
+                sleep $delay
+                delay=$((delay * 2))
+              fi
+            done
+            
+            return 1
+          }
+          
+          # Manual download fallback
+          manual_install() {
+            log_status "INFO" "Attempting manual download installation"
+            
+            local version_clean=$(echo ${{ env.PIXI_VERSION }} | sed 's/^v//')
+            local download_url="https://github.com/prefix-dev/pixi/releases/download/${{ env.PIXI_VERSION }}/pixi-x86_64-unknown-linux-musl"
+            
+            mkdir -p "$HOME/.pixi/bin"
+            
+            if curl -fsSL --connect-timeout 30 --retry 3 -o "$HOME/.pixi/bin/pixi" "$download_url"; then
+              chmod +x "$HOME/.pixi/bin/pixi"
+              echo "$HOME/.pixi/bin" >> $GITHUB_PATH
+              export PATH="$HOME/.pixi/bin:$PATH"
+              
+              if verify_pixi; then
+                log_status "SUCCESS" "Manual installation successful"
+                return 0
+              fi
+            fi
+            
+            return 1
+          }
+          
+          # Execute installation with fallbacks
+          log_status "INFO" "Starting enhanced pixi installation for PR checks"
+          
+          if install_with_retry; then
+            log_status "SUCCESS" "Standard installation completed"
+          elif manual_install; then
+            log_status "SUCCESS" "Manual installation completed"
           else
-            echo "🚨 CRITICAL: pixi installation failed"
+            log_status "ERROR" "All installation methods failed"
+            echo "Debug information:"
+            echo "- PATH: $PATH"
+            echo "- Network test: $(curl -Is --connect-timeout 5 https://github.com | head -1 || echo 'Network failed')"
+            echo "- Files in .pixi: $(ls -la $HOME/.pixi/ 2>/dev/null || echo 'No .pixi directory')"
             exit 1
           fi
 
-      - name: Install quality tools with validation
+      - name: Enhanced quality tools installation with fallbacks
         run: |
-          echo "🔧 Installing quality tools"
+          echo "🔧 Installing quality tools with enhanced reliability"
+          
+          # Enhanced installation with fallbacks
           if pixi install -e ci; then
-            echo "✅ Quality tools installed successfully"
+            echo "✅ CI environment installed successfully"
+          elif pixi install -e dev; then
+            echo "⚠️ Using dev environment as fallback"
+          elif pixi install; then
+            echo "⚠️ Using default environment as last resort"
           else
-            echo "🚨 CRITICAL: Failed to install quality tools"
+            echo "🚨 CRITICAL: All environment installations failed"
+            echo "Project info:"
+            pixi info 2>&1 || echo "pixi info failed"
             exit 1
           fi
 
@@ -138,20 +225,34 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Robust pixi installation for tests
+      - name: Enhanced pixi installation for tests with reliability improvements
         run: |
-          echo "🚀 Installing pixi for quick tests"
+          echo "🚀 Installing pixi for quick tests with enhanced reliability"
           
-          # Install pixi with verification
-          curl -fsSL https://pixi.sh/install.sh | bash -s -- --version ${{ env.PIXI_VERSION }}
-          echo "$HOME/.pixi/bin" >> $GITHUB_PATH
-          export PATH="$HOME/.pixi/bin:$PATH"
+          # Reuse the enhanced installation logic
+          install_with_retry() {
+            local attempts=3
+            for attempt in $(seq 1 $attempts); do
+              if curl -fsSL --connect-timeout 30 --retry 3 https://pixi.sh/install.sh | bash -s -- --version ${{ env.PIXI_VERSION }}; then
+                echo "$HOME/.pixi/bin" >> $GITHUB_PATH
+                export PATH="$HOME/.pixi/bin:$PATH"
+                
+                if command -v pixi >/dev/null 2>&1 && pixi --help >/dev/null 2>&1; then
+                  echo "✅ pixi installed successfully: $(pixi --version)"
+                  return 0
+                fi
+              fi
+              
+              if [ $attempt -lt $attempts ]; then
+                echo "⚠️ Attempt $attempt failed, retrying..."
+                sleep 2
+              fi
+            done
+            return 1
+          }
           
-          # Verify installation
-          if command -v pixi >/dev/null 2>&1; then
-            echo "✅ pixi installed successfully: $(pixi --version)"
-          else
-            echo "🚨 CRITICAL: pixi installation failed"
+          if ! install_with_retry; then
+            echo "🚨 CRITICAL: pixi installation failed after retries"
             exit 1
           fi
 
@@ -188,20 +289,34 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Robust pixi installation for security
+      - name: Enhanced pixi installation for security with retry mechanisms
         run: |
-          echo "🚀 Installing pixi for security scanning"
+          echo "🚀 Installing pixi for security scanning with enhanced reliability"
           
-          # Install pixi with verification
-          curl -fsSL https://pixi.sh/install.sh | bash -s -- --version ${{ env.PIXI_VERSION }}
-          echo "$HOME/.pixi/bin" >> $GITHUB_PATH
-          export PATH="$HOME/.pixi/bin:$PATH"
+          # Enhanced installation with retry
+          install_with_retry() {
+            local attempts=3
+            for attempt in $(seq 1 $attempts); do
+              if curl -fsSL --connect-timeout 30 --retry 3 https://pixi.sh/install.sh | bash -s -- --version ${{ env.PIXI_VERSION }}; then
+                echo "$HOME/.pixi/bin" >> $GITHUB_PATH
+                export PATH="$HOME/.pixi/bin:$PATH"
+                
+                if command -v pixi >/dev/null 2>&1 && pixi --help >/dev/null 2>&1; then
+                  echo "✅ pixi installed successfully: $(pixi --version)"
+                  return 0
+                fi
+              fi
+              
+              if [ $attempt -lt $attempts ]; then
+                echo "⚠️ Attempt $attempt failed, retrying..."
+                sleep 2
+              fi
+            done
+            return 1
+          }
           
-          # Verify installation
-          if command -v pixi >/dev/null 2>&1; then
-            echo "✅ pixi installed successfully: $(pixi --version)"
-          else
-            echo "🚨 CRITICAL: pixi installation failed"
+          if ! install_with_retry; then
+            echo "🚨 CRITICAL: pixi installation failed after retries"
             exit 1
           fi
 
