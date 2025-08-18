@@ -80,9 +80,63 @@ openssl = "*"
 libopenssl-static = "*"  # OpenSSL development libraries
 pkg-config = "*"  # For native package builds
 
-# NOTE: Cross-platform sections are dynamically added by CI for Windows/macOS testing
-# The CI workflow temporarily modifies platforms = ["linux-64"] to specific platforms
-# and adds appropriate [tool.pixi.target.{platform}.dependencies] sections as needed
+# Cross-platform dependencies for Windows/macOS compatibility
+[tool.pixi.target.win-64.dependencies]
+# Windows-compatible core dependencies (excluding Linux-only packages)
+python = ">=3.12,<3.13"
+loguru = ">=0.7.3"
+python-dotenv = ">=1.1.0"
+toml = ">=0.10.2"
+watchdog = ">=6.0.0"
+typer = ">=0.12.5"
+rich = ">=13.7.1"
+prompt-toolkit = ">=3.0.0"
+diff-match-patch = ">=20241021"
+click = ">=8.0.0"
+google-genai = ">=1.27.0"
+pre-commit = ">=4.3.0,<5"
+pydantic = ">=2.7.0,<2.15.0"
+pydantic-settings = ">=2.0.0,<2.5.0"
+pydantic-ai-slim = ">=0.2.14"
+# NOTE: pymgclient, tree-sitter packages excluded - not available/needed on Windows
+
+[tool.pixi.target.osx-64.dependencies]
+# macOS Intel dependencies (excluding Linux-only packages)
+python = ">=3.12,<3.13"
+loguru = ">=0.7.3"
+python-dotenv = ">=1.1.0"
+toml = ">=0.10.2"
+watchdog = ">=6.0.0"
+typer = ">=0.12.5"
+rich = ">=13.7.1"
+prompt-toolkit = ">=3.0.0"
+diff-match-patch = ">=20241021"
+click = ">=8.0.0"
+google-genai = ">=1.27.0"
+pre-commit = ">=4.3.0,<5"
+pydantic = ">=2.7.0,<2.15.0"
+pydantic-settings = ">=2.0.0,<2.5.0"
+pydantic-ai-slim = ">=0.2.14"
+# NOTE: pymgclient excluded - not available on macOS
+
+[tool.pixi.target.osx-arm64.dependencies]
+# macOS Apple Silicon dependencies (excluding Linux-only packages)
+python = ">=3.12,<3.13"
+loguru = ">=0.7.3"
+python-dotenv = ">=1.1.0"
+toml = ">=0.10.2"
+watchdog = ">=6.0.0"
+typer = ">=0.12.5"
+rich = ">=13.7.1"
+prompt-toolkit = ">=3.0.0"
+diff-match-patch = ">=20241021"
+click = ">=8.0.0"
+google-genai = ">=1.27.0"
+pre-commit = ">=4.3.0,<5"
+pydantic = ">=2.7.0,<2.15.0"
+pydantic-settings = ">=2.0.0,<2.5.0"
+pydantic-ai-slim = ">=0.2.14"
+# NOTE: pymgclient excluded - not available on macOS ARM
 
 # [tool.pixi.pypi-dependencies]
 # PyPI-only packages that don't exist in conda-forge
@@ -120,6 +174,39 @@ rich = ">=13.7.1"
 loguru = ">=0.7.3"
 google-genai = ">=1.27.0"
 
+# ===== CROSS-PLATFORM CI ENVIRONMENT =====
+# Basic CI environment for Windows/macOS (no Linux-specific packages)
+[tool.pixi.feature.ci-basic.dependencies]
+# Core Testing Framework (cross-platform)
+pytest = ">=8.4.1"
+pytest-cov = ">=4.0.0"
+pytest-timeout = ">=2.1.0"
+pytest-asyncio = ">=1.0.0"
+pytest-xdist = ">=3.3.0"
+
+# Linting & Formatting (cross-platform)
+ruff = ">=0.5.5"
+
+# Type Checking (cross-platform)
+mypy = ">=1.11.0"
+types-toml = ">=0.10.8.20240310"
+
+# Essential Quality Tools (cross-platform)
+bandit = ">=1.8.6"
+pre-commit = ">=4.2.0"
+coverage = ">=7.9.2"
+
+# Core runtime dependencies (cross-platform)
+pydantic = ">=2.7.0,<2.15.0"
+pydantic-settings = ">=2.0.0,<2.5.0"
+pydantic-ai-slim = ">=0.2.14"
+python-dotenv = ">=1.1.0"
+typer = ">=0.12.5"
+rich = ">=13.7.1"
+loguru = ">=0.7.3"
+google-genai = ">=1.27.0"
+# NOTE: Excludes pymgclient, tree-sitter packages for cross-platform compatibility
+
 # ===== OPTIONAL DEVELOPMENT FEATURES =====
 [tool.pixi.feature.dev-extra.dependencies]
 # Additional development tools (optional)
@@ -129,12 +216,13 @@ python-build = ">=1.2.2"
 twine = ">=6.1.0"
 
 [tool.pixi.environments]
-# ===== SIMPLIFIED ENVIRONMENT STRATEGY =====
+# ===== CROSS-PLATFORM ENVIRONMENT STRATEGY =====
 # Single primary environment for maximum reliability
 default = {solve-group = "default"}
 
-# Single CI environment (replaces ci-smoke, ci, quality)
-ci = {features = ["ci"], solve-group = "default"}
+# Platform-specific CI environments for cross-platform testing
+ci = {features = ["ci"], solve-group = "default"}                          # Linux CI (full features)
+ci-basic = {features = ["ci-basic"], solve-group = "cross-platform"}       # Windows/macOS CI (basic features)
 
 # Optional development environment with extra tools
 dev = {features = ["ci", "dev-extra"], solve-group = "default"}
@@ -154,6 +242,10 @@ test-integration = "pixi run -e ci pytest codebase_rag/tests/test_*_integration.
 
 # Smoke testing (cross-platform compatible)
 test-smoke = "pixi run -e ci pytest codebase_rag/tests/test_main_smoke.py -v --timeout=30"
+
+# Cross-platform testing tasks (for Windows/macOS)
+test-unit-basic = "pytest codebase_rag/tests/test_*.py -v --timeout=30"                    # Basic unit tests without env
+test-smoke-basic = "pytest codebase_rag/tests/test_main_smoke.py -v --timeout=30"          # Basic smoke tests without env
 
 # Quality Gates (CRITICAL - MUST PASS) - PREVENT CI FAILURES
 # All quality tasks explicitly specify CI environment for dependency access

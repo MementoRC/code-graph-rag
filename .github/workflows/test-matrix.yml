@@ -84,49 +84,97 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install pixi
+      - name: Install pixi (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          Write-Host "🚀 Installing pixi on Windows"
+          $env:PIXI_HOME = "$env:USERPROFILE\.pixi"
+          Invoke-WebRequest -Uri "https://pixi.sh/install.ps1" -UseBasicParsing | Invoke-Expression
+          echo "$env:PIXI_HOME\bin" >> $env:GITHUB_PATH
+          
+          # Verify installation
+          & "$env:PIXI_HOME\bin\pixi.exe" --version
+
+      - name: Install pixi (Unix)
+        if: matrix.os != 'windows-latest'
         shell: bash
         run: |
           echo "🚀 Installing pixi on ${{ matrix.os }}"
-          
-          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-            # Windows installation
-            powershell -Command "iwr -useb https://pixi.sh/install.ps1 | iex"
-            echo "$HOME/.pixi/bin" >> $GITHUB_PATH
-          else
-            # Unix installation
-            curl -fsSL https://pixi.sh/install.sh | bash -s -- --version ${{ env.PIXI_VERSION }}
-            echo "$HOME/.pixi/bin" >> $GITHUB_PATH
-          fi
+          curl -fsSL https://pixi.sh/install.sh | bash -s -- --version ${{ env.PIXI_VERSION }}
+          echo "$HOME/.pixi/bin" >> $GITHUB_PATH
+          export PATH="$HOME/.pixi/bin:$PATH"
           
           # Verify installation
           pixi --version
 
-      - name: Install dependencies
+      - name: Install dependencies (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          Write-Host "🔧 Installing dependencies for ${{ matrix.test-type }} tests on Windows"
+          
+          # Windows - basic CI environment (no Linux-specific packages)
+          Write-Host "Installing cross-platform CI environment for Windows..."
+          try {
+            pixi install -e ci-basic
+            echo "PIXI_ENV=ci-basic" >> $env:GITHUB_ENV
+            Write-Host "✅ Cross-platform CI environment installed successfully"
+          }
+          catch {
+            Write-Host "❌ Failed to install cross-platform CI environment"
+            Write-Host "Attempting fallback to default environment..."
+            try {
+              pixi install
+              echo "PIXI_ENV=default" >> $env:GITHUB_ENV
+              Write-Host "⚠️ Using default environment as fallback"
+            }
+            catch {
+              Write-Host "🚨 All environment installations failed"
+              exit 1
+            }
+          }
+
+      - name: Install dependencies (Unix)
+        if: matrix.os != 'windows-latest'
+        shell: bash
         run: |
           echo "🔧 Installing dependencies for ${{ matrix.test-type }} tests on ${{ matrix.os }}"
           
-          # Install with platform-aware fallback
+          # Platform-specific environment selection
           if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
-            # Ubuntu - full CI environment
+            # Linux - full CI environment with all dependencies
+            echo "Installing full CI environment for Linux..."
             if pixi install -e ci; then
               echo "PIXI_ENV=ci" >> $GITHUB_ENV
+              echo "✅ Linux CI environment installed successfully"
             else
+              echo "❌ Failed to install Linux CI environment"
               exit 1
             fi
           else
-            # Windows/macOS - fallback strategy
-            if pixi install -e ci; then
-              echo "PIXI_ENV=ci" >> $GITHUB_ENV
-            elif pixi install -e dev; then
-              echo "PIXI_ENV=dev" >> $GITHUB_ENV
+            # macOS - basic CI environment (no Linux-specific packages)
+            echo "Installing cross-platform CI environment for macOS..."
+            if pixi install -e ci-basic; then
+              echo "PIXI_ENV=ci-basic" >> $GITHUB_ENV
+              echo "✅ Cross-platform CI environment installed successfully"
             else
-              exit 1
+              echo "❌ Failed to install cross-platform CI environment"
+              echo "Attempting fallback to default environment..."
+              if pixi install; then
+                echo "PIXI_ENV=default" >> $GITHUB_ENV
+                echo "⚠️ Using default environment as fallback"
+              else
+                echo "🚨 All environment installations failed"
+                exit 1
+              fi
             fi
           fi
 
       - name: Install dev dependencies
-        run: pixi run -e dev dev-setup
+        run: |
+          echo "🛠️ Setting up development environment using: ${PIXI_ENV}"
+          pixi run -e ${PIXI_ENV} dev-setup
 
       - name: Verify Memgraph connection
         if: matrix.test-type != 'unit' && matrix.os == 'ubuntu-latest'
@@ -209,16 +257,51 @@ jobs:
           echo "  All critical Linux-specific dependencies are available and functioning"
           echo "  Safe to proceed with ${{ matrix.test-type }} tests on Linux"
 
-      - name: Select tests by marker and platform
-        id: select-tests
+      - name: Select tests by marker and platform (Windows)
+        if: matrix.os == 'windows-latest'
+        id: select-tests-windows
+        shell: pwsh
+        run: |
+          # Map test types to pytest markers and commands for Windows
+          Write-Host "Current environment: $env:PIXI_ENV"
+          
+          switch ("${{ matrix.test-type }}") {
+            "unit" {
+              if ($env:PIXI_ENV -eq "ci-basic") {
+                echo "test_cmd=pixi run -e ci-basic test-unit-basic" >> $env:GITHUB_OUTPUT
+              } else {
+                echo "test_cmd=pixi run test-unit-basic" >> $env:GITHUB_OUTPUT
+              }
+              echo "marker=unit tests (Windows cross-platform)" >> $env:GITHUB_OUTPUT
+            }
+            default {
+              echo "test_cmd=echo 'Non-unit tests skipped on Windows - platform limitation'" >> $env:GITHUB_OUTPUT
+              echo "marker=tests skipped (Windows platform limitation)" >> $env:GITHUB_OUTPUT
+            }
+          }
+
+      - name: Select tests by marker and platform (Unix)
+        if: matrix.os != 'windows-latest'
+        id: select-tests-unix
+        shell: bash
         run: |
           # Map test types to pytest markers and commands with platform awareness
           echo "Current environment: ${PIXI_ENV:-ci}"
           
           case "${{ matrix.test-type }}" in
             "unit")
-              echo "test_cmd=pixi run -e ${PIXI_ENV:-ci} test-unit" >> $GITHUB_OUTPUT
-              echo "marker=unit tests (fast, no external dependencies)" >> $GITHUB_OUTPUT
+              if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
+                echo "test_cmd=pixi run -e ${PIXI_ENV:-ci} test-unit" >> $GITHUB_OUTPUT
+                echo "marker=unit tests (Linux full environment)" >> $GITHUB_OUTPUT
+              else
+                # macOS
+                if [[ "${PIXI_ENV}" == "ci-basic" ]]; then
+                  echo "test_cmd=pixi run -e ci-basic test-unit-basic" >> $GITHUB_OUTPUT
+                else
+                  echo "test_cmd=pixi run test-unit-basic" >> $GITHUB_OUTPUT
+                fi
+                echo "marker=unit tests (macOS cross-platform)" >> $GITHUB_OUTPUT
+              fi
               ;;
             "integration")
               if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
@@ -239,15 +322,48 @@ jobs:
               fi
               ;;
             *)
-              echo "test_cmd=pixi run -e ${PIXI_ENV:-ci} test-unit" >> $GITHUB_OUTPUT
+              if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
+                echo "test_cmd=pixi run -e ${PIXI_ENV:-ci} test-unit" >> $GITHUB_OUTPUT
+              else
+                echo "test_cmd=pixi run test-unit-basic" >> $GITHUB_OUTPUT
+              fi
               echo "marker=fallback to unit tests" >> $GITHUB_OUTPUT
               ;;
           esac
 
-      - name: Run selected tests
+      - name: Run selected tests (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
         run: |
-          echo "🧪 Running ${{ steps.select-tests.outputs.marker }}"
-          echo "Command: ${{ steps.select-tests.outputs.test_cmd }}"
+          $marker = "${{ steps.select-tests-windows.outputs.marker }}"
+          $testCmd = "${{ steps.select-tests-windows.outputs.test_cmd }}"
+          
+          Write-Host "🧪 Running $marker"
+          Write-Host "Command: $testCmd"
+
+          # Set environment variables for tests
+          $env:MEMGRAPH_HOST = "localhost"
+          $env:MEMGRAPH_PORT = "7687"
+          $env:ENVIRONMENT = "ci"
+
+          # Run tests (pytest-timeout handles test timeouts cross-platform)
+          try {
+            Invoke-Expression $testCmd
+            Write-Host "✅ Tests completed successfully"
+          }
+          catch {
+            Write-Host "❌ Tests failed on Windows"
+            Write-Host "Test command was: $testCmd"
+            Write-Host "Error details: $_"
+            exit 1
+          }
+
+      - name: Run selected tests (Unix)
+        if: matrix.os != 'windows-latest'
+        shell: bash
+        run: |
+          echo "🧪 Running ${{ steps.select-tests-unix.outputs.marker }}"
+          echo "Command: ${{ steps.select-tests-unix.outputs.test_cmd }}"
 
           # Set environment variables for tests
           export MEMGRAPH_HOST=localhost
@@ -255,13 +371,13 @@ jobs:
           export ENVIRONMENT=ci
 
           # Run tests (pytest-timeout handles test timeouts cross-platform)
-          if ${{ steps.select-tests.outputs.test_cmd }}; then
+          if ${{ steps.select-tests-unix.outputs.test_cmd }}; then
             echo "✅ Tests completed successfully"
           else
             echo "❌ Tests failed - Running post-failure diagnostics"
 
-            # Enhanced debugging for integration/e2e test failures
-            if [[ "${{ matrix.test-type }}" == "integration" || "${{ matrix.test-type }}" == "e2e" ]]; then
+            # Enhanced debugging for integration/e2e test failures (Linux only)
+            if [[ "${{ matrix.test-type }}" == "integration" || "${{ matrix.test-type }}" == "e2e" ]] && [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
               echo "🔍 Post-Failure Environment Diagnostics:"
               echo "  Re-checking environment after test failure..."
 
