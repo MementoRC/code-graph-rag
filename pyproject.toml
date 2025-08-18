@@ -169,8 +169,8 @@ quality = { depends-on = ["test-smoke", "lint", "format-check", "typecheck"] }  
 
 # Pre-commit Integration - PREVENT CI FAILURES
 # Pre-commit tasks explicitly specify CI environment for dependency access
-pre-commit = "pixi run -e ci pre-commit run --all-files"
-install-pre-commit = "pixi run -e ci pre-commit install --install-hooks"
+pre-commit = { cmd = "pre-commit run --all-files", env = { ENVIRONMENT = "ci" } }
+install-pre-commit = { cmd = "pre-commit install --install-hooks", env = { ENVIRONMENT = "ci" } }
 
 # Emergency Quality Fix - USE FOR "Found X errors" CI FAILURES
 # Emergency fix uses CI environment for all dependency access
