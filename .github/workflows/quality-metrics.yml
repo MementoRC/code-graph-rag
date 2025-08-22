@@ -12,7 +12,7 @@ on:
 
 env:
   PYTHONUNBUFFERED: 1
-  PIXI_VERSION: v0.50.2
+  PIXI_VERSION: v0.49.0  # Stable version - matches working CI configuration
   ENVIRONMENT: ci
   CLAUDECODE: 0
 
@@ -36,22 +36,77 @@ jobs:
         with:
           fetch-depth: 0  # Need full history for coverage comparison
 
-      - name: Install pixi
-        run: |
-          echo "🚀 Installing pixi for quality metrics"
-          curl -fsSL https://pixi.sh/install.sh | bash -s -- --version ${{ env.PIXI_VERSION }}
-          echo "$HOME/.pixi/bin" >> $GITHUB_PATH
-          pixi --version
+      # =============================================================================
+      # ENHANCED PIXI INSTALLATION WITH COMPREHENSIVE FALLBACK STRATEGY
+      # =============================================================================
+      
+      - name: "🚀 TIER 1: Setup pixi (primary action)"
+        id: setup-pixi-primary
+        continue-on-error: true
+        uses: prefix-dev/setup-pixi@v0.8.11
+        with:
+          pixi-version: ${{ env.PIXI_VERSION }}
+          cache: true
+          manifest-path: pyproject.toml
 
-      - name: Install quality analysis dependencies
+      - name: "🔧 TIER 2: Manual pixi installation (enhanced fallback)"
+        if: steps.setup-pixi-primary.outcome == 'failure'
         run: |
-          echo "📊 Installing quality analysis dependencies"
-          if pixi install -e ci; then
-            echo "✅ Quality analysis dependencies installed successfully"
-          else
-            echo "🚨 CRITICAL: Failed to install quality analysis dependencies"
+          echo "⚠️ TIER 1 failed - attempting enhanced manual installation"
+          
+          # Clear corrupted cache
+          rm -rf ~/.pixi || true
+          
+          # Enhanced manual installation with retries
+          for attempt in 1 2 3; do
+            echo "📥 Manual installation attempt $attempt/3..."
+            if timeout 300s curl -fsSL https://pixi.sh/install.sh | timeout 300s bash -s -- --version ${{ env.PIXI_VERSION }}; then
+              echo "$HOME/.pixi/bin" >> $GITHUB_PATH
+              export PATH="$HOME/.pixi/bin:$PATH"
+              if pixi --version; then
+                echo "✅ Manual installation successful"
+                exit 0
+              fi
+            fi
+            echo "❌ Attempt $attempt failed, retrying..."
+            sleep 10
+          done
+          echo "❌ Manual installation failed"
+          exit 1
+
+      - name: "📊 Enhanced Quality Dependencies Installation"
+        run: |
+          echo "📊 Installing quality analysis dependencies with enhanced reliability"
+          
+          # Enhanced environment installation with fallback strategy
+          ENVIRONMENTS=("ci" "quality-full" "dev" "default")
+          INSTALLATION_SUCCESS=false
+          
+          for env in "${ENVIRONMENTS[@]}"; do
+            echo "🔄 Attempting environment: $env"
+            if timeout 600s pixi install -e "$env"; then
+              echo "PIXI_ENV=$env" >> $GITHUB_ENV
+              echo "✅ Environment '$env' installed successfully"
+              INSTALLATION_SUCCESS=true
+              break
+            else
+              echo "❌ Environment '$env' failed, trying auto-repair..."
+              rm -rf .pixi/envs/"$env" || true
+              if timeout 600s pixi install -e "$env"; then
+                echo "PIXI_ENV=$env" >> $GITHUB_ENV
+                echo "✅ Auto-repair successful for '$env'"
+                INSTALLATION_SUCCESS=true
+                break
+              fi
+            fi
+          done
+          
+          if [ "$INSTALLATION_SUCCESS" = false ]; then
+            echo "🚨 CRITICAL: All quality environments failed to install"
             exit 1
           fi
+          
+          echo "✅ Quality analysis environment ready: ${PIXI_ENV}"
 
       - name: Run comprehensive test coverage
         run: |
