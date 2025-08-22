@@ -66,84 +66,64 @@ jobs:
           echo "Memory info:"
           free -h || echo "free command failed (likely non-Linux)"
 
-      - name: Install pixi (simplified)
+      - name: Install pixi (simplified reliable approach)
         run: |
-          echo "🚀 Installing pixi with simplified approach"
+          echo "🚀 Installing pixi with simple, reliable method"
+          
+          # Single reliable method - direct curl install
           curl -fsSL https://pixi.sh/install.sh | bash -s -- --version ${{ env.PIXI_VERSION }}
+          
+          # Add to PATH
           echo "$HOME/.pixi/bin" >> $GITHUB_PATH
+          export PATH="$HOME/.pixi/bin:$PATH"
+          
+          # Verify installation
           pixi --version
+          echo "✅ Pixi installed successfully"
 
-      - name: Install dependencies
+      - name: Install dependencies (simplified reliable approach)
         run: |
-          echo "🔄 Installing dependencies"
+          echo "🔄 Installing dependencies with single environment strategy"
           
-          # Verify pixi is working
-          pixi --version
+          # Clean any corrupted state
+          echo "🧹 Cleaning existing state"
+          rm -rf .pixi pixi.lock
           
-          # Install with simple fallback strategy
-          if pixi install -e ci; then
-            echo "PIXI_ENV=ci" >> $GITHUB_ENV
-            echo "✅ CI environment installed"
-          elif pixi install -e dev; then
-            echo "PIXI_ENV=dev" >> $GITHUB_ENV
-            echo "⚠️ Using dev environment as fallback"
-          else
-            echo "🚨 Failed to install dependencies"
-            exit 1
-          fi
+          # Platform enforcement - ensure linux-64 only
+          echo "🛡️ Enforcing linux-64 platform"
+          sed -i 's/platforms = \[.*\]/platforms = ["linux-64"]/' pyproject.toml
+          
+          # Install ci environment with timeout
+          echo "📦 Installing ci environment"
+          timeout 300s pixi install -e ci
+          
+          echo "PIXI_ENV=ci" >> $GITHUB_ENV
+          echo "✅ CI environment installed successfully"
 
-      - name: Run essential quality gates with Ubuntu CI optimization
+      - name: Validate environment (simplified check)
         run: |
-          echo "🚨 Running Zero-Tolerance Quality Gates with environment: ${PIXI_ENV:-ci} (Ubuntu CI)"
+          echo "🔍 Environment Validation"
           
-          # Set default environment if not set
-          CURRENT_ENV="${PIXI_ENV:-ci}"
+          # Simple validation - just verify tools work
+          echo "✅ Testing environment functionality:"
+          pixi run -e ci python --version
+          pixi run -e ci ruff --version
+          pixi run -e ci pytest --version
           
-          # Verify environment exists and is usable
-          echo "🔍 Validating environment: $CURRENT_ENV"
-          if ! pixi run -e $CURRENT_ENV python --version >/dev/null 2>&1; then
-            echo "🚨 CRITICAL: Environment $CURRENT_ENV is not functional on Ubuntu CI"
-            echo "Available environments:"
-            pixi info 2>/dev/null || echo "pixi info failed"
-            echo "Attempting environment diagnostics:"
-            pixi list -e $CURRENT_ENV 2>/dev/null | head -10 || echo "Failed to list environment packages"
-            exit 1
-          fi
-          
-          echo "✅ Environment $CURRENT_ENV is functional on Ubuntu CI"
-          
-          # Run critical lint checks (F,E9 only for reliability)
-          echo "🔍 Running critical lint checks (F,E9) in $CURRENT_ENV"
-          if pixi run -e $CURRENT_ENV ruff check codebase_rag/ --select=F,E9 --no-fix; then
-            echo "✅ Critical lint checks passed"
-          else
-            echo "❌ Critical lint checks failed"
-            echo "Environment debug info:"
-            echo "- Environment: $CURRENT_ENV"
-            echo "- Python in env: $(pixi run -e $CURRENT_ENV python --version 2>&1 || echo 'Python check failed')"
-            echo "- Ruff in env: $(pixi run -e $CURRENT_ENV ruff --version 2>&1 || echo 'Ruff check failed')"
-            echo "Showing first 10 violations:"
-            pixi run -e $CURRENT_ENV ruff check codebase_rag/ --select=F,E9 --no-fix | head -20
-            exit 1
-          fi
+          echo "✅ Environment ci is functional"
 
-      - name: Check code formatting with Ubuntu CI optimization
+      - name: Run quality gates (simplified)
         run: |
-          CURRENT_ENV="${PIXI_ENV:-ci}"
-          echo "🎨 Running format check with environment: $CURRENT_ENV (Ubuntu CI)"
+          echo "🚨 Running Quality Gates"
           
-          # Attempt format check with Ubuntu CI optimizations
-          if pixi run -e $CURRENT_ENV ruff format --check codebase_rag/; then
-            echo "✅ Code formatting check passed on Ubuntu CI"
-          else
-            echo "❌ Code formatting check failed on Ubuntu CI"
-            echo "Environment debug info:"
-            echo "- Environment: $CURRENT_ENV"
-            echo "- Ruff version: $(pixi run -e $CURRENT_ENV ruff --version 2>&1 || echo 'Ruff version check failed')"
-            echo "Showing formatting differences (first 20 lines):"
-            pixi run -e $CURRENT_ENV ruff format --diff codebase_rag/ | head -20
-            exit 1
-          fi
+          # Critical lint checks
+          echo "🔍 Running critical lint checks"
+          pixi run -e ci ruff check codebase_rag/ --select=F,E9
+
+      - name: Check code formatting (simplified)
+        run: |
+          echo "🎨 Running format check"
+          pixi run -e ci ruff format --check codebase_rag/
 
       - name: Generate Ubuntu CI quality report
         if: always()
@@ -191,24 +171,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install pixi
+      - name: Install pixi (simplified)
         run: |
-          echo "🚀 Installing pixi for testing"
           curl -fsSL https://pixi.sh/install.sh | bash -s -- --version ${{ env.PIXI_VERSION }}
           echo "$HOME/.pixi/bin" >> $GITHUB_PATH
+          export PATH="$HOME/.pixi/bin:$PATH"
           pixi --version
 
-      - name: Install dependencies
+      - name: Install dependencies (simplified)
         run: |
-          echo "🔄 Installing test dependencies"
-          if pixi install -e ci; then
-            echo "TEST_ENV=ci" >> $GITHUB_ENV
-          elif pixi install -e dev; then
-            echo "TEST_ENV=dev" >> $GITHUB_ENV
-          else
-            echo "🚨 Failed to install dependencies"
-            exit 1
-          fi
+          rm -rf .pixi pixi.lock
+          sed -i 's/platforms = \[.*\]/platforms = ["linux-64"]/' pyproject.toml
+          timeout 300s pixi install -e ci
+          echo "TEST_ENV=ci" >> $GITHUB_ENV
 
       - name: Wait for Memgraph to be ready
         run: |
@@ -274,20 +249,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install pixi and dependencies
+      - name: Install pixi and dependencies (simplified)
         run: |
-          echo "🔒 Setting up security scanning"
           curl -fsSL https://pixi.sh/install.sh | bash -s -- --version ${{ env.PIXI_VERSION }}
           echo "$HOME/.pixi/bin" >> $GITHUB_PATH
+          export PATH="$HOME/.pixi/bin:$PATH"
           pixi --version
           
-          if pixi install -e ci; then
-            echo "SECURITY_ENV=ci" >> $GITHUB_ENV
-          elif pixi install -e dev; then
-            echo "SECURITY_ENV=dev" >> $GITHUB_ENV
-          else
-            exit 1
-          fi
+          rm -rf .pixi pixi.lock
+          sed -i 's/platforms = \[.*\]/platforms = ["linux-64"]/' pyproject.toml
+          timeout 300s pixi install -e ci
+          echo "SECURITY_ENV=ci" >> $GITHUB_ENV
 
       - name: Run security scanning
         run: |
@@ -326,13 +298,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install pixi and dependencies
+      - name: Install pixi and dependencies (simplified)
         run: |
-          echo "⚡ Setting up performance testing"
           curl -fsSL https://pixi.sh/install.sh | bash -s -- --version ${{ env.PIXI_VERSION }}
           echo "$HOME/.pixi/bin" >> $GITHUB_PATH
+          export PATH="$HOME/.pixi/bin:$PATH"
           pixi --version
-          pixi install -e ci
+          
+          rm -rf .pixi pixi.lock
+          sed -i 's/platforms = \[.*\]/platforms = ["linux-64"]/' pyproject.toml
+          timeout 300s pixi install -e ci
 
       - name: Wait for Memgraph to be ready
         run: |
@@ -372,13 +347,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install pixi and dependencies
+      - name: Install pixi and dependencies (simplified)
         run: |
-          echo "🏗️ Setting up build environment"
           curl -fsSL https://pixi.sh/install.sh | bash -s -- --version ${{ env.PIXI_VERSION }}
           echo "$HOME/.pixi/bin" >> $GITHUB_PATH
+          export PATH="$HOME/.pixi/bin:$PATH"
           pixi --version
-          pixi install -e ci
+          
+          rm -rf .pixi pixi.lock
+          sed -i 's/platforms = \[.*\]/platforms = ["linux-64"]/' pyproject.toml
+          timeout 300s pixi install -e ci
 
       - name: Build package
         run: |
@@ -412,13 +390,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install pixi and dependencies
+      - name: Install pixi and dependencies (simplified)
         run: |
-          echo "🔍 Setting up quality check environment"
           curl -fsSL https://pixi.sh/install.sh | bash -s -- --version ${{ env.PIXI_VERSION }}
           echo "$HOME/.pixi/bin" >> $GITHUB_PATH
+          export PATH="$HOME/.pixi/bin:$PATH"
           pixi --version
-          pixi install -e ci
+          
+          rm -rf .pixi pixi.lock
+          sed -i 's/platforms = \[.*\]/platforms = ["linux-64"]/' pyproject.toml
+          timeout 300s pixi install -e ci
 
       - name: Run comprehensive quality checks
         run: |
