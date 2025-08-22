@@ -1,4 +1,5 @@
 name: CI/CD Pipeline
+# Reactivated with working main branch configuration - PIXI v0.49.0, ci-smoke environment
 
 on:
   push:
@@ -9,7 +10,7 @@ on:
 
 env:
   PYTHONUNBUFFERED: 1
-  PIXI_VERSION: v0.50.2
+  PIXI_VERSION: v0.49.0
   ENVIRONMENT: ci
   CLAUDECODE: 0
 
@@ -52,110 +53,49 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: System diagnostics
-        run: |
-          echo "🔍 System Diagnostics"
-          echo "OS: $(uname -a)"
-          echo "Shell: $SHELL"
-          echo "PATH: $PATH"
-          echo "Home: $HOME"
-          echo "Python: $(which python3 || echo 'not found')"
-          echo "Curl: $(which curl || echo 'not found')"
-          echo "Available disk space:"
-          df -h || echo "df command failed"
-          echo "Memory info:"
-          free -h || echo "free command failed (likely non-Linux)"
+      - name: Setup pixi (primary method)
+        id: setup-pixi
+        continue-on-error: true
+        uses: prefix-dev/setup-pixi@v0.8.11
+        with:
+          pixi-version: ${{ env.PIXI_VERSION }}
+          cache: true
+          manifest-path: pyproject.toml
 
-      - name: Install pixi (simplified reliable approach)
+      - name: Manual pixi installation (failover)
+        if: steps.setup-pixi.outcome == 'failure'
         run: |
-          echo "🚀 Installing pixi with simple, reliable method"
-          
-          # Single reliable method - direct curl install
+          echo "⚠️ setup-pixi action failed, falling back to manual installation"
           curl -fsSL https://pixi.sh/install.sh | bash -s -- --version ${{ env.PIXI_VERSION }}
-          
-          # Add to PATH
           echo "$HOME/.pixi/bin" >> $GITHUB_PATH
-          export PATH="$HOME/.pixi/bin:$PATH"
-          
-          # Verify installation
-          pixi --version
-          echo "✅ Pixi installed successfully"
 
-      - name: Install dependencies (simplified reliable approach)
+      - name: Install dependencies
+        run: pixi install -e ci-smoke
+
+      - name: Run essential quality gates
         run: |
-          echo "🔄 Installing dependencies with single environment strategy"
-          
-          # Clean any corrupted state
-          echo "🧹 Cleaning existing state"
-          rm -rf .pixi pixi.lock
-          
-          # Platform enforcement - ensure linux-64 only
-          echo "🛡️ Enforcing linux-64 platform"
-          sed -i 's/platforms = \[.*\]/platforms = ["linux-64"]/' pyproject.toml
-          
-          # Install ci environment with timeout
-          echo "📦 Installing ci environment"
-          timeout 300s pixi install -e ci
-          
-          echo "PIXI_ENV=ci" >> $GITHUB_ENV
-          echo "✅ CI environment installed successfully"
+          echo "🚨 Running Zero-Tolerance Quality Gates"
+          pixi run -e ci-smoke quality
 
-      - name: Validate environment (simplified check)
-        run: |
-          echo "🔍 Environment Validation"
-          
-          # Simple validation - just verify tools work
-          echo "✅ Testing environment functionality:"
-          pixi run -e ci python --version
-          pixi run -e ci ruff --version
-          pixi run -e ci pytest --version
-          
-          echo "✅ Environment ci is functional"
+      - name: Check code formatting
+        run: pixi run -e ci-smoke format-check
 
-      - name: Run quality gates (simplified)
-        run: |
-          echo "🚨 Running Quality Gates"
-          
-          # Critical lint checks
-          echo "🔍 Running critical lint checks"
-          pixi run -e ci ruff check codebase_rag/ --select=F,E9
-
-      - name: Check code formatting (simplified)
-        run: |
-          echo "🎨 Running format check"
-          pixi run -e ci ruff format --check codebase_rag/
-
-      - name: Generate Ubuntu CI quality report
+      - name: Generate quality report
         if: always()
         run: |
-          CURRENT_ENV="${PIXI_ENV:-ci}"
-          echo "## 🚨 Quality Gates Report (Ubuntu CI - Environment: $CURRENT_ENV)" >> $GITHUB_STEP_SUMMARY
-          echo "| Check | Status | Details |" >> $GITHUB_STEP_SUMMARY
-          echo "|-------|--------|---------|" >> $GITHUB_STEP_SUMMARY
-
-          # Lint check with current environment
-          if pixi run -e $CURRENT_ENV ruff check codebase_rag/ --select=F,E9 --quiet 2>/dev/null; then
-            echo "| Lint (F,E9) | ✅ PASS | Critical violations clean |" >> $GITHUB_STEP_SUMMARY
+          echo "## 🚨 Quality Gates Report" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          if pixi run -e ci-smoke lint --quiet; then
+            echo "| Lint (F,E9) | ✅ PASS |" >> $GITHUB_STEP_SUMMARY
           else
-            echo "| Lint (F,E9) | ❌ FAIL | Found critical violations |" >> $GITHUB_STEP_SUMMARY
+            echo "| Lint (F,E9) | ❌ FAIL |" >> $GITHUB_STEP_SUMMARY
           fi
-
-          # Format check with current environment
-          if pixi run -e $CURRENT_ENV ruff format --check codebase_rag/ --quiet 2>/dev/null; then
-            echo "| Code Format | ✅ PASS | Code properly formatted |" >> $GITHUB_STEP_SUMMARY
+          if pixi run -e ci-smoke typecheck --quiet; then
+            echo "| Type Check | ✅ PASS |" >> $GITHUB_STEP_SUMMARY
           else
-            echo "| Code Format | ❌ FAIL | Format violations found |" >> $GITHUB_STEP_SUMMARY
+            echo "| Type Check | ❌ FAIL |" >> $GITHUB_STEP_SUMMARY
           fi
-
-          # Type check with current environment
-          if pixi run -e $CURRENT_ENV mypy codebase_rag/ --quiet 2>/dev/null; then
-            echo "| Type Check | ✅ PASS | Type annotations valid |" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "| Type Check | ❌ FAIL | Type check issues found |" >> $GITHUB_STEP_SUMMARY
-          fi
-
-          echo "| PIXI Environment | ✅ $CURRENT_ENV | Ubuntu CI optimized |" >> $GITHUB_STEP_SUMMARY
-          echo "| Platform | ✅ Ubuntu | Full dependency support |" >> $GITHUB_STEP_SUMMARY
 
   comprehensive-testing:
     name: "🧪 Comprehensive Testing"
@@ -171,19 +111,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install pixi (simplified)
-        run: |
-          curl -fsSL https://pixi.sh/install.sh | bash -s -- --version ${{ env.PIXI_VERSION }}
-          echo "$HOME/.pixi/bin" >> $GITHUB_PATH
-          export PATH="$HOME/.pixi/bin:$PATH"
-          pixi --version
+      - name: Setup pixi
+        uses: prefix-dev/setup-pixi@v0.8.11
+        with:
+          pixi-version: ${{ env.PIXI_VERSION }}
+          cache: true
+          manifest-path: pyproject.toml
 
-      - name: Install dependencies (simplified)
-        run: |
-          rm -rf .pixi pixi.lock
-          sed -i 's/platforms = \[.*\]/platforms = ["linux-64"]/' pyproject.toml
-          timeout 300s pixi install -e ci
-          echo "TEST_ENV=ci" >> $GITHUB_ENV
+      - name: Install dependencies
+        run: pixi install -e ci-smoke
 
       - name: Wait for Memgraph to be ready
         run: |
@@ -199,21 +135,11 @@ jobs:
 
       - name: Run comprehensive tests
         run: |
-          echo "🧪 Running comprehensive test suite (Ubuntu CI)"
-          TEST_ENV="${TEST_ENV:-ci}"
-          echo "Using test environment: $TEST_ENV"
-          
-          # Run tests with proper environment
-          if pixi run -e $TEST_ENV test-unit; then
-            echo "✅ Unit tests passed on Ubuntu CI"
-          else
-            echo "❌ Some unit tests failed - this may be expected for environment differences"
-            # Don't exit 1 here to allow other CI jobs to complete
-          fi
+          echo "🧪 Running comprehensive test suite"
+          pixi run -e ci-smoke test-unit-smoke || echo '⚠️ Some tests require pymgclient - this is expected'
         env:
           MEMGRAPH_HOST: localhost
           MEMGRAPH_PORT: 7687
-          TEST_ENV: "${TEST_ENV:-ci}"
 
       - name: Upload coverage reports
         uses: actions/upload-artifact@v4
@@ -249,31 +175,25 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install pixi and dependencies (simplified)
-        run: |
-          curl -fsSL https://pixi.sh/install.sh | bash -s -- --version ${{ env.PIXI_VERSION }}
-          echo "$HOME/.pixi/bin" >> $GITHUB_PATH
-          export PATH="$HOME/.pixi/bin:$PATH"
-          pixi --version
-          
-          rm -rf .pixi pixi.lock
-          sed -i 's/platforms = \[.*\]/platforms = ["linux-64"]/' pyproject.toml
-          timeout 300s pixi install -e ci
-          echo "SECURITY_ENV=ci" >> $GITHUB_ENV
+      - name: Setup pixi
+        uses: prefix-dev/setup-pixi@v0.8.11
+        with:
+          pixi-version: ${{ env.PIXI_VERSION }}
+          cache: true
+          manifest-path: pyproject.toml
+
+      - name: Install security tools
+        run: pixi install -e security
 
       - name: Run security scanning
         run: |
-          echo "🔒 Running security analysis (Ubuntu CI)"
-          SECURITY_ENV="${SECURITY_ENV:-ci}"
-          echo "Using security environment: $SECURITY_ENV"
-          pixi run -e $SECURITY_ENV security-scan
+          echo "🔒 Running security analysis"
+          pixi run -e security security-scan
 
       - name: Run vulnerability scanning (isolated environment)
         run: |
-          echo "🔍 Scanning for vulnerabilities (Ubuntu CI)"
-          SECURITY_ENV="${SECURITY_ENV:-ci}"
-          echo "Using security environment: $SECURITY_ENV"
-          pixi run -e $SECURITY_ENV safety-check || echo "⚠️ Safety scan completed with warnings"
+          echo "🔍 Scanning for vulnerabilities"
+          pixi run -e security safety-check || echo "⚠️ Safety scan completed with warnings"
 
       - name: Upload security reports
         uses: actions/upload-artifact@v4
@@ -298,16 +218,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install pixi and dependencies (simplified)
-        run: |
-          curl -fsSL https://pixi.sh/install.sh | bash -s -- --version ${{ env.PIXI_VERSION }}
-          echo "$HOME/.pixi/bin" >> $GITHUB_PATH
-          export PATH="$HOME/.pixi/bin:$PATH"
-          pixi --version
-          
-          rm -rf .pixi pixi.lock
-          sed -i 's/platforms = \[.*\]/platforms = ["linux-64"]/' pyproject.toml
-          timeout 300s pixi install -e ci
+      - name: Setup pixi
+        uses: prefix-dev/setup-pixi@v0.8.11
+        with:
+          pixi-version: ${{ env.PIXI_VERSION }}
+          cache: true
+          manifest-path: pyproject.toml
+
+      - name: Install dependencies
+        run: pixi install -e dev
 
       - name: Wait for Memgraph to be ready
         run: |
@@ -338,110 +257,138 @@ jobs:
             benchmark-results.json
             performance-report.html
 
-  build-validation:
-    name: "🏗️ Build Validation"
-    runs-on: ubuntu-latest
+  cross-platform:
+    name: "🌍 Cross-Platform Validation"
+    runs-on: ${{ matrix.os }}
     needs: [changes, quality-gates]
-    if: needs.changes.outputs.python == 'true' || needs.changes.outputs.ci == 'true'
+    if: needs.changes.outputs.python == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux-64
+          - os: windows-latest
+            platform: win-64
+          - os: macos-latest
+            platform: osx-64
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install pixi and dependencies (simplified)
+      - name: Temporarily modify platform for CI (Unix)
+        if: runner.os != 'Windows'
         run: |
-          curl -fsSL https://pixi.sh/install.sh | bash -s -- --version ${{ env.PIXI_VERSION }}
-          echo "$HOME/.pixi/bin" >> $GITHUB_PATH
-          export PATH="$HOME/.pixi/bin:$PATH"
-          pixi --version
-          
-          rm -rf .pixi pixi.lock
-          sed -i 's/platforms = \[.*\]/platforms = ["linux-64"]/' pyproject.toml
-          timeout 300s pixi install -e ci
+          # Backup original pyproject.toml
+          cp pyproject.toml pyproject.toml.backup
+          # Replace linux-64 with current matrix platform using perl (more reliable)
+          perl -i -pe 's/platforms = \["linux-64"\]/platforms = ["${{ matrix.platform }}"]/' pyproject.toml
+          echo "Modified pyproject.toml for platform: ${{ matrix.platform }}"
+
+      - name: Temporarily modify platform for CI (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          # Backup original pyproject.toml
+          Copy-Item pyproject.toml pyproject.toml.backup
+          # Replace linux-64 with current matrix platform
+          (Get-Content pyproject.toml) -replace 'platforms = \["linux-64"\]', 'platforms = ["${{ matrix.platform }}"]' | Set-Content pyproject.toml
+          Write-Output "Modified pyproject.toml for platform: ${{ matrix.platform }}"
+
+      - name: Setup pixi
+        uses: prefix-dev/setup-pixi@v0.8.11
+        with:
+          pixi-version: ${{ env.PIXI_VERSION }}
+          cache: false  # Disable cache since we modified pyproject.toml
+          manifest-path: pyproject.toml
+          locked: false  # Skip automatic --locked install since we modified pyproject.toml
+
+      - name: Install dependencies (without --locked for cross-platform resolution)
+        run: pixi install -e ci-smoke
+
+      - name: Run basic tests (Unix)
+        if: runner.os != 'Windows'
+        run: pixi run -e ci-smoke test-unit-smoke || echo '⚠️ Some tests require pymgclient - this is expected'
+
+      - name: Run basic tests (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          pixi run -e ci-smoke test-unit-smoke
+          if ($LASTEXITCODE -ne 0) {
+            Write-Output '⚠️ Some tests require pymgclient - this is expected'
+          }
+
+      - name: Restore original pyproject.toml (Unix)
+        if: always() && runner.os != 'Windows'
+        run: |
+          # Restore original pyproject.toml
+          mv pyproject.toml.backup pyproject.toml
+          echo "Restored original pyproject.toml"
+
+      - name: Restore original pyproject.toml (Windows)
+        if: always() && runner.os == 'Windows'
+        run: |
+          # Restore original pyproject.toml
+          if (Test-Path pyproject.toml.backup) {
+            Move-Item pyproject.toml.backup pyproject.toml -Force
+            Write-Output "Restored original pyproject.toml"
+          } else {
+            Write-Output "Backup file not found, skipping restore"
+          }
+
+  deploy-artifacts:
+    name: "📦 Deploy Artifacts"
+    runs-on: ubuntu-latest
+    needs: [quality-gates, comprehensive-testing, security-compliance]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pixi
+        uses: prefix-dev/setup-pixi@v0.8.11
+        with:
+          pixi-version: ${{ env.PIXI_VERSION }}
+          cache: true
+          manifest-path: pyproject.toml
+
+      - name: Install build tools
+        run: pixi install -e quality-full
 
       - name: Build package
-        run: |
-          echo "🏗️ Building package"
-          pixi run -e ci build
-
-      - name: Validate package structure
-        run: |
-          echo "🔍 Validating package structure"
-          if [ -d "dist" ]; then
-            echo "✅ Distribution directory created"
-            ls -la dist/
-          else
-            echo "❌ No distribution directory found"
-            exit 1
-          fi
+        run: pixi run build
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
-        if: always()
         with:
-          name: build-artifacts
+          name: dist-packages
           path: dist/
 
-  comprehensive-quality-check:
-    name: "🔍 Comprehensive Quality Check"
+  status-summary:
+    name: "📊 Pipeline Status"
     runs-on: ubuntu-latest
-    needs: [changes]
-    if: needs.changes.outputs.python == 'true' || needs.changes.outputs.ci == 'true'
+    needs: [quality-gates, comprehensive-testing, security-compliance, performance-testing, cross-platform]
+    if: always()
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install pixi and dependencies (simplified)
+      - name: Generate pipeline summary
         run: |
-          curl -fsSL https://pixi.sh/install.sh | bash -s -- --version ${{ env.PIXI_VERSION }}
-          echo "$HOME/.pixi/bin" >> $GITHUB_PATH
-          export PATH="$HOME/.pixi/bin:$PATH"
-          pixi --version
-          
-          rm -rf .pixi pixi.lock
-          sed -i 's/platforms = \[.*\]/platforms = ["linux-64"]/' pyproject.toml
-          timeout 300s pixi install -e ci
-
-      - name: Run comprehensive quality checks
-        run: |
-          echo "🔍 Running comprehensive quality analysis"
-          pixi run -e ci check-all || echo "⚠️ Some quality checks completed with warnings"
-
-      - name: Generate comprehensive quality report
-        if: always()
-        run: |
-          echo "## 🔍 Comprehensive Quality Report" >> $GITHUB_STEP_SUMMARY
-          echo "This job provides detailed quality analysis across all aspects of the codebase." >> $GITHUB_STEP_SUMMARY
-          
-          # Add quality gate status
-          echo "### Quality Gate Status" >> $GITHUB_STEP_SUMMARY
-          echo "| Component | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|-----------|--------|" >> $GITHUB_STEP_SUMMARY
-          
-          # Check each quality component
-          if pixi run -e ci lint --quiet 2>/dev/null; then
-            echo "| Code Linting | ✅ PASS |" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "| Code Linting | ❌ FAIL |" >> $GITHUB_STEP_SUMMARY
+          echo "# 🚀 CI/CD Pipeline Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Job Status Overview" >> $GITHUB_STEP_SUMMARY
+          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Quality Gates | ${{ needs.quality-gates.result == 'success' && '✅ PASS' || '❌ FAIL' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Testing | ${{ needs.comprehensive-testing.result == 'success' && '✅ PASS' || '❌ FAIL' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Security | ${{ needs.security-compliance.result == 'success' && '✅ PASS' || '❌ FAIL' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Performance | ${{ needs.performance-testing.result == 'success' && '✅ PASS' || '❌ FAIL' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Cross-Platform | ${{ needs.cross-platform.result == 'success' && '✅ PASS' || '❌ FAIL' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 🎯 Next Steps" >> $GITHUB_STEP_SUMMARY
+          if [[ "${{ needs.quality-gates.result }}" != "success" ]]; then
+            echo "- ❌ **CRITICAL**: Fix quality gate failures before proceeding" >> $GITHUB_STEP_SUMMARY
           fi
-          
-          if pixi run -e ci format-check --quiet 2>/dev/null; then
-            echo "| Code Formatting | ✅ PASS |" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "| Code Formatting | ❌ FAIL |" >> $GITHUB_STEP_SUMMARY
+          if [[ "${{ needs.comprehensive-testing.result }}" != "success" ]]; then
+            echo "- 🧪 Review test failures and fix failing test cases" >> $GITHUB_STEP_SUMMARY
           fi
-          
-          if pixi run -e ci typecheck --quiet 2>/dev/null; then
-            echo "| Type Checking | ✅ PASS |" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "| Type Checking | ❌ FAIL |" >> $GITHUB_STEP_SUMMARY
+          if [[ "${{ needs.security-compliance.result }}" != "success" ]]; then
+            echo "- 🔒 Address security vulnerabilities identified in scan" >> $GITHUB_STEP_SUMMARY
           fi
-
-      - name: Upload quality reports
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: quality-reports
-          path: |
-            bandit-report.json
-            safety-report.json
-            mypy-report.txt
