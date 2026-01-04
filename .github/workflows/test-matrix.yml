@@ -122,6 +122,11 @@ jobs:
           cache: true
           cache-write: ${{ github.event_name != 'pull_request' }}
           manifest-path: pyproject.toml
+          environments: quality
+
+      - name: Set environment variable (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: echo "PIXI_ENV=quality" >> $GITHUB_ENV
 
       - name: Setup pixi (Windows/macOS - resolve fresh)
         if: matrix.os != 'ubuntu-latest'
@@ -131,56 +136,16 @@ jobs:
           cache: false
           manifest-path: pyproject.toml
           locked: false
+          environments: quality
 
-      # ============================================================
-      # ENVIRONMENT INSTALLATION
-      # ============================================================
-      - name: Install CI environment (Linux)
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          echo "🔧 Installing CI environment for ${{ matrix.test-type }} tests"
-          if pixi install -e ci-smoke; then
-            echo "PIXI_ENV=ci-smoke" >> $GITHUB_ENV
-            echo "✅ ci-smoke environment installed"
-          elif pixi install -e ci; then
-            echo "PIXI_ENV=ci" >> $GITHUB_ENV
-            echo "✅ ci environment installed"
-          else
-            echo "🚨 Environment installation failed"
-            exit 1
-          fi
-
-      - name: Install CI environment (Windows)
+      - name: Set environment variable (Windows)
         if: matrix.os == 'windows-latest'
         shell: pwsh
-        run: |
-          Write-Host "🔧 Installing CI environment (fresh resolve for Windows)"
-          # Use ci-smoke which has fewer Linux-specific deps
-          if (pixi install -e ci-smoke) {
-            echo "PIXI_ENV=ci-smoke" >> $env:GITHUB_ENV
-            Write-Host "✅ ci-smoke environment installed"
-          } elseif (pixi install -e quality) {
-            echo "PIXI_ENV=quality" >> $env:GITHUB_ENV
-            Write-Host "✅ quality environment installed (fallback)"
-          } else {
-            Write-Host "🚨 Environment installation failed"
-            exit 1
-          }
+        run: echo "PIXI_ENV=quality" >> $env:GITHUB_ENV
 
-      - name: Install CI environment (macOS)
+      - name: Set environment variable (macOS)
         if: matrix.os == 'macos-latest'
-        run: |
-          echo "🔧 Installing CI environment (fresh resolve for macOS)"
-          if pixi install -e ci-smoke; then
-            echo "PIXI_ENV=ci-smoke" >> $GITHUB_ENV
-            echo "✅ ci-smoke environment installed"
-          elif pixi install -e quality; then
-            echo "PIXI_ENV=quality" >> $GITHUB_ENV
-            echo "✅ quality environment installed (fallback)"
-          else
-            echo "🚨 Environment installation failed"
-            exit 1
-          fi
+        run: echo "PIXI_ENV=quality" >> $GITHUB_ENV
 
       # ============================================================
       # PRE-TEST VALIDATION (Linux integration/e2e only)
@@ -319,16 +284,14 @@ jobs:
           pixi-version: ${{ env.PIXI_VERSION }}
           cache: true
           manifest-path: pyproject.toml
-
-      - name: Install CI environment
-        run: pixi install -e ci-smoke || pixi install -e ci
+          environments: quality
 
       - name: Wait for Memgraph
         run: timeout 30 bash -c 'until nc -z localhost 7687; do sleep 1; done'
 
       - name: Run benchmarks
         run: |
-          pixi run -e ci-smoke benchmark --benchmark-json=benchmark-results.json || echo "⚠️ Benchmarks completed with variations"
+          pixi run -e quality benchmark --benchmark-json=benchmark-results.json || echo "⚠️ Benchmarks completed with variations"
         env:
           MEMGRAPH_HOST: localhost
           MEMGRAPH_PORT: 7687
