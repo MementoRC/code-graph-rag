@@ -8,7 +8,7 @@ const { format, subDays } = require('date-fns');
 // Mock API responses for dynamic features
 module.exports = function() {
   const now = new Date();
-  
+
   return {
     // Commit network data for D3.js visualization
     commitNetwork: {
@@ -27,17 +27,17 @@ module.exports = function() {
         { source: 'abc123', target: 'mno345', value: 2 }
       ]
     },
-    
+
     // Change heatmap data
     changeHeatmap: generateHeatmapData(),
-    
+
     // Real-time update simulation
     updates: {
       lastUpdate: now.toISOString(),
       frequency: 30000, // 30 seconds
       types: ['commit', 'extraction', 'analysis', 'upstream']
     },
-    
+
     // User preferences
     preferences: {
       theme: 'light',
@@ -45,7 +45,7 @@ module.exports = function() {
       notifications: true,
       autoRefresh: true
     },
-    
+
     // Performance metrics
     performance: {
       loadTime: Math.floor(Math.random() * 500) + 100,
@@ -61,9 +61,9 @@ function generateHeatmapData() {
     'tests/test_main.py', 'tests/test_utils.py', 'docs/README.md',
     'config/settings.py', 'scripts/build.py', 'requirements.txt'
   ];
-  
+
   const data = [];
-  
+
   files.forEach((file, fileIndex) => {
     const days = 30;
     for (let day = 0; day < days; day++) {
@@ -76,6 +76,6 @@ function generateHeatmapData() {
       });
     }
   });
-  
+
   return data;
 }

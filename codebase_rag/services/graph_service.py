@@ -36,7 +36,10 @@ class MemgraphIngestor:
         return self
 
     def __exit__(
-        self, exc_type: type | None, exc_val: Exception | None, exc_tb: Any
+        self,
+        exc_type: type | None,
+        exc_val: Exception | None,
+        exc_tb: Any,
     ) -> None:
         if exc_type:
             logger.error(
@@ -98,7 +101,7 @@ class MemgraphIngestor:
         for label, prop in self.unique_constraints.items():
             try:
                 self._execute_query(
-                    f"CREATE CONSTRAINT ON (n:{label}) ASSERT n.{prop} IS UNIQUE;"
+                    f"CREATE CONSTRAINT ON (n:{label}) ASSERT n.{prop} IS UNIQUE;",
                 )
             except Exception:
                 pass
@@ -124,7 +127,7 @@ class MemgraphIngestor:
                 rel_type,
                 (to_label, to_key, to_val),
                 properties,
-            )
+            ),
         )
 
     def flush_nodes(self) -> None:
@@ -141,7 +144,7 @@ class MemgraphIngestor:
             id_key = self.unique_constraints.get(label)
             if not id_key:
                 logger.warning(
-                    f"No unique constraint defined for label '{label}'. Skipping flush."
+                    f"No unique constraint defined for label '{label}'. Skipping flush.",
                 )
                 continue
 
@@ -163,7 +166,7 @@ class MemgraphIngestor:
         for from_node, rel_type, to_node, props in self.relationship_buffer:
             pattern = (from_node[0], from_node[1], rel_type, to_node[0], to_node[1])
             rels_by_pattern[pattern].append(
-                {"from_val": from_node[2], "to_val": to_node[2], "props": props or {}}
+                {"from_val": from_node[2], "to_val": to_node[2], "props": props or {}},
             )
         for pattern, params_list in rels_by_pattern.items():
             from_label, from_key, rel_type, to_label, to_key = pattern
@@ -223,7 +226,7 @@ class MemgraphIngestor:
         }
 
         logger.info(
-            f"Exported {len(nodes_data)} nodes and {len(relationships_data)} relationships"
+            f"Exported {len(nodes_data)} nodes and {len(relationships_data)} relationships",
         )
         return graph_data
 

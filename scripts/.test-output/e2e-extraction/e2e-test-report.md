@@ -1,8 +1,8 @@
 # Feature Extraction Workflow - End-to-End Test Report
 
-**Generated**: 2025-07-27T22:19:45.190Z  
-**Duration**: 0 seconds  
-**Success Rate**: 95.2%  
+**Generated**: 2025-07-27T22:19:45.190Z
+**Duration**: 0 seconds
+**Success Rate**: 95.2%
 
 ## Executive Summary
 

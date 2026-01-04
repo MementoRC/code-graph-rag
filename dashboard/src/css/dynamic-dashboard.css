@@ -257,16 +257,16 @@ body.dark-theme .update-flash {
     flex-direction: column;
     gap: 12px;
   }
-  
+
   .filter-controls {
     flex-wrap: wrap;
     gap: 8px;
   }
-  
+
   .visualization-container {
     height: 250px;
   }
-  
+
   #dashboardSearch {
     width: 100%;
   }
@@ -349,7 +349,7 @@ body.dark-theme .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   .status-indicator {
     display: none !important;
   }
-  
+
   .card {
     break-inside: avoid;
     border: 1px solid #000 !important;

@@ -79,7 +79,7 @@ def create_query_tool(
                         table,
                         title="[bold blue]Cypher Query Results[/bold blue]",
                         expand=False,
-                    )
+                    ),
                 )
 
             summary = f"Successfully retrieved {len(results)} item(s) from the graph."
@@ -92,7 +92,8 @@ def create_query_tool(
             )
         except Exception as e:
             logger.error(
-                f"[Tool:QueryGraph] Error during query execution: {e}", exc_info=True
+                f"[Tool:QueryGraph] Error during query execution: {e}",
+                exc_info=True,
             )
             return GraphData(
                 query_used=cypher_query,

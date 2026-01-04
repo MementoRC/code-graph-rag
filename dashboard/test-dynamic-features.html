@@ -4,19 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dynamic Dashboard Test</title>
-    
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
+
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js"></script>
-    
+
     <!-- Chart.js Zoom Plugin -->
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
-    
+
     <!-- Alpine.js -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
-    
+
     <!-- Dynamic Dashboard Styles -->
     <link rel="stylesheet" href="src/css/dynamic-dashboard.css">
     <link rel="stylesheet" href="src/css/dynamic-enhancements.css">
@@ -25,34 +25,34 @@
     theme: 'light',
     stats: { totalCommits: 42, localCommits: 23, upstreamCommits: 19 },
     filters: { dateRange: '30d', author: 'all', changeType: 'all', search: '' },
-    
+
     toggleTheme() {
         this.theme = this.theme === 'light' ? 'dark' : 'light',
         document.body.classList.toggle('dark-theme')
     },
-    
+
     get isFiltered() {
-        return this.filters.dateRange !== '30d' || 
-               this.filters.author !== 'all' || 
-               this.filters.changeType !== 'all' || 
+        return this.filters.dateRange !== '30d' ||
+               this.filters.author !== 'all' ||
+               this.filters.changeType !== 'all' ||
                this.filters.search !== '';
     }
 }">
 
 <div class="max-w-7xl mx-auto p-6">
     <h1 class="text-3xl font-bold text-gray-900 mb-8">🚀 Dynamic Dashboard Features Test</h1>
-    
+
     <!-- Enhanced Controls Panel -->
     <div class="bg-white border border-gray-200 mb-6 p-4 rounded-lg shadow-sm filters-panel">
         <div class="flex flex-wrap items-center justify-between gap-4">
             <div class="flex items-center space-x-4">
                 <h2 class="text-lg font-semibold text-gray-900">Interactive Controls</h2>
-                
+
                 <!-- Filter Status Badge -->
                 <div x-show="isFiltered" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 filter-active">
                     <span x-text="`Filtered: ${stats.totalCommits} items`"></span>
                 </div>
-                
+
                 <!-- Date Range Filter -->
                 <select x-model="filters.dateRange" class="form-select text-sm border-gray-300 rounded-md">
                     <option value="1d">Last 24 hours</option>
@@ -61,14 +61,14 @@
                     <option value="90d">Last 90 days</option>
                     <option value="all">All time</option>
                 </select>
-                
+
                 <!-- Author Filter -->
                 <select x-model="filters.author" class="form-select text-sm border-gray-300 rounded-md">
                     <option value="all">All authors</option>
                     <option value="vitali87">vitali87</option>
                     <option value="contributor1">Contributor 1</option>
                 </select>
-                
+
                 <!-- Change Type Filter -->
                 <select x-model="filters.changeType" class="form-select text-sm border-gray-300 rounded-md">
                     <option value="all">All changes</option>
@@ -77,21 +77,21 @@
                     <option value="docs">Documentation</option>
                 </select>
             </div>
-            
+
             <div class="flex items-center space-x-4">
                 <!-- Search -->
-                <input 
-                    type="text" 
+                <input
+                    type="text"
                     x-model="filters.search"
-                    placeholder="Search commits..." 
+                    placeholder="Search commits..."
                     class="form-input text-sm border-gray-300 rounded-md w-48"
                 >
-                
+
                 <!-- Theme Toggle -->
                 <button @click="toggleTheme()" class="btn btn-secondary text-sm">
                     <span x-text="theme === 'light' ? '🌙 Dark Mode' : '☀️ Light Mode'"></span>
                 </button>
-                
+
                 <!-- Status -->
                 <div class="flex items-center text-sm text-gray-500">
                     <div class="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse status-indicator online"></div>
@@ -100,7 +100,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Stats Grid -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div class="stat-card hover-lift">
@@ -116,7 +116,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="stat-card hover-lift">
             <div class="flex items-center">
                 <div class="flex-shrink-0">
@@ -130,7 +130,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="stat-card hover-lift">
             <div class="flex items-center">
                 <div class="flex-shrink-0">
@@ -145,7 +145,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Advanced Visualizations Test -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
         <!-- Interactive Chart -->
@@ -155,7 +155,7 @@
                 <canvas id="testChart"></canvas>
             </div>
         </div>
-        
+
         <!-- Network Graph Placeholder -->
         <div class="card">
             <h3 class="text-lg font-semibold text-gray-900 mb-4">Network Visualization</h3>
@@ -176,11 +176,11 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Feature Test Results -->
     <div class="card">
         <h3 class="text-lg font-semibold text-gray-900 mb-4">✅ Enhanced Features Test Results</h3>
-        
+
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
                 <h4 class="font-medium text-gray-900 mb-2">Alpine.js Features</h4>
@@ -203,7 +203,7 @@
                     </li>
                 </ul>
             </div>
-            
+
             <div>
                 <h4 class="font-medium text-gray-900 mb-2">Interactive Elements</h4>
                 <ul class="space-y-1 text-sm text-gray-600">
@@ -226,10 +226,10 @@
                 </ul>
             </div>
         </div>
-        
+
         <div class="mt-4 p-3 bg-green-50 rounded-lg">
             <p class="text-sm text-green-800">
-                🎉 <strong>Success!</strong> All dynamic dashboard enhancements are working correctly. 
+                🎉 <strong>Success!</strong> All dynamic dashboard enhancements are working correctly.
                 The existing Eleventy-based dashboard has been enhanced with:
             </p>
             <ul class="mt-2 text-sm text-green-700 ml-4">

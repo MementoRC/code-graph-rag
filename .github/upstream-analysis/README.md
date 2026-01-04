@@ -77,13 +77,13 @@ significance:
     - "*.js"
     - "pyproject.toml"
     - "README.md"
-  
+
   # Files to ignore (low significance)
   ignore_files:
     - "*.log"
     - "*.tmp"
     - "docs/**"
-  
+
   # Keywords that increase significance
   significant_keywords:
     - "breaking"
@@ -101,7 +101,7 @@ categories:
     keywords: ["security", "vulnerability", "cve"]
     weight: 10
     color: "#fd7e14"
-  
+
   feature:
     keywords: ["feat", "feature", "add", "new"]
     weight: 8
@@ -117,7 +117,7 @@ notifications:
     enabled: true
     min_significance_score: 15
     labels: ["upstream-sync", "analysis-required"]
-  
+
   slack:
     enabled: false
     min_significance_score: 10
@@ -151,7 +151,7 @@ node test-analyze.js --json
 
 ### GitHub Actions Outputs
 - `analysis_success`: Whether analysis completed successfully
-- `significance_score`: Total significance score for changes  
+- `significance_score`: Total significance score for changes
 - `change_level`: Classification (minor, moderate, major, critical)
 - `github_issue_created`: Whether GitHub issue was created
 - `slack_sent`: Whether Slack notification was sent
@@ -231,7 +231,7 @@ Check GitHub Actions logs for detailed execution information:
 - `@slack/webhook@^6.1.0`: Slack notifications
 - `js-yaml@^4.1.0`: Configuration parsing
 
-### Development Dependencies  
+### Development Dependencies
 - `node-fetch@^3.3.0`: HTTP requests for testing
 
 ### System Requirements

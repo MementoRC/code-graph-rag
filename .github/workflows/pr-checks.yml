@@ -7,7 +7,7 @@ on:
 
 env:
   PYTHONUNBUFFERED: 1
-  PIXI_VERSION: v0.49.0
+  PIXI_VERSION: v0.49.0  # Stable version - prevents installation failures
   ENVIRONMENT: ci
   CLAUDECODE: 0
 
@@ -58,30 +58,134 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup pixi (fast cache)
-        uses: prefix-dev/setup-pixi@v0.8.11
-        with:
-          pixi-version: ${{ env.PIXI_VERSION }}
-          cache: true
-          manifest-path: pyproject.toml
+      - name: Enhanced pixi installation for PR checks with comprehensive fallbacks
+        run: |
+          echo "🚀 Installing pixi for PR quality checks with enhanced reliability"
+          
+          # Enhanced logging function
+          log_status() {
+            local level="$1"
+            local message="$2"
+            echo "[$level] $(date -u '+%Y-%m-%d %H:%M:%S UTC') [PR-CHECK] - $message"
+          }
+          
+          # Enhanced pixi verification
+          verify_pixi() {
+            if command -v pixi >/dev/null 2>&1; then
+              local pixi_version=$(pixi --version 2>/dev/null || echo "version unknown")
+              log_status "SUCCESS" "pixi installed: $pixi_version"
+              # Test basic functionality
+              if pixi --help >/dev/null 2>&1; then
+                return 0
+              else
+                log_status "ERROR" "pixi found but not functional"
+                return 1
+              fi
+            else
+              log_status "ERROR" "pixi not found in PATH"
+              return 1
+            fi
+          }
+          
+          # Retry mechanism for installation
+          install_with_retry() {
+            local attempts=3
+            local delay=2
+            
+            for attempt in $(seq 1 $attempts); do
+              log_status "INFO" "Installation attempt $attempt/$attempts"
+              
+              if curl -fsSL --connect-timeout 30 --retry 3 https://pixi.sh/install.sh | bash -s -- --version ${{ env.PIXI_VERSION }}; then
+                echo "$HOME/.pixi/bin" >> $GITHUB_PATH
+                export PATH="$HOME/.pixi/bin:$PATH"
+                
+                if verify_pixi; then
+                  log_status "SUCCESS" "Installation successful on attempt $attempt"
+                  return 0
+                fi
+              fi
+              
+              if [ $attempt -lt $attempts ]; then
+                log_status "WARN" "Attempt $attempt failed, retrying in ${delay}s"
+                sleep $delay
+                delay=$((delay * 2))
+              fi
+            done
+            
+            return 1
+          }
+          
+          # Manual download fallback
+          manual_install() {
+            log_status "INFO" "Attempting manual download installation"
+            
+            local version_clean=$(echo ${{ env.PIXI_VERSION }} | sed 's/^v//')
+            local download_url="https://github.com/prefix-dev/pixi/releases/download/${{ env.PIXI_VERSION }}/pixi-x86_64-unknown-linux-musl"
+            
+            mkdir -p "$HOME/.pixi/bin"
+            
+            if curl -fsSL --connect-timeout 30 --retry 3 -o "$HOME/.pixi/bin/pixi" "$download_url"; then
+              chmod +x "$HOME/.pixi/bin/pixi"
+              echo "$HOME/.pixi/bin" >> $GITHUB_PATH
+              export PATH="$HOME/.pixi/bin:$PATH"
+              
+              if verify_pixi; then
+                log_status "SUCCESS" "Manual installation successful"
+                return 0
+              fi
+            fi
+            
+            return 1
+          }
+          
+          # Execute installation with fallbacks
+          log_status "INFO" "Starting enhanced pixi installation for PR checks"
+          
+          if install_with_retry; then
+            log_status "SUCCESS" "Standard installation completed"
+          elif manual_install; then
+            log_status "SUCCESS" "Manual installation completed"
+          else
+            log_status "ERROR" "All installation methods failed"
+            echo "Debug information:"
+            echo "- PATH: $PATH"
+            echo "- Network test: $(curl -Is --connect-timeout 5 https://github.com | head -1 || echo 'Network failed')"
+            echo "- Files in .pixi: $(ls -la $HOME/.pixi/ 2>/dev/null || echo 'No .pixi directory')"
+            exit 1
+          fi
 
-      - name: Install quality tools only
-        run: pixi install -e quality
+      - name: Enhanced quality tools installation with fallbacks
+        run: |
+          echo "🔧 Installing quality tools with enhanced reliability"
+          
+          # Enhanced installation with fallbacks
+          if pixi install -e ci; then
+            echo "✅ CI environment installed successfully"
+          elif pixi install -e dev; then
+            echo "⚠️ Using dev environment as fallback"
+          elif pixi install; then
+            echo "⚠️ Using default environment as last resort"
+          else
+            echo "🚨 CRITICAL: All environment installations failed"
+            echo "Project info:"
+            pixi info 2>&1 || echo "pixi info failed"
+            exit 1
+          fi
 
       - name: Run fast lint check (F,E9 only)
         run: |
           echo "🚨 Running critical lint checks"
-          pixi run -e quality lint
+          pixi run -e ci lint
 
       - name: Check code formatting
         run: |
           echo "🎨 Checking code formatting"
-          pixi run -e quality format-check
+          pixi run -e ci format-check
 
       - name: Run type checking
         run: |
           echo "📝 Running type checks"
-          pixi run -e quality typecheck
+          pixi run -e ci typecheck
 
       - name: Post quick status
         if: always()
@@ -90,21 +194,21 @@ jobs:
           echo "| Check | Result |" >> $GITHUB_STEP_SUMMARY
           echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
           # Lint check
-          if pixi run -e quality lint --quiet >/dev/null 2>&1; then
+          if pixi run -e ci lint --quiet >/dev/null 2>&1; then
             echo "| Critical Lint (F,E9) | ✅ PASS |" >> $GITHUB_STEP_SUMMARY
           else
             echo "| Critical Lint (F,E9) | ❌ FAIL |" >> $GITHUB_STEP_SUMMARY
           fi
 
           # Format check
-          if pixi run -e quality format-check --quiet >/dev/null 2>&1; then
+          if pixi run -e ci format-check --quiet >/dev/null 2>&1; then
             echo "| Code Formatting | ✅ PASS |" >> $GITHUB_STEP_SUMMARY
           else
             echo "| Code Formatting | ❌ FAIL |" >> $GITHUB_STEP_SUMMARY
           fi
 
           # Type check
-          if pixi run -e quality typecheck --quiet >/dev/null 2>&1; then
+          if pixi run -e ci typecheck --quiet >/dev/null 2>&1; then
             echo "| Type Checking | ✅ PASS |" >> $GITHUB_STEP_SUMMARY
           else
             echo "| Type Checking | ❌ FAIL |" >> $GITHUB_STEP_SUMMARY
@@ -121,20 +225,51 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup pixi
-        uses: prefix-dev/setup-pixi@v0.8.11
-        with:
-          pixi-version: ${{ env.PIXI_VERSION }}
-          cache: true
-          manifest-path: pyproject.toml
+      - name: Enhanced pixi installation for tests with reliability improvements
+        run: |
+          echo "🚀 Installing pixi for quick tests with enhanced reliability"
+          
+          # Reuse the enhanced installation logic
+          install_with_retry() {
+            local attempts=3
+            for attempt in $(seq 1 $attempts); do
+              if curl -fsSL --connect-timeout 30 --retry 3 https://pixi.sh/install.sh | bash -s -- --version ${{ env.PIXI_VERSION }}; then
+                echo "$HOME/.pixi/bin" >> $GITHUB_PATH
+                export PATH="$HOME/.pixi/bin:$PATH"
+                
+                if command -v pixi >/dev/null 2>&1 && pixi --help >/dev/null 2>&1; then
+                  echo "✅ pixi installed successfully: $(pixi --version)"
+                  return 0
+                fi
+              fi
+              
+              if [ $attempt -lt $attempts ]; then
+                echo "⚠️ Attempt $attempt failed, retrying..."
+                sleep 2
+              fi
+            done
+            return 1
+          }
+          
+          if ! install_with_retry; then
+            echo "🚨 CRITICAL: pixi installation failed after retries"
+            exit 1
+          fi
 
-      - name: Install test dependencies
-        run: pixi install -e quality
+      - name: Install test dependencies with validation
+        run: |
+          echo "🧪 Installing test dependencies"
+          if pixi install -e ci; then
+            echo "✅ Test dependencies installed successfully"
+          else
+            echo "🚨 CRITICAL: Failed to install test dependencies"
+            exit 1
+          fi
 
       - name: Run unit tests only (fast)
         run: |
           echo "🧪 Running unit tests"
-          pixi run -e quality test-unit-smoke ||
+          pixi run -e ci test-unit ||
             echo "⚠️ Some unit tests failed"
 
       - name: Generate test summary
@@ -154,20 +289,51 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup pixi
-        uses: prefix-dev/setup-pixi@v0.8.11
-        with:
-          pixi-version: ${{ env.PIXI_VERSION }}
-          cache: true
-          manifest-path: pyproject.toml
+      - name: Enhanced pixi installation for security with retry mechanisms
+        run: |
+          echo "🚀 Installing pixi for security scanning with enhanced reliability"
+          
+          # Enhanced installation with retry
+          install_with_retry() {
+            local attempts=3
+            for attempt in $(seq 1 $attempts); do
+              if curl -fsSL --connect-timeout 30 --retry 3 https://pixi.sh/install.sh | bash -s -- --version ${{ env.PIXI_VERSION }}; then
+                echo "$HOME/.pixi/bin" >> $GITHUB_PATH
+                export PATH="$HOME/.pixi/bin:$PATH"
+                
+                if command -v pixi >/dev/null 2>&1 && pixi --help >/dev/null 2>&1; then
+                  echo "✅ pixi installed successfully: $(pixi --version)"
+                  return 0
+                fi
+              fi
+              
+              if [ $attempt -lt $attempts ]; then
+                echo "⚠️ Attempt $attempt failed, retrying..."
+                sleep 2
+              fi
+            done
+            return 1
+          }
+          
+          if ! install_with_retry; then
+            echo "🚨 CRITICAL: pixi installation failed after retries"
+            exit 1
+          fi
 
-      - name: Install security tools
-        run: pixi install -e quality-extended
+      - name: Install security tools with validation
+        run: |
+          echo "🔒 Installing security tools"
+          if pixi install -e ci; then
+            echo "✅ Security tools installed successfully"
+          else
+            echo "🚨 CRITICAL: Failed to install security tools"
+            exit 1
+          fi
 
       - name: Run Bandit security scan
         run: |
           echo "🔒 Running security analysis"
-          pixi run -e quality-extended security-scan
+          pixi run -e ci security-scan
 
       - name: Security summary
         if: always()

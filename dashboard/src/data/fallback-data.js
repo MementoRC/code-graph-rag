@@ -29,7 +29,7 @@ class FallbackDataGenerator {
       'Charlie Contributor': 8,
       'Diana Engineer': 10
     };
-    
+
     // Generate commits for last 30 days
     for (let i = 29; i >= 0; i--) {
       const date = format(subDays(this.now, i), 'yyyy-MM-dd');
@@ -216,7 +216,7 @@ class FallbackDataGenerator {
 
   generateUpstreamActivity() {
     const commitsByDate = {};
-    
+
     // Generate upstream commits for last 30 days
     for (let i = 29; i >= 0; i--) {
       const date = format(subDays(this.now, i), 'yyyy-MM-dd');
@@ -334,7 +334,7 @@ class FallbackDataGenerator {
       'improve performance',
       'fix edge case bug'
     ];
-    
+
     const type = types[Math.floor(Math.random() * types.length)];
     const subject = subjects[Math.floor(Math.random() * subjects.length)];
     return `${type}: ${subject}`;
@@ -342,9 +342,9 @@ class FallbackDataGenerator {
 
   async run() {
     console.log('🎯 Generating fallback data for dashboard...');
-    
+
     await this.ensureDataDir();
-    
+
     const gitStats = this.generateGitStats();
     const analysisDocs = this.generateAnalysisDocs();
     const githubData = this.generateGitHubData();
@@ -395,7 +395,7 @@ class FallbackDataGenerator {
     console.log('  - github-data.json');
     console.log('  - upstream-activity.json');
     console.log('  - collection-summary.json');
-    
+
     return summary;
   }
 }

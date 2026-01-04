@@ -2,14 +2,14 @@
 
 /**
  * End-to-End Feature Extraction Workflow Testing
- * 
+ *
  * Comprehensive testing of the complete feature extraction workflow including:
  * - Decision framework assessment
  * - Branch automation and template generation
  * - Traceability and metadata preservation
  * - Error handling and edge cases
  * - Performance benchmarking
- * 
+ *
  * This test validates the integration between all components established
  * in Tasks 8.1-8.6 of the Feature Extraction Workflow.
  */
@@ -25,7 +25,7 @@ class MockExtractionBranchAutomation {
         this.branchPrefix = options.branchPrefix || 'feature/extracted-';
         this.testMode = options.testMode || false;
     }
-    
+
     generateBranchName(assessment) {
         const featureName = assessment.title
             .toLowerCase()
@@ -52,12 +52,12 @@ class FeatureExtractionE2ETest {
             performanceMetrics: {},
             testSuites: {}
         };
-        
+
         // Ensure test output directory exists
         if (!fs.existsSync(this.testOutputDir)) {
             fs.mkdirSync(this.testOutputDir, { recursive: true });
         }
-        
+
         console.log(`🧪 Feature Extraction E2E Testing initialized`);
         console.log(`📁 Test output directory: ${this.testOutputDir}`);
         console.log(`⏰ Test started at: ${this.testResults.startTime.toISOString()}`);
@@ -68,29 +68,29 @@ class FeatureExtractionE2ETest {
      */
     async runComplete() {
         console.log('\n🚀 Starting End-to-End Feature Extraction Workflow Testing\n');
-        
+
         try {
             // Test Suite 1: Decision Framework Testing
             await this.testDecisionFramework();
-            
+
             // Test Suite 2: Branch Automation and Template Generation
             await this.testBranchAutomation();
-            
+
             // Test Suite 3: Traceability and Metadata
             await this.testTraceability();
-            
+
             // Test Suite 4: Error Handling and Edge Cases
             await this.testErrorHandling();
-            
+
             // Test Suite 5: Performance and Optimization
             await this.testPerformance();
-            
+
             // Test Suite 6: Integration Validation
             await this.testIntegrationPoints();
-            
+
             // Generate final report
             this.generateFinalReport();
-            
+
         } catch (error) {
             console.error(`💥 E2E Testing failed: ${error.message}`);
             this.testResults.errors.push({
@@ -110,14 +110,14 @@ class FeatureExtractionE2ETest {
      */
     async testDecisionFramework() {
         console.log('📋 Test Suite 1: Decision Framework Testing');
-        
+
         const testSuite = {
             name: 'Decision Framework',
             tests: [],
             startTime: new Date(),
             endTime: null
         };
-        
+
         // Test scenarios with different feature complexities
         const testScenarios = [
             {
@@ -148,7 +148,7 @@ class FeatureExtractionE2ETest {
             {
                 name: 'Complex Security Feature (L)',
                 feature: {
-                    feature_id: 'test_security_feature', 
+                    feature_id: 'test_security_feature',
                     title: 'Advanced Authentication System',
                     description: 'Multi-factor authentication with biometric support',
                     upstream_reference: 'https://github.com/upstream/repo/commit/def456',
@@ -205,7 +205,7 @@ class FeatureExtractionE2ETest {
                     scores: {
                         value: { raw_score: 3 },      // High value
                         effort: { raw_score: 2 },     // Medium effort (M)
-                        compatibility: { raw_score: 1 }, // Good compatibility  
+                        compatibility: { raw_score: 1 }, // Good compatibility
                         priority: { raw_score: 2 }    // Medium priority
                     },
                     rationale: {
@@ -221,13 +221,13 @@ class FeatureExtractionE2ETest {
                 expectedOutcome: 'approved'
             }
         ];
-        
+
         // Run decision framework tests
         for (const scenario of testScenarios) {
             const testResult = await this.runDecisionFrameworkTest(scenario);
             testSuite.tests.push(testResult);
             this.testResults.totalTests++;
-            
+
             if (testResult.passed) {
                 this.testResults.passedTests++;
                 console.log(`  ✅ ${scenario.name}: PASSED`);
@@ -236,10 +236,10 @@ class FeatureExtractionE2ETest {
                 console.log(`  ❌ ${scenario.name}: FAILED - ${testResult.error}`);
             }
         }
-        
+
         testSuite.endTime = new Date();
         this.testResults.testSuites.decisionFramework = testSuite;
-        
+
         console.log(`📊 Decision Framework Tests: ${testSuite.tests.filter(t => t.passed).length}/${testSuite.tests.length} passed\n`);
     }
 
@@ -248,14 +248,14 @@ class FeatureExtractionE2ETest {
      */
     async testBranchAutomation() {
         console.log('🔧 Test Suite 2: Branch Automation and Template Generation');
-        
+
         const testSuite = {
             name: 'Branch Automation',
             tests: [],
             startTime: new Date(),
             endTime: null
         };
-        
+
         // Test branch automation with approved feature
         const testFeature = {
             feature_id: 'test_automation_feature',
@@ -271,22 +271,22 @@ class FeatureExtractionE2ETest {
             weighted_score: 2.1,
             decision: 'extract'
         };
-        
+
         try {
             // Test 1: Branch Creation
             const branchTest = await this.testBranchCreation(testFeature);
             testSuite.tests.push(branchTest);
             this.testResults.totalTests++;
-            
+
             if (branchTest.passed) {
                 this.testResults.passedTests++;
                 console.log(`  ✅ Branch Creation: PASSED`);
-                
+
                 // Test 2: Template Generation
                 const templateTest = await this.testTemplateGeneration(testFeature);
                 testSuite.tests.push(templateTest);
                 this.testResults.totalTests++;
-                
+
                 if (templateTest.passed) {
                     this.testResults.passedTests++;
                     console.log(`  ✅ Template Generation: PASSED`);
@@ -294,12 +294,12 @@ class FeatureExtractionE2ETest {
                     this.testResults.failedTests++;
                     console.log(`  ❌ Template Generation: FAILED - ${templateTest.error}`);
                 }
-                
+
                 // Test 3: Testing Scaffolding
                 const scaffoldingTest = await this.testScaffoldingGeneration(testFeature);
                 testSuite.tests.push(scaffoldingTest);
                 this.testResults.totalTests++;
-                
+
                 if (scaffoldingTest.passed) {
                     this.testResults.passedTests++;
                     console.log(`  ✅ Testing Scaffolding: PASSED`);
@@ -307,12 +307,12 @@ class FeatureExtractionE2ETest {
                     this.testResults.failedTests++;
                     console.log(`  ❌ Testing Scaffolding: FAILED - ${scaffoldingTest.error}`);
                 }
-                
+
             } else {
                 this.testResults.failedTests++;
                 console.log(`  ❌ Branch Creation: FAILED - ${branchTest.error}`);
             }
-            
+
         } catch (error) {
             this.testResults.failedTests++;
             this.testResults.errors.push({
@@ -321,10 +321,10 @@ class FeatureExtractionE2ETest {
                 timestamp: new Date().toISOString()
             });
         }
-        
+
         testSuite.endTime = new Date();
         this.testResults.testSuites.branchAutomation = testSuite;
-        
+
         console.log(`📊 Branch Automation Tests: ${testSuite.tests.filter(t => t.passed).length}/${testSuite.tests.length} passed\n`);
     }
 
@@ -333,14 +333,14 @@ class FeatureExtractionE2ETest {
      */
     async testTraceability() {
         console.log('🔍 Test Suite 3: Traceability and Metadata Preservation');
-        
+
         const testSuite = {
             name: 'Traceability',
             tests: [],
             startTime: new Date(),
             endTime: null
         };
-        
+
         const testFeature = {
             feature_id: 'test_traceability_feature',
             title: 'Data Analytics Dashboard',
@@ -350,12 +350,12 @@ class FeatureExtractionE2ETest {
             weighted_score: 2.4,
             decision: 'extract'
         };
-        
+
         // Test metadata creation and preservation
         const metadataTest = await this.testMetadataPreservation(testFeature);
         testSuite.tests.push(metadataTest);
         this.testResults.totalTests++;
-        
+
         if (metadataTest.passed) {
             this.testResults.passedTests++;
             console.log(`  ✅ Metadata Preservation: PASSED`);
@@ -363,12 +363,12 @@ class FeatureExtractionE2ETest {
             this.testResults.failedTests++;
             console.log(`  ❌ Metadata Preservation: FAILED - ${metadataTest.error}`);
         }
-        
+
         // Test traceability audit trail
         const auditTest = await this.testAuditTrail(testFeature);
         testSuite.tests.push(auditTest);
         this.testResults.totalTests++;
-        
+
         if (auditTest.passed) {
             this.testResults.passedTests++;
             console.log(`  ✅ Audit Trail: PASSED`);
@@ -376,10 +376,10 @@ class FeatureExtractionE2ETest {
             this.testResults.failedTests++;
             console.log(`  ❌ Audit Trail: FAILED - ${auditTest.error}`);
         }
-        
+
         testSuite.endTime = new Date();
         this.testResults.testSuites.traceability = testSuite;
-        
+
         console.log(`📊 Traceability Tests: ${testSuite.tests.filter(t => t.passed).length}/${testSuite.tests.length} passed\n`);
     }
 
@@ -388,14 +388,14 @@ class FeatureExtractionE2ETest {
      */
     async testErrorHandling() {
         console.log('⚠️ Test Suite 4: Error Handling and Edge Cases');
-        
+
         const testSuite = {
             name: 'Error Handling',
             tests: [],
             startTime: new Date(),
             endTime: null
         };
-        
+
         // Test various error scenarios
         const errorScenarios = [
             {
@@ -415,13 +415,13 @@ class FeatureExtractionE2ETest {
                 test: () => this.testTemplateErrors()
             }
         ];
-        
+
         for (const scenario of errorScenarios) {
             try {
                 const testResult = await scenario.test();
                 testSuite.tests.push(testResult);
                 this.testResults.totalTests++;
-                
+
                 if (testResult.passed) {
                     this.testResults.passedTests++;
                     console.log(`  ✅ ${scenario.name}: PASSED`);
@@ -440,10 +440,10 @@ class FeatureExtractionE2ETest {
                 console.log(`  💥 ${scenario.name}: ERROR - ${error.message}`);
             }
         }
-        
+
         testSuite.endTime = new Date();
         this.testResults.testSuites.errorHandling = testSuite;
-        
+
         console.log(`📊 Error Handling Tests: ${testSuite.tests.filter(t => t.passed).length}/${testSuite.tests.length} passed\n`);
     }
 
@@ -452,14 +452,14 @@ class FeatureExtractionE2ETest {
      */
     async testPerformance() {
         console.log('⚡ Test Suite 5: Performance and Optimization');
-        
+
         const testSuite = {
             name: 'Performance',
             tests: [],
             startTime: new Date(),
             endTime: null
         };
-        
+
         // Performance benchmarks
         const performanceTests = [
             {
@@ -479,16 +479,16 @@ class FeatureExtractionE2ETest {
                 test: () => this.benchmarkMemoryUsage()
             }
         ];
-        
+
         for (const perfTest of performanceTests) {
             const testResult = await perfTest.test();
             testSuite.tests.push(testResult);
             this.testResults.totalTests++;
-            
+
             if (testResult.passed) {
                 this.testResults.passedTests++;
                 console.log(`  ✅ ${perfTest.name}: PASSED (${testResult.duration}ms)`);
-                
+
                 // Store performance metrics
                 this.testResults.performanceMetrics[perfTest.name] = {
                     duration: testResult.duration,
@@ -500,10 +500,10 @@ class FeatureExtractionE2ETest {
                 console.log(`  ❌ ${perfTest.name}: FAILED - ${testResult.error}`);
             }
         }
-        
+
         testSuite.endTime = new Date();
         this.testResults.testSuites.performance = testSuite;
-        
+
         console.log(`📊 Performance Tests: ${testSuite.tests.filter(t => t.passed).length}/${testSuite.tests.length} passed\n`);
     }
 
@@ -512,14 +512,14 @@ class FeatureExtractionE2ETest {
      */
     async testIntegrationPoints() {
         console.log('🔗 Test Suite 6: Integration Points Validation');
-        
+
         const testSuite = {
             name: 'Integration',
             tests: [],
             startTime: new Date(),
             endTime: null
         };
-        
+
         // Test integration with various components
         const integrationTests = [
             {
@@ -539,12 +539,12 @@ class FeatureExtractionE2ETest {
                 test: () => this.testCompleteWorkflow()
             }
         ];
-        
+
         for (const integrationTest of integrationTests) {
             const testResult = await integrationTest.test();
             testSuite.tests.push(testResult);
             this.testResults.totalTests++;
-            
+
             if (testResult.passed) {
                 this.testResults.passedTests++;
                 console.log(`  ✅ ${integrationTest.name}: PASSED`);
@@ -553,10 +553,10 @@ class FeatureExtractionE2ETest {
                 console.log(`  ❌ ${integrationTest.name}: FAILED - ${testResult.error}`);
             }
         }
-        
+
         testSuite.endTime = new Date();
         this.testResults.testSuites.integration = testSuite;
-        
+
         console.log(`📊 Integration Tests: ${testSuite.tests.filter(t => t.passed).length}/${testSuite.tests.length} passed\n`);
     }
 
@@ -566,16 +566,16 @@ class FeatureExtractionE2ETest {
         try {
             // Simulate decision framework evaluation
             const assessment = scenario.feature;
-            
+
             // Validate assessment structure
             if (!assessment.feature_id || !assessment.title || !assessment.scores) {
                 throw new Error('Invalid assessment structure');
             }
-            
+
             // Check decision logic
             const actualDecision = this.evaluateDecision(assessment);
             const expectedDecision = scenario.expectedOutcome;
-            
+
             if (actualDecision === expectedDecision) {
                 return {
                     name: scenario.name,
@@ -615,18 +615,18 @@ class FeatureExtractionE2ETest {
                 repoPath: this.projectRoot,
                 testMode: true
             });
-            
+
             const branchName = automation.generateBranchName(feature);
-            
+
             // Validate branch name format
             if (!branchName.startsWith('feature/extracted-')) {
                 throw new Error('Invalid branch name format');
             }
-            
+
             if (branchName.length > 60) {
                 throw new Error('Branch name too long');
             }
-            
+
             return {
                 name: 'Branch Creation',
                 passed: true,
@@ -651,7 +651,7 @@ class FeatureExtractionE2ETest {
                 'implementation-plan.md',
                 'progress-tracker.md'
             ];
-            
+
             // Check if all expected templates would be generated
             for (const template of expectedTemplates) {
                 // Simulate template validation
@@ -659,7 +659,7 @@ class FeatureExtractionE2ETest {
                     throw new Error(`Template validation failed for ${template}`);
                 }
             }
-            
+
             return {
                 name: 'Template Generation',
                 passed: true,
@@ -683,11 +683,11 @@ class FeatureExtractionE2ETest {
                 `${feature.feature_id}.test.js`,
                 `${feature.feature_id}.integration.test.js`
             ];
-            
+
             if (feature.scores.effort.raw_score >= 2) {
                 expectedTestFiles.push(`${feature.feature_id}.e2e.test.js`);
             }
-            
+
             return {
                 name: 'Testing Scaffolding',
                 passed: true,
@@ -715,12 +715,12 @@ class FeatureExtractionE2ETest {
                 createdAt: new Date().toISOString(),
                 traceabilityHash: this.generateTraceabilityHash(feature)
             };
-            
+
             // Validate metadata structure
             if (!metadata.extractionId || !metadata.traceabilityHash) {
                 throw new Error('Metadata validation failed');
             }
-            
+
             return {
                 name: 'Metadata Preservation',
                 passed: true,
@@ -760,12 +760,12 @@ class FeatureExtractionE2ETest {
                     }
                 ]
             };
-            
+
             // Validate audit trail
             if (auditTrail.events.length < 3) {
                 throw new Error('Incomplete audit trail');
             }
-            
+
             return {
                 name: 'Audit Trail',
                 passed: true,
@@ -790,10 +790,10 @@ class FeatureExtractionE2ETest {
                 title: 'Invalid Feature'
                 // Missing feature_id, scores, etc.
             };
-            
+
             // This should fail gracefully
             const result = this.evaluateDecision(invalidFeature);
-            
+
             // If we get here, error handling worked
             return {
                 name: 'Invalid Feature Data',
@@ -816,7 +816,7 @@ class FeatureExtractionE2ETest {
         try {
             // Simulate missing dependency scenario
             const missingDeps = ['non-existent-module', 'invalid-template'];
-            
+
             // Error handling should catch these
             return {
                 name: 'Missing Dependencies',
@@ -837,7 +837,7 @@ class FeatureExtractionE2ETest {
         try {
             // Simulate git operation failures
             const gitErrors = ['permission_denied', 'branch_exists', 'remote_unavailable'];
-            
+
             // Test error recovery
             return {
                 name: 'Git Operation Failures',
@@ -876,7 +876,7 @@ class FeatureExtractionE2ETest {
     async benchmarkDecisionFramework() {
         const startTime = Date.now();
         const startMemory = process.memoryUsage().heapUsed;
-        
+
         try {
             // Simulate decision framework processing
             for (let i = 0; i < 100; i++) {
@@ -890,24 +890,24 @@ class FeatureExtractionE2ETest {
                 };
                 this.evaluateDecision(testFeature);
             }
-            
+
             const endTime = Date.now();
             const endMemory = process.memoryUsage().heapUsed;
             const duration = endTime - startTime;
             const memoryUsage = endMemory - startMemory;
-            
+
             // Performance thresholds
             const maxDuration = 1000; // 1 second for 100 assessments
             const maxMemory = 10 * 1024 * 1024; // 10MB
-            
+
             const passed = duration < maxDuration && memoryUsage < maxMemory;
-            
+
             return {
                 name: 'Decision Framework Speed',
                 passed,
                 duration,
                 memoryUsage,
-                details: { 
+                details: {
                     assessments: 100,
                     avgDurationPerAssessment: duration / 100,
                     thresholds: { maxDuration, maxMemory }
@@ -926,14 +926,14 @@ class FeatureExtractionE2ETest {
 
     async benchmarkBranchCreation() {
         const startTime = Date.now();
-        
+
         try {
             // Simulate branch creation timing
             await new Promise(resolve => setTimeout(resolve, 50)); // Simulate git operations
-            
+
             const duration = Date.now() - startTime;
             const maxDuration = 2000; // 2 seconds
-            
+
             return {
                 name: 'Branch Creation Speed',
                 passed: duration < maxDuration,
@@ -954,14 +954,14 @@ class FeatureExtractionE2ETest {
 
     async benchmarkTemplateGeneration() {
         const startTime = Date.now();
-        
+
         try {
             // Simulate template generation timing
             await new Promise(resolve => setTimeout(resolve, 100)); // Simulate file I/O
-            
+
             const duration = Date.now() - startTime;
             const maxDuration = 5000; // 5 seconds
-            
+
             return {
                 name: 'Template Generation Speed',
                 passed: duration < maxDuration,
@@ -982,24 +982,24 @@ class FeatureExtractionE2ETest {
 
     async benchmarkMemoryUsage() {
         const startMemory = process.memoryUsage().heapUsed;
-        
+
         try {
             // Simulate memory-intensive operations
             const largeArray = new Array(1000).fill(0).map((_, i) => ({
                 id: i,
                 data: 'x'.repeat(1000)
             }));
-            
+
             const endMemory = process.memoryUsage().heapUsed;
             const memoryUsage = endMemory - startMemory;
             const maxMemory = 50 * 1024 * 1024; // 50MB
-            
+
             return {
                 name: 'Memory Usage',
                 passed: memoryUsage < maxMemory,
                 duration: 0,
                 memoryUsage,
-                details: { 
+                details: {
                     threshold: maxMemory,
                     itemsProcessed: largeArray.length
                 }
@@ -1024,7 +1024,7 @@ class FeatureExtractionE2ETest {
                 branch_created: true,
                 pr_template_available: true
             };
-            
+
             return {
                 name: 'GitHub API Integration',
                 passed: mockGitHubResponse.status === 'success',
@@ -1049,9 +1049,9 @@ class FeatureExtractionE2ETest {
                 markdown_parser_working: true,
                 output_directory_writable: true
             };
-            
+
             const allChecks = Object.values(docSystemCheck).every(check => check === true);
-            
+
             return {
                 name: 'Documentation System Integration',
                 passed: allChecks,
@@ -1077,9 +1077,9 @@ class FeatureExtractionE2ETest {
                 coverage_measurable: true,
                 pre_commit_hooks_working: true
             };
-            
+
             const allChecks = Object.values(qualityChecks).every(check => check === true);
-            
+
             return {
                 name: 'Quality Gates Integration',
                 passed: allChecks,
@@ -1108,10 +1108,10 @@ class FeatureExtractionE2ETest {
                 'metadata_preservation',
                 'audit_trail_creation'
             ];
-            
+
             const completedSteps = workflowSteps.length;
             const expectedSteps = workflowSteps.length;
-            
+
             return {
                 name: 'End-to-End Workflow',
                 passed: completedSteps === expectedSteps,
@@ -1138,11 +1138,11 @@ class FeatureExtractionE2ETest {
             if (!assessment.scores || !assessment.scores.value || !assessment.scores.effort) {
                 return 'rejected'; // Missing required data
             }
-            
+
             const valueScore = assessment.scores.value.raw_score || 0;
             const effortScore = assessment.scores.effort.raw_score || 0;
             const weightedScore = assessment.weighted_score || 0;
-            
+
             // Simple decision logic based on weighted score
             if (weightedScore >= 2.0) {
                 return 'approved';
@@ -1170,14 +1170,14 @@ class FeatureExtractionE2ETest {
     generateFinalReport() {
         const duration = this.testResults.endTime - this.testResults.startTime;
         const successRate = (this.testResults.passedTests / this.testResults.totalTests) * 100;
-        
+
         console.log('\n📊 ===== FINAL TEST REPORT =====');
         console.log(`⏱️  Total Duration: ${Math.round(duration / 1000)}s`);
         console.log(`✅ Tests Passed: ${this.testResults.passedTests}/${this.testResults.totalTests}`);
         console.log(`📈 Success Rate: ${successRate.toFixed(1)}%`);
         console.log(`⚠️  Warnings: ${this.testResults.warnings.length}`);
         console.log(`❌ Errors: ${this.testResults.errors.length}`);
-        
+
         // Performance summary
         if (Object.keys(this.testResults.performanceMetrics).length > 0) {
             console.log('\n⚡ Performance Summary:');
@@ -1185,7 +1185,7 @@ class FeatureExtractionE2ETest {
                 console.log(`  ${test}: ${metrics.duration}ms`);
             }
         }
-        
+
         // Test suite breakdown
         console.log('\n📋 Test Suite Breakdown:');
         for (const [suiteName, suite] of Object.entries(this.testResults.testSuites)) {
@@ -1194,7 +1194,7 @@ class FeatureExtractionE2ETest {
             const suiteRate = suiteTotal > 0 ? (suitePassed / suiteTotal) * 100 : 0;
             console.log(`  ${suite.name}: ${suitePassed}/${suiteTotal} (${suiteRate.toFixed(1)}%)`);
         }
-        
+
         // Overall assessment
         console.log('\n🎯 Overall Assessment:');
         if (successRate >= 95) {
@@ -1206,18 +1206,18 @@ class FeatureExtractionE2ETest {
         } else {
             console.log('  ❌ POOR - Major issues require attention');
         }
-        
+
         console.log('\n=====================================\n');
     }
 
     saveTestResults() {
         const resultsFile = path.join(this.testOutputDir, 'e2e-test-results.json');
         const reportFile = path.join(this.testOutputDir, 'e2e-test-report.md');
-        
+
         // Save JSON results
         fs.writeFileSync(resultsFile, JSON.stringify(this.testResults, null, 2));
         console.log(`💾 Test results saved to: ${resultsFile}`);
-        
+
         // Generate Markdown report
         const markdownReport = this.generateMarkdownReport();
         fs.writeFileSync(reportFile, markdownReport);
@@ -1227,12 +1227,12 @@ class FeatureExtractionE2ETest {
     generateMarkdownReport() {
         const duration = this.testResults.endTime - this.testResults.startTime;
         const successRate = (this.testResults.passedTests / this.testResults.totalTests) * 100;
-        
+
         return `# Feature Extraction Workflow - End-to-End Test Report
 
-**Generated**: ${new Date().toISOString()}  
-**Duration**: ${Math.round(duration / 1000)} seconds  
-**Success Rate**: ${successRate.toFixed(1)}%  
+**Generated**: ${new Date().toISOString()}
+**Duration**: ${Math.round(duration / 1000)} seconds
+**Success Rate**: ${successRate.toFixed(1)}%
 
 ## Executive Summary
 
@@ -1248,7 +1248,7 @@ ${Object.entries(this.testResults.testSuites).map(([suiteName, suite]) => {
     const passed = suite.tests.filter(t => t.passed).length;
     const total = suite.tests.length;
     const rate = total > 0 ? (passed / total) * 100 : 0;
-    
+
     return `### ${suite.name}
 - **Status**: ${rate === 100 ? '✅ PASSED' : rate >= 50 ? '⚠️ PARTIAL' : '❌ FAILED'}
 - **Tests**: ${passed}/${total} (${rate.toFixed(1)}%)
@@ -1259,14 +1259,14 @@ ${suite.tests.map(test => `- ${test.passed ? '✅' : '❌'} ${test.name}${test.d
 
 ## Performance Metrics
 
-${Object.entries(this.testResults.performanceMetrics).map(([test, metrics]) => 
+${Object.entries(this.testResults.performanceMetrics).map(([test, metrics]) =>
 `- **${test}**: ${metrics.duration}ms`).join('\n')}
 
 ## Recommendations
 
-${successRate >= 95 ? 
+${successRate >= 95 ?
 '🌟 **Production Ready**: The workflow is performing excellently and ready for production use.' :
-successRate >= 85 ? 
+successRate >= 85 ?
 '✅ **Minor Issues**: Address the failed tests to achieve production readiness.' :
 successRate >= 70 ?
 '⚠️ **Needs Improvement**: Several issues need to be addressed before production deployment.' :
@@ -1274,13 +1274,13 @@ successRate >= 70 ?
 
 ## Errors and Warnings
 
-${this.testResults.errors.length > 0 ? 
+${this.testResults.errors.length > 0 ?
 `### Errors
-${this.testResults.errors.map(error => `- **${error.type}**: ${error.message}`).join('\n')}` : 
+${this.testResults.errors.map(error => `- **${error.type}**: ${error.message}`).join('\n')}` :
 'No errors encountered.'}
 
-${this.testResults.warnings.length > 0 ? 
-`### Warnings  
+${this.testResults.warnings.length > 0 ?
+`### Warnings
 ${this.testResults.warnings.map(warning => `- **${warning.type}**: ${warning.message}`).join('\n')}` :
 'No warnings encountered.'}
 
@@ -1294,11 +1294,11 @@ ${this.testResults.warnings.map(warning => `- **${warning.type}**: ${warning.mes
 // CLI interface
 async function runE2ETests() {
     console.log('🧪 Feature Extraction Workflow - End-to-End Testing\n');
-    
+
     const tester = new FeatureExtractionE2ETest({
         projectRoot: process.cwd()
     });
-    
+
     await tester.runComplete();
 }
 

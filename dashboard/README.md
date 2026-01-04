@@ -221,7 +221,7 @@ npm run dev
    ```bash
    # Check GitHub token configuration
    echo $GITHUB_TOKEN
-   
+
    # Test GitHub API access
    curl -H "Authorization: token $GITHUB_TOKEN" \
         https://api.github.com/user
@@ -239,7 +239,7 @@ npm run dev
    ```bash
    # Check data collection logs
    npm run build:data 2>&1 | tee collection.log
-   
+
    # Verify data file generation
    find src/_data -name "*.json" -exec echo "File: {}" \; -exec head -5 {} \;
    ```
@@ -248,7 +248,7 @@ npm run dev
    ```bash
    # Verify Chart.js CDN access
    curl -I https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js
-   
+
    # Check browser console for JavaScript errors
    ```
 
@@ -266,7 +266,7 @@ DEBUG=dashboard:* npm run build:data
    ```bash
    # Create new page directory
    mkdir src/new-feature/
-   
+
    # Add index.njk with layout
    cat > src/new-feature/index.njk << EOF
    ---

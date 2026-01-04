@@ -2,7 +2,7 @@
 
 /**
  * Interactive CLI for Analysis Session Facilitation
- * 
+ *
  * This script provides an interactive command-line interface for:
  * - Navigating through upstream changes
  * - Applying the decision framework
@@ -29,7 +29,7 @@ class AnalysisSessionCLI {
       sessionNotesPath: join(__dirname, 'session-notes.md'),
       ...options
     };
-    
+
     this.config = this.loadConfig();
     this.git = simpleGit();
     this.session = {
@@ -38,7 +38,7 @@ class AnalysisSessionCLI {
       extractionCandidates: [],
       notes: []
     };
-    
+
     this.currentCommitIndex = 0;
     this.commits = [];
   }
@@ -55,12 +55,12 @@ class AnalysisSessionCLI {
 
   async initialize() {
     console.log(chalk.bold.blue('🔍 Analysis Session Interactive CLI\\n'));
-    
+
     // Load session metadata if available
     if (existsSync(join(__dirname, 'change-summary.json'))) {
       const summaryContent = readFileSync(join(__dirname, 'change-summary.json'), 'utf8');
       this.sessionMetadata = JSON.parse(summaryContent);
-      
+
       console.log(chalk.blue('📋 Session Information:'));
       console.log(`   Session ID: ${this.sessionMetadata.sessionId}`);
       console.log(`   Date: ${this.sessionMetadata.date}`);
@@ -68,7 +68,7 @@ class AnalysisSessionCLI {
       console.log(`   Commits to Analyze: ${this.sessionMetadata.analysis.commitCount}`);
       console.log('');
     }
-    
+
     await this.loadCommits();
   }
 
@@ -76,7 +76,7 @@ class AnalysisSessionCLI {
     try {
       // Determine commit range
       let fromRef = 'upstream/main~10'; // Default fallback
-      
+
       if (this.sessionMetadata?.analysis?.lastSessionDate !== 'never') {
         // Try to find the exact last session commit
         try {
@@ -85,7 +85,7 @@ class AnalysisSessionCLI {
             .filter(branch => branch.includes('origin/analysis/'))
             .sort()
             .pop();
-            
+
           if (lastBranch) {
             fromRef = lastBranch.replace('origin/', '');
           }
@@ -93,14 +93,14 @@ class AnalysisSessionCLI {
           console.warn(chalk.yellow(`Warning: Could not determine exact commit range: ${error.message}`));
         }
       }
-      
+
       // Get commit log
       const log = await this.git.log({
         from: fromRef,
         to: 'upstream/main',
         maxCount: this.config.cli?.max_commit_display || 20
       });
-      
+
       this.commits = log.all.map((commit, index) => ({
         index: index + 1,
         hash: commit.hash.substring(0, 8),
@@ -113,9 +113,9 @@ class AnalysisSessionCLI {
         priority: null,
         extractionCandidate: false
       }));
-      
+
       console.log(chalk.green(`📦 Loaded ${this.commits.length} commits for analysis\\n`));
-      
+
     } catch (error) {
       console.error(chalk.red(`Failed to load commits: ${error.message}`));
       process.exit(1);
@@ -170,7 +170,7 @@ class AnalysisSessionCLI {
 
   async analyzeCommits() {
     const unanalyzedCommits = this.commits.filter(c => !c.analyzed);
-    
+
     if (unanalyzedCommits.length === 0) {
       console.log(chalk.green('✅ All commits have been analyzed!'));
       await this.promptContinue();
@@ -208,17 +208,17 @@ class AnalysisSessionCLI {
 
   async interactiveAnalysis() {
     const unanalyzed = this.commits.filter(c => !c.analyzed);
-    
+
     for (const commit of unanalyzed) {
       await this.analyzeCommit(commit);
-      
+
       const { continue: shouldContinue } = await inquirer.prompt([{
         type: 'confirm',
         name: 'continue',
         message: 'Continue with next commit?',
         default: true
       }]);
-      
+
       if (!shouldContinue) break;
     }
   }
@@ -231,7 +231,7 @@ class AnalysisSessionCLI {
     console.log(`Author: ${commit.author}`);
     console.log(`Date: ${commit.date}`);
     console.log(`Message: ${chalk.white(commit.message)}`);
-    
+
     // Show diff if requested
     const { showDiff } = await inquirer.prompt([{
       type: 'confirm',
@@ -239,7 +239,7 @@ class AnalysisSessionCLI {
       message: 'Show commit diff?',
       default: false
     }]);
-    
+
     if (showDiff) {
       try {
         const diff = await this.git.show([commit.fullHash, '--stat']);
@@ -268,7 +268,7 @@ class AnalysisSessionCLI {
         { name: '⏭️ Skip - Skip this commit', value: 'skip' }
       ]
     }]);
-    
+
     if (category === 'skip') {
       commit.analyzed = true;
       commit.category = 'skipped';
@@ -300,7 +300,7 @@ class AnalysisSessionCLI {
         message: 'Mark as extraction candidate?',
         default: true
       }]);
-      
+
       if (isCandidate) {
         commit.extractionCandidate = true;
         await this.createExtractionCandidate(commit);
@@ -325,7 +325,7 @@ class AnalysisSessionCLI {
 
     const criteria = [
       'innovation',
-      'performance', 
+      'performance',
       'code_quality',
       'user_experience',
       'security',
@@ -409,37 +409,37 @@ class AnalysisSessionCLI {
       acc[commit.category] = (acc[commit.category] || 0) + 1;
       return acc;
     }, {});
-    
+
     const byPriority = analyzed.reduce((acc, commit) => {
       acc[commit.priority] = (acc[commit.priority] || 0) + 1;
       return acc;
     }, {});
 
     console.log(chalk.bold.blue('\\n📊 Analysis Summary\\n'));
-    
+
     console.log(chalk.yellow('Progress:'));
     console.log(`   Analyzed: ${analyzed.length}/${this.commits.length} commits`);
     console.log(`   Remaining: ${this.commits.length - analyzed.length}`);
-    
+
     console.log(chalk.yellow('\\nBy Category:'));
     Object.entries(byCategory).forEach(([category, count]) => {
       console.log(`   ${category}: ${count}`);
     });
-    
+
     console.log(chalk.yellow('\\nBy Priority:'));
     Object.entries(byPriority).forEach(([priority, count]) => {
       const color = priority === 'high' ? 'red' : priority === 'medium' ? 'yellow' : 'green';
       console.log(`   ${chalk[color](priority)}: ${count}`);
     });
-    
+
     console.log(chalk.yellow('\\nExtraction Candidates:'));
     console.log(`   Total: ${this.session.extractionCandidates.length}`);
-    
+
     const candidatesByPriority = this.session.extractionCandidates.reduce((acc, candidate) => {
       acc[candidate.priority] = (acc[candidate.priority] || 0) + 1;
       return acc;
     }, {});
-    
+
     Object.entries(candidatesByPriority).forEach(([priority, count]) => {
       const color = priority === 'high' ? 'red' : priority === 'medium' ? 'yellow' : 'green';
       console.log(`   ${chalk[color](priority)}: ${count}`);
@@ -458,7 +458,7 @@ class AnalysisSessionCLI {
 
     const progressPath = join(__dirname, 'session-progress.json');
     writeFileSync(progressPath, JSON.stringify(progressData, null, 2));
-    
+
     console.log(chalk.green(`\\n💾 Progress saved to: ${progressPath}`));
     await this.promptContinue();
   }
@@ -470,11 +470,11 @@ class AnalysisSessionCLI {
       message: 'Save progress before exiting?',
       default: true
     }]);
-    
+
     if (saveBeforeExit) {
       await this.saveProgress();
     }
-    
+
     console.log(chalk.blue('\\n👋 Thank you for using Analysis Session CLI!'));
     console.log(chalk.gray('   Run "npm run finalize" to complete the session when ready.'));
     process.exit(0);
@@ -512,7 +512,7 @@ program
       configPath: options.config,
       sessionNotesPath: options.sessionNotes
     });
-    
+
     await cli.run();
   });
 

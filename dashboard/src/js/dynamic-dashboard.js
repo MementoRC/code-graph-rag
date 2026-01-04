@@ -14,7 +14,7 @@ class DynamicDashboard {
             changeType: 'all',
             search: ''
         };
-        
+
         // Initialize when DOM is ready
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => this.init());
@@ -25,10 +25,10 @@ class DynamicDashboard {
 
     async init() {
         console.log('🚀 Initializing Dynamic Dashboard...');
-        
+
         // Load initial data
         await this.loadData();
-        
+
         // Initialize components
         this.initThemeToggle();
         this.initFilters();
@@ -36,10 +36,10 @@ class DynamicDashboard {
         this.initAdvancedCharts();
         this.initRealTimeUpdates();
         this.initKeyboardShortcuts();
-        
+
         // Apply user settings
         this.applySettings();
-        
+
         console.log('✅ Dynamic Dashboard initialized');
     }
 
@@ -50,7 +50,7 @@ class DynamicDashboard {
             // Load data from the same sources as the static build
             const dataFiles = [
                 'git-stats.json',
-                'github-data.json', 
+                'github-data.json',
                 'upstream-activity.json',
                 'analysis-docs.json'
             ];
@@ -69,7 +69,7 @@ class DynamicDashboard {
                     this.data[file.replace('.json', '').replace('-', '_')] = {};
                 }
             }
-            
+
             console.log('📊 Data loaded:', Object.keys(this.data));
         } catch (error) {
             console.error('Failed to load dashboard data:', error);
@@ -135,7 +135,7 @@ class DynamicDashboard {
             this.settings.theme = isDark ? 'dark' : 'light';
             themeToggle.innerHTML = isDark ? '☀️ Light Mode' : '🌙 Dark Mode';
             this.saveSettings();
-            
+
             // Update charts for theme change
             this.updateChartsTheme(isDark);
         });
@@ -158,7 +158,7 @@ class DynamicDashboard {
                         if (scale.grid) scale.grid.color = gridColor;
                     });
                 }
-                
+
                 // Update legend colors
                 if (chart.options.plugins && chart.options.plugins.legend) {
                     chart.options.plugins.legend.labels = {
@@ -166,7 +166,7 @@ class DynamicDashboard {
                         color: textColor
                     };
                 }
-                
+
                 chart.update();
             }
         });
@@ -177,7 +177,7 @@ class DynamicDashboard {
     initFilters() {
         const filterElements = [
             'dateRangePicker',
-            'authorFilter', 
+            'authorFilter',
             'changeTypeFilter'
         ];
 
@@ -209,13 +209,13 @@ class DynamicDashboard {
 
     applyFilters() {
         console.log('🔍 Applying filters:', this.filters);
-        
+
         // Filter and update charts
         this.updateCharts();
-        
+
         // Filter recent activity list
         this.filterRecentActivity();
-        
+
         // Update metrics based on filters
         this.updateFilteredMetrics();
     }
@@ -225,31 +225,31 @@ class DynamicDashboard {
         if (!activityContainer) return;
 
         const activities = activityContainer.querySelectorAll('.flex.items-center.space-x-3');
-        
+
         activities.forEach(activity => {
             const messageEl = activity.querySelector('.text-sm.font-medium');
             const authorEl = activity.querySelector('.text-sm.text-gray-500');
-            
+
             if (!messageEl || !authorEl) return;
-            
+
             const message = messageEl.textContent.toLowerCase();
             const authorText = authorEl.textContent.toLowerCase();
-            
+
             let visible = true;
-            
+
             // Apply search filter
-            if (this.filters.search && 
-                !message.includes(this.filters.search) && 
+            if (this.filters.search &&
+                !message.includes(this.filters.search) &&
                 !authorText.includes(this.filters.search)) {
                 visible = false;
             }
-            
+
             // Apply author filter
-            if (this.filters.author !== 'all' && 
+            if (this.filters.author !== 'all' &&
                 !authorText.includes(this.filters.author.toLowerCase())) {
                 visible = false;
             }
-            
+
             activity.style.display = visible ? 'flex' : 'none';
         });
     }
@@ -316,13 +316,13 @@ class DynamicDashboard {
 
     handleChartClick(chartType, element, chart) {
         console.log(`🖱️ Chart clicked: ${chartType}`, element);
-        
+
         if (chartType === 'commit') {
             // Show commits for selected day
             const dataIndex = element.index;
             const dataset = chart.data.datasets[element.datasetIndex];
             const label = chart.data.labels[dataIndex];
-            
+
             this.showCommitDetails(label, dataset.label);
         } else if (chartType === 'types') {
             // Filter by change type
@@ -393,15 +393,15 @@ class DynamicDashboard {
             circle.setAttribute('stroke', '#ffffff');
             circle.setAttribute('stroke-width', '2');
             circle.style.cursor = 'pointer';
-            
+
             // Add tooltip
             circle.innerHTML = `<title>${node.label}</title>`;
-            
+
             // Add click handler
             circle.addEventListener('click', () => {
                 this.showNodeDetails(node);
             });
-            
+
             svg.appendChild(circle);
         });
     }
@@ -409,7 +409,7 @@ class DynamicDashboard {
     generateNetworkNodes() {
         const nodes = [];
         const authors = Object.keys(this.data.git_stats?.commits?.byAuthor || {});
-        
+
         authors.slice(0, 8).forEach((author, i) => {
             const commits = this.data.git_stats.commits.byAuthor[author] || 0;
             nodes.push({
@@ -487,7 +487,7 @@ class DynamicDashboard {
 
         // Render heatmap squares
         grid.innerHTML = heatmapData.map(cell => `
-            <div class="heatmap-cell" 
+            <div class="heatmap-cell"
                  style="opacity: ${0.1 + cell.intensity * 0.9}; background-color: #10b981;"
                  title="${cell.date}: ${cell.commits} commits"
                  onclick="window.dynamicDashboard.showHeatmapDetails('${cell.date}', ${cell.commits})">
@@ -518,16 +518,16 @@ class DynamicDashboard {
 
     async refreshData() {
         console.log('🔄 Refreshing dashboard data...');
-        
+
         try {
             await this.loadData();
             this.updateCharts();
             this.updateMetrics();
             this.updateLastRefreshTime();
-            
+
             // Flash the status indicator
             this.flashStatusIndicator();
-            
+
         } catch (error) {
             console.error('Failed to refresh data:', error);
             this.updateStatusIndicator(false);
@@ -537,13 +537,13 @@ class DynamicDashboard {
     updateStatusIndicator(isLive) {
         const indicator = document.querySelector('.status-indicator');
         const statusText = document.querySelector('.last-updated');
-        
+
         if (indicator) {
-            indicator.className = isLive 
+            indicator.className = isLive
                 ? 'w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse status-indicator'
                 : 'w-2 h-2 bg-red-400 rounded-full mr-2 status-indicator';
         }
-        
+
         if (statusText) {
             statusText.textContent = isLive ? 'Live' : 'Offline';
         }
@@ -614,7 +614,7 @@ class DynamicDashboard {
             <div>/: Focus search</div>
             <div>Ctrl+F: Focus filters</div>
         `;
-        
+
         document.body.appendChild(hintsContainer);
     }
 

@@ -1,4 +1,4 @@
-from typing import Union, cast
+from typing import cast
 
 from loguru import logger
 from pydantic_ai import Agent, Tool
@@ -41,7 +41,7 @@ class CypherGenerator:
     def __init__(self) -> None:
         try:
             model_settings = None
-            llm: Union[GeminiModel, OpenAIResponsesModel, OpenAIModel]
+            llm: GeminiModel | OpenAIResponsesModel | OpenAIModel
 
             # Get active cypher model and detect its provider
             cypher_model_id = settings.active_cypher_model
@@ -61,8 +61,8 @@ class CypherGenerator:
                 if settings.GEMINI_THINKING_BUDGET is not None:
                     model_settings = GeminiModelSettings(
                         gemini_thinking_config={
-                            "thinking_budget": int(settings.GEMINI_THINKING_BUDGET)
-                        }
+                            "thinking_budget": int(settings.GEMINI_THINKING_BUDGET),
+                        },
                     )
 
                 llm = GeminiModel(
@@ -95,12 +95,12 @@ class CypherGenerator:
             )
         except Exception as e:
             raise LLMGenerationError(
-                f"Failed to initialize CypherGenerator: {e}"
+                f"Failed to initialize CypherGenerator: {e}",
             ) from e
 
     async def generate(self, natural_language_query: str) -> str:
         logger.info(
-            f"  [CypherGenerator] Generating query for: '{natural_language_query}'"
+            f"  [CypherGenerator] Generating query for: '{natural_language_query}'",
         )
         try:
             result = await self.agent.run(natural_language_query)
@@ -109,7 +109,7 @@ class CypherGenerator:
                 or "MATCH" not in result.output.upper()
             ):
                 raise LLMGenerationError(
-                    f"LLM did not generate a valid query. Output: {result.output}"
+                    f"LLM did not generate a valid query. Output: {result.output}",
                 )
 
             query = _clean_cypher_response(result.output)
@@ -124,7 +124,7 @@ def create_rag_orchestrator(tools: list[Tool]) -> Agent:
     """Factory function to create the main RAG orchestrator agent."""
     try:
         model_settings = None
-        llm: Union[GeminiModel, OpenAIModel, OpenAIResponsesModel]
+        llm: GeminiModel | OpenAIModel | OpenAIResponsesModel
 
         # Get active orchestrator model and detect its provider
         orchestrator_model_id = settings.active_orchestrator_model
@@ -143,8 +143,8 @@ def create_rag_orchestrator(tools: list[Tool]) -> Agent:
             if settings.GEMINI_THINKING_BUDGET is not None:
                 model_settings = GeminiModelSettings(
                     gemini_thinking_config={
-                        "thinking_budget": int(settings.GEMINI_THINKING_BUDGET)
-                    }
+                        "thinking_budget": int(settings.GEMINI_THINKING_BUDGET),
+                    },
                 )
 
             llm = GeminiModel(

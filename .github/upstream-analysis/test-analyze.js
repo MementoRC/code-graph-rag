@@ -2,7 +2,7 @@
 
 /**
  * Test script for upstream analysis functionality
- * 
+ *
  * Tests the analyzer with mock data and validates core functionality
  */
 
@@ -24,7 +24,7 @@ class MockAnalyzer extends UpstreamAnalyzer {
         isMerge: false
       },
       {
-        hash: 'def456789012', 
+        hash: 'def456789012',
         subject: 'fix: resolve security vulnerability in login',
         author: 'Security Team',
         email: 'security@example.com',
@@ -51,7 +51,7 @@ class MockAnalyzer extends UpstreamAnalyzer {
         isMerge: false
       }
     ];
-    
+
     this.mockFiles = {
       'abc123456789': [
         { status: 'A', path: 'src/auth/login.py', name: 'login.py' },
@@ -87,43 +87,43 @@ class MockAnalyzer extends UpstreamAnalyzer {
 
 async function runTests() {
   console.log('🧪 Starting upstream analysis tests...\n');
-  
+
   const analyzer = new MockAnalyzer();
-  
+
   try {
     console.log('📋 Test 1: Configuration Loading');
     await analyzer.initialize();
     console.log('✅ Configuration loaded successfully\n');
-    
+
     console.log('📋 Test 2: Commit Analysis');
     const result = await analyzer.analyzeChanges('mock-from', 'mock-to');
-    
+
     if (!result.success) {
       throw new Error('Analysis failed');
     }
-    
+
     const { summary, analyzedCommits } = result;
-    
+
     console.log('✅ Analysis completed successfully');
     console.log(`   • Commits analyzed: ${analyzedCommits.length}`);
     console.log(`   • Total significance: ${summary.totalSignificance}`);
     console.log(`   • Change level: ${summary.changeLevel}`);
     console.log(`   • Categories found: ${Object.keys(summary.categories).length}`);
     console.log('');
-    
+
     console.log('📋 Test 3: Categorization Validation');
     const expectedCategories = {
       'feat: add new user authentication system': 'feature',
-      'fix: resolve security vulnerability in login': 'security', 
+      'fix: resolve security vulnerability in login': 'security',
       'docs: update README with installation instructions': 'docs',
       'refactor: restructure authentication module': 'refactor'
     };
-    
+
     let categorizationCorrect = true;
     for (const commit of analyzedCommits) {
       const expected = expectedCategories[commit.subject];
       const actual = commit.category;
-      
+
       if (expected && expected !== actual) {
         console.log(`❌ Categorization mismatch: "${commit.subject}"`);
         console.log(`   Expected: ${expected}, Got: ${actual}`);
@@ -132,13 +132,13 @@ async function runTests() {
         console.log(`✅ Correct category for "${commit.subject}": ${actual}`);
       }
     }
-    
+
     if (categorizationCorrect) {
       console.log('✅ All categorizations correct\n');
     } else {
       console.log('❌ Some categorizations incorrect\n');
     }
-    
+
     console.log('📋 Test 4: Significance Scoring');
     const significanceTests = [
       {
@@ -152,13 +152,13 @@ async function runTests() {
         description: 'Documentation commit should have low significance'
       }
     ];
-    
+
     for (const test of significanceTests) {
       if (test.commit) {
         const score = test.commit.significance;
-        const passed = (test.minScore && score >= test.minScore) || 
+        const passed = (test.minScore && score >= test.minScore) ||
                       (test.maxScore && score <= test.maxScore);
-        
+
         if (passed) {
           console.log(`✅ ${test.description}: ${score}`);
         } else {
@@ -167,13 +167,13 @@ async function runTests() {
       }
     }
     console.log('');
-    
+
     console.log('📋 Test 5: Summary Generation');
     const requiredSummaryFields = [
-      'totalCommits', 'totalSignificance', 'totalFiles', 
+      'totalCommits', 'totalSignificance', 'totalFiles',
       'changeLevel', 'categories', 'topCommits', 'shouldNotify'
     ];
-    
+
     let summaryValid = true;
     for (const field of requiredSummaryFields) {
       if (!(field in summary)) {
@@ -181,11 +181,11 @@ async function runTests() {
         summaryValid = false;
       }
     }
-    
+
     if (summaryValid) {
       console.log('✅ Summary contains all required fields');
     }
-    
+
     // Test notification threshold logic
     const shouldNotify = summary.totalSignificance >= analyzer.config.thresholds.notification_threshold;
     if (summary.shouldNotify === shouldNotify) {
@@ -194,17 +194,17 @@ async function runTests() {
       console.log('❌ Notification threshold logic incorrect');
     }
     console.log('');
-    
+
     console.log('📋 Test 6: Issue Body Generation');
     const issueBody = analyzer.generateIssueBody(summary);
-    
+
     const requiredSections = [
       'Upstream Analysis Report',
-      'Summary by Category', 
+      'Summary by Category',
       'Top Significant Commits',
       'Review Actions'
     ];
-    
+
     let issueBodyValid = true;
     for (const section of requiredSections) {
       if (!issueBody.includes(section)) {
@@ -212,12 +212,12 @@ async function runTests() {
         issueBodyValid = false;
       }
     }
-    
+
     if (issueBodyValid) {
       console.log('✅ Issue body contains all required sections');
     }
     console.log('');
-    
+
     console.log('🎉 All tests completed!');
     console.log('\n📊 Test Results Summary:');
     console.log(`   • Configuration loading: ✅`);
@@ -226,7 +226,7 @@ async function runTests() {
     console.log(`   • Significance scoring: ✅`);
     console.log(`   • Summary generation: ${summaryValid ? '✅' : '❌'}`);
     console.log(`   • Issue body generation: ${issueBodyValid ? '✅' : '❌'}`);
-    
+
     // Output test results for potential CI use
     const testResults = {
       success: true,
@@ -245,32 +245,32 @@ async function runTests() {
         categories: Object.keys(summary.categories)
       }
     };
-    
+
     // Write test results to file if in CI environment
     if (process.env.CI || process.argv.includes('--output-json')) {
       await fs.writeFile('test-results.json', JSON.stringify(testResults, null, 2));
       console.log('\n📁 Test results written to test-results.json');
     }
-    
+
     if (process.argv.includes('--json')) {
       console.log('\n📋 JSON Output:');
       console.log(JSON.stringify(testResults, null, 2));
     }
-    
+
   } catch (error) {
     console.error('\n💥 Test failed:', error.message);
     console.error(error.stack);
-    
+
     const failureResults = {
       success: false,
       error: error.message,
       stack: error.stack
     };
-    
+
     if (process.env.CI || process.argv.includes('--output-json')) {
       await fs.writeFile('test-results.json', JSON.stringify(failureResults, null, 2));
     }
-    
+
     process.exit(1);
   }
 }

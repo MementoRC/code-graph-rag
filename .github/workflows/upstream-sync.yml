@@ -17,7 +17,7 @@ name: Upstream Sync
 jobs:
   sync-upstream:
     runs-on: ubuntu-latest
-    
+
     outputs:
       has_changes: ${{ steps.changes.outputs.has_changes }}
       upstream_commit: ${{ steps.fetch.outputs.upstream_commit }}
@@ -200,7 +200,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: sync-upstream
     if: needs.sync-upstream.outputs.has_changes == 'true'
-    
+
     outputs:
       analysis_success: ${{ steps.analyze.outputs.analysis_success }}
       significance_score: ${{ steps.analyze.outputs.significance_score }}
@@ -244,11 +244,11 @@ jobs:
         id: range
         run: |
           echo "🔍 Determining commit range for analysis..."
-          
+
           # Get the previous upstream-mirror commit (before sync)
           # This should be available from the sync job, but we'll calculate it
           current_commit=$(git rev-parse upstream/main)
-          
+
           # Try to get the previous commit from a few sources
           if [ -f .github/upstream-analysis/last-analysis.txt ]; then
             previous_commit=$(cat .github/upstream-analysis/last-analysis.txt)
@@ -262,7 +262,7 @@ jobs:
             fi
             echo "🕒 Using calculated previous commit: $previous_commit"
           fi
-          
+
           echo "from_ref=$previous_commit" >> $GITHUB_OUTPUT
           echo "to_ref=$current_commit" >> $GITHUB_OUTPUT
           echo "📊 Analysis range: $previous_commit → $current_commit"
@@ -277,10 +277,10 @@ jobs:
         run: |
           echo "🧠 Running upstream change analysis..."
           cd .github/upstream-analysis
-          
+
           # Run the analysis script
           node analyze-changes.js "$FROM_REF" "$TO_REF"
-          
+
           echo "✅ Analysis completed"
 
       - name: Store analysis checkpoint
@@ -290,14 +290,14 @@ jobs:
           mkdir -p .github/upstream-analysis
           echo "${{ steps.range.outputs.to_ref }}" > \
             .github/upstream-analysis/last-analysis.txt
-          
+
           # Commit the checkpoint file
           git add .github/upstream-analysis/last-analysis.txt
           if git diff --staged --quiet; then
             echo "ℹ️ No checkpoint changes to commit"
           else
             git commit -m "chore: update analysis checkpoint
-            
+
             🤖 Generated with [Claude Code](https://claude.ai/code)
             Co-Authored-By: Claude <noreply@anthropic.com>"
             git push origin upstream-mirror
@@ -309,7 +309,7 @@ jobs:
           echo "📊 Analysis Summary" >> $GITHUB_STEP_SUMMARY
           echo "==================" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           if [ "${{ steps.analyze.outputs.analysis_success }}" = "true" ]; then
             echo "- **Status**: ✅ Analysis completed" >> $GITHUB_STEP_SUMMARY
             echo "- **Significance Score**: ${{ steps.analyze.outputs.significance_score }}" \
@@ -319,7 +319,7 @@ jobs:
             echo "- **Range**: \`${{ steps.range.outputs.from_ref }}\` → \`${{ steps.range.outputs.to_ref }}\`" \
               >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-            
+
             # Notification status
             echo "### Notifications" >> $GITHUB_STEP_SUMMARY
             if [ "${{ steps.analyze.outputs.github_issue_created }}" = "true" ]; then
@@ -327,7 +327,7 @@ jobs:
             else
               echo "- ➖ No GitHub issue created" >> $GITHUB_STEP_SUMMARY
             fi
-            
+
             if [ "${{ steps.analyze.outputs.slack_sent }}" = "true" ]; then
               echo "- ✅ Slack notification sent" >> $GITHUB_STEP_SUMMARY
             else
@@ -337,7 +337,7 @@ jobs:
             echo "- **Status**: ❌ Analysis failed" >> $GITHUB_STEP_SUMMARY
             echo "- **Check logs**: Review workflow logs for details" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "---" >> $GITHUB_STEP_SUMMARY
           echo "*Analysis completed: $(date -u)*" >> $GITHUB_STEP_SUMMARY

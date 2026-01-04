@@ -25,7 +25,8 @@ def cli() -> None:
     help="URL to the tree-sitter grammar repository. If not provided, will use https://github.com/tree-sitter/tree-sitter-<language_name>",
 )
 def add_grammar(
-    language_name: str | None = None, grammar_url: str | None = None
+    language_name: str | None = None,
+    grammar_url: str | None = None,
 ) -> None:
     """Add a new language grammar to the project."""
 
@@ -36,7 +37,7 @@ def add_grammar(
     if not grammar_url:
         if not language_name:
             click.echo(
-                "❌ Error: Either language_name or --grammar-url must be provided"
+                "❌ Error: Either language_name or --grammar-url must be provided",
             )
             return
         grammar_url = f"https://github.com/tree-sitter/tree-sitter-{language_name}"
@@ -148,7 +149,7 @@ def add_grammar(
         file_extension = [
             ext.strip()
             for ext in click.prompt(
-                "What file extensions should be associated with this language? (comma-separated)"
+                "What file extensions should be associated with this language? (comma-separated)",
             ).split(",")
         ]
     else:
@@ -175,12 +176,12 @@ def add_grammar(
             click.echo("Warning: No grammars found in tree-sitter.json")
             if not language_name:
                 language_name = click.prompt(
-                    "What is the common name for this language?"
+                    "What is the common name for this language?",
                 )
             file_extension = [
                 ext.strip()
                 for ext in click.prompt(
-                    "What file extensions should be associated with this language? (comma-separated)"
+                    "What file extensions should be associated with this language? (comma-separated)",
                 ).split(",")
             ]
 
@@ -195,7 +196,10 @@ def add_grammar(
         possible_paths.extend(
             [
                 os.path.join(
-                    grammar_path, language_name, "src", "node-types.json"
+                    grammar_path,
+                    language_name,
+                    "src",
+                    "node-types.json",
                 ),  # Nested by language name
                 os.path.join(
                     grammar_path,
@@ -203,7 +207,7 @@ def add_grammar(
                     "src",
                     "node-types.json",
                 ),  # Underscore variant
-            ]
+            ],
         )
 
     node_types_path = None
@@ -214,7 +218,7 @@ def add_grammar(
 
     if not node_types_path:
         click.echo(
-            f"Warning: node-types.json not found in any expected location for {language_name}"
+            f"Warning: node-types.json not found in any expected location for {language_name}",
         )
         # Fallback to manual input
         function_nodes = ["function_definition", "method_definition"]
@@ -226,25 +230,29 @@ def add_grammar(
         functions = [
             node.strip()
             for node in click.prompt(
-                "Select nodes representing FUNCTIONS (comma-separated)", type=str
+                "Select nodes representing FUNCTIONS (comma-separated)",
+                type=str,
             ).split(",")
         ]
         classes = [
             node.strip()
             for node in click.prompt(
-                "Select nodes representing CLASSES (comma-separated)", type=str
+                "Select nodes representing CLASSES (comma-separated)",
+                type=str,
             ).split(",")
         ]
         modules = [
             node.strip()
             for node in click.prompt(
-                "Select nodes representing MODULES (comma-separated)", type=str
+                "Select nodes representing MODULES (comma-separated)",
+                type=str,
             ).split(",")
         ]
         calls = [
             node.strip()
             for node in click.prompt(
-                "Select nodes representing FUNCTION CALLS (comma-separated)", type=str
+                "Select nodes representing FUNCTION CALLS (comma-separated)",
+                type=str,
             ).split(",")
         ]
     else:
@@ -308,7 +316,7 @@ def add_grammar(
             click.echo("🌳 Tree-sitter semantic categories:")
             for category, subtypes in semantic_categories.items():
                 click.echo(
-                    f"  {category}: {subtypes[:5]}{'...' if len(subtypes) > 5 else ''} ({len(subtypes)} total)"
+                    f"  {category}: {subtypes[:5]}{'...' if len(subtypes) > 5 else ''} ({len(subtypes)} total)",
                 )
 
             # Map to our simplified categories - search ALL semantic categories
@@ -455,7 +463,7 @@ def add_grammar(
                 f.write(new_content)
 
             click.echo(
-                f"\n✅ Language '{language_name}' has been added to the configuration!"
+                f"\n✅ Language '{language_name}' has been added to the configuration!",
             )
             click.echo(f"📝 Updated {config_file_path}")
 
@@ -463,24 +471,26 @@ def add_grammar(
             click.echo()
             click.echo(
                 click.style(
-                    "📋 Please review the detected node types:", bold=True, fg="yellow"
-                )
+                    "📋 Please review the detected node types:",
+                    bold=True,
+                    fg="yellow",
+                ),
             )
             click.echo("   The auto-detection is good but may need manual adjustments.")
             click.echo(f"   Edit the configuration in: {config_file_path}")
             click.echo()
             click.echo("🎯 Look for these common issues:")
             click.echo(
-                "   • Remove misclassified types (e.g., table_constructor in functions)"
+                "   • Remove misclassified types (e.g., table_constructor in functions)",
             )
             click.echo("   • Add missing types that should be included")
             click.echo(
-                "   • Verify class_node_types includes all relevant class-like constructs"
+                "   • Verify class_node_types includes all relevant class-like constructs",
             )
             click.echo("   • Check call_node_types covers all function call patterns")
             click.echo()
             click.echo(
-                "💡 You can run 'python -m codebase_rag.tools.language list-languages' to see the current config."
+                "💡 You can run 'python -m codebase_rag.tools.language list-languages' to see the current config.",
             )
         else:
             raise ValueError("Could not find LANGUAGE_CONFIGS dictionary end")
@@ -491,7 +501,7 @@ def add_grammar(
             click.style(
                 "FALLBACK: Please manually add the following entry to 'LANGUAGE_CONFIGS' in 'codebase_rag/language_config.py':",
                 bold=True,
-            )
+            ),
         )
         click.echo(click.style(config_entry, fg="green"))
 
@@ -502,7 +512,9 @@ def list_languages() -> None:
     console = Console()
 
     table = Table(
-        title="📋 Configured Languages", show_header=True, header_style="bold magenta"
+        title="📋 Configured Languages",
+        show_header=True,
+        header_style="bold magenta",
     )
     table.add_column("Language", style="cyan", width=12)
     table.add_column("Extensions", style="green", width=20)
@@ -530,7 +542,9 @@ def list_languages() -> None:
 @cli.command()
 @click.argument("language_name")
 @click.option(
-    "--keep-submodule", is_flag=True, help="Keep the git submodule (default: remove it)"
+    "--keep-submodule",
+    is_flag=True,
+    help="Keep the git submodule (default: remove it)",
 )
 def remove_language(language_name: str, keep_submodule: bool = False) -> None:
     """Remove a language from the project."""
@@ -578,7 +592,9 @@ def remove_language(language_name: str, keep_submodule: bool = False) -> None:
                     capture_output=True,
                 )
                 subprocess.run(
-                    ["git", "rm", "-f", submodule_path], check=True, capture_output=True
+                    ["git", "rm", "-f", submodule_path],
+                    check=True,
+                    capture_output=True,
                 )
 
                 # Clean up .git/modules directory (this is crucial!)

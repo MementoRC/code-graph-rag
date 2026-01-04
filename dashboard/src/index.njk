@@ -9,7 +9,7 @@ description: Real-time visualization of upstream activity and analysis status
     <div class="flex flex-wrap items-center justify-between gap-4">
         <div class="flex items-center space-x-4">
             <h2 class="text-lg font-semibold text-gray-900">Filters & Controls</h2>
-            
+
             <!-- Filter Status Badge -->
             <div x-show="isFiltered" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 filter-active">
                 <span x-text="`${data.stats.totalCommits || 0} filtered`"></span>
@@ -19,7 +19,7 @@ description: Real-time visualization of upstream activity and analysis status
                     </svg>
                 </button>
             </div>
-            
+
             <!-- Date Range Filter -->
             <select x-model="filters.dateRange" @change="applyFilters()" class="form-select text-sm border-gray-300 rounded-md">
                 <option value="1d">Last 24 hours</option>
@@ -28,7 +28,7 @@ description: Real-time visualization of upstream activity and analysis status
                 <option value="90d">Last 90 days</option>
                 <option value="all">All time</option>
             </select>
-            
+
             <!-- Author Filter -->
             <select x-model="filters.author" @change="applyFilters()" class="form-select text-sm border-gray-300 rounded-md">
                 <option value="all">All authors</option>
@@ -36,7 +36,7 @@ description: Real-time visualization of upstream activity and analysis status
                     <option :value="author.author" x-text="`${author.author} (${author.count})`"></option>
                 </template>
             </select>
-            
+
             <!-- Change Type Filter -->
             <select x-model="filters.changeType" @change="applyFilters()" class="form-select text-sm border-gray-300 rounded-md">
                 <option value="all">All changes</option>
@@ -48,17 +48,17 @@ description: Real-time visualization of upstream activity and analysis status
                 <option value="other">Other</option>
             </select>
         </div>
-        
+
         <div class="flex items-center space-x-4">
             <!-- Search -->
-            <input 
-                type="text" 
+            <input
+                type="text"
                 x-model="filters.search"
                 @input.debounce.300ms="applyFilters()"
-                placeholder="Search commits, issues..." 
+                placeholder="Search commits, issues..."
                 class="form-input text-sm border-gray-300 rounded-md w-64"
             >
-            
+
             <!-- Action Buttons -->
             <button @click="refreshData()" :disabled="ui.loading" class="btn btn-secondary text-sm transition-all">
                 <svg x-show="!ui.loading" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -70,27 +70,27 @@ description: Real-time visualization of upstream activity and analysis status
                 </svg>
                 <span x-text="ui.loading ? 'Refreshing...' : 'Refresh'"></span>
             </button>
-            
+
             <!-- Theme Toggle -->
             <button @click="toggleTheme()" class="btn btn-secondary text-sm">
                 <span x-text="settings.theme === 'light' ? '🌙 Dark Mode' : '☀️ Light Mode'"></span>
             </button>
-            
+
             <!-- Settings Toggle -->
             <button @click="toggleSettings()" class="btn btn-secondary text-sm">
                 ⚙️ Settings
             </button>
-            
+
             <!-- Real-time Status -->
             <div class="flex items-center text-sm text-gray-500" :title="`Last updated: ${formatDate(ui.lastUpdated)}`">
-                <div class="w-2 h-2 rounded-full mr-2 animate-pulse" 
+                <div class="w-2 h-2 rounded-full mr-2 animate-pulse"
                      :class="settings.autoRefresh ? 'bg-green-400 status-indicator online' : 'bg-gray-400 status-indicator offline'">
                 </div>
                 <span x-text="settings.autoRefresh ? 'Live' : 'Manual'"></span>
             </div>
         </div>
     </div>
-    
+
     <!-- Settings Panel -->
     <div x-show="ui.showSettings" x-transition class="mt-4 p-4 bg-gray-50 rounded-lg border">
         <h3 class="text-sm font-semibold text-gray-900 mb-3">Dashboard Settings</h3>
@@ -117,7 +117,7 @@ description: Real-time visualization of upstream activity and analysis status
             </button>
         </div>
     </div>
-    
+
     <!-- Keyboard Shortcuts Hint -->
     <div x-show="ui.showKeyboardHints" x-transition class="fixed bottom-4 right-4 bg-gray-800 text-white p-4 rounded-lg text-xs z-50 glass-effect">
         <div class="font-semibold mb-2">Keyboard Shortcuts:</div>
@@ -395,32 +395,32 @@ document.addEventListener('DOMContentLoaded', function() {
         // Prepare data from collections
         const gitStats = {{ collections.gitStats | dump | safe }};
         const upstreamActivity = {{ collections.upstreamActivity | dump | safe }};
-        
+
         // Process commit data by date for the last 30 days
         const today = new Date();
         const thirtyDaysAgo = new Date(today.getTime() - (30 * 24 * 60 * 60 * 1000));
         const labels = [];
         const localData = [];
         const upstreamData = [];
-        
+
         for (let i = 29; i >= 0; i--) {
             const date = new Date(today.getTime() - (i * 24 * 60 * 60 * 1000));
             const dateStr = date.toISOString().split('T')[0];
             labels.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
-            
+
             // Get local commits for this date
-            const localCommits = (gitStats?.commits?.byDate && gitStats.commits.byDate[dateStr]) 
-                ? gitStats.commits.byDate[dateStr].length || 0 
+            const localCommits = (gitStats?.commits?.byDate && gitStats.commits.byDate[dateStr])
+                ? gitStats.commits.byDate[dateStr].length || 0
                 : 0;
             localData.push(localCommits);
-            
+
             // Get upstream commits for this date
-            const upstreamCommits = (upstreamActivity?.commits?.byDate && upstreamActivity.commits.byDate[dateStr]) 
-                ? upstreamActivity.commits.byDate[dateStr] || 0 
+            const upstreamCommits = (upstreamActivity?.commits?.byDate && upstreamActivity.commits.byDate[dateStr])
+                ? upstreamActivity.commits.byDate[dateStr] || 0
                 : 0;
             upstreamData.push(upstreamCommits);
         }
-        
+
         new Chart(commitCtx, {
             type: 'line',
             data: {
@@ -463,7 +463,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-    
+
     // Change Types Chart
     const typesCtx = document.getElementById('changeTypesChart');
     if (typesCtx) {
@@ -475,7 +475,7 @@ document.addEventListener('DOMContentLoaded', function() {
             test: 0,
             other: 0
         };
-        
+
         new Chart(typesCtx, {
             type: 'doughnut',
             data: {

@@ -41,7 +41,8 @@ class FileReader:
 
             if not full_path.is_file():
                 return FileReadResult(
-                    file_path=file_path, error_message="File not found."
+                    file_path=file_path,
+                    error_message="File not found.",
                 )
 
             # Check if the file has a binary extension
@@ -68,7 +69,8 @@ class FileReader:
         except Exception as e:
             logger.error(f"Error reading file {file_path}: {e}")
             return FileReadResult(
-                file_path=file_path, error_message=f"An unexpected error occurred: {e}"
+                file_path=file_path,
+                error_message=f"An unexpected error occurred: {e}",
             )
 
 

@@ -2,7 +2,7 @@
 
 /**
  * Template Generation Script
- * 
+ *
  * Generates analysis session documentation from templates with upstream data
  */
 
@@ -29,7 +29,7 @@ class TemplateGenerator {
    */
   async initialize() {
     console.log('🔧 Initializing template generator...');
-    
+
     // Load configuration
     const configPath = path.join(__dirname, 'config.yml');
     try {
@@ -93,17 +93,17 @@ class TemplateGenerator {
    */
   async createAnalysisBranch(branchDate) {
     const branchName = `analysis/${branchDate}`;
-    
+
     try {
       console.log(`🌿 Creating analysis branch: ${branchName}`);
-      
+
       // Ensure we're starting from the right base
       execSync('git fetch upstream', { cwd: process.cwd() });
       execSync('git checkout upstream-mirror', { cwd: process.cwd() });
-      
+
       // Create and checkout the analysis branch
       execSync(`git checkout -b ${branchName}`, { cwd: process.cwd() });
-      
+
       console.log(`✅ Analysis branch created: ${branchName}`);
       return branchName;
     } catch (error) {
@@ -117,10 +117,10 @@ class TemplateGenerator {
    */
   async getAnalysisData(fromRef, toRef) {
     console.log('📊 Gathering analysis data...');
-    
+
     try {
       const result = await this.analyzer.analyzeChanges(fromRef, toRef);
-      
+
       if (!result.success) {
         throw new Error('Analysis failed');
       }
@@ -139,15 +139,15 @@ class TemplateGenerator {
     const { summary, analyzedCommits } = analysisData;
     const now = new Date();
     const branchDate = options.branchDate || now.toISOString().split('T')[0];
-    
+
     // Get repository URLs (assuming GitHub)
     let repoUrl = 'https://github.com/vitali87/code-graph-rag';
     let localRepoUrl = 'https://github.com/MementoRC/code-graph-rag';
-    
+
     try {
-      const remoteOrigin = execSync('git remote get-url origin', { 
-        encoding: 'utf8', 
-        cwd: process.cwd() 
+      const remoteOrigin = execSync('git remote get-url origin', {
+        encoding: 'utf8',
+        cwd: process.cwd()
       }).trim();
       const match = remoteOrigin.match(/github\.com[/:](.*?)\/(.*)\.git/);
       if (match) {
@@ -171,20 +171,20 @@ class TemplateGenerator {
       sessionDuration: options.duration || 'TBD',
       lastSessionDate: options.lastSessionDate || 'never',
       commitCount: options.commitCount || summary.totalCommits,
-      
+
       // Repository info
       repoUrl,
       localRepoUrl,
       upstreamCommit: options.toRef || 'HEAD',
       previousCommit: options.fromRef || 'HEAD~1',
-      
+
       // Analysis data
       totalCommits: summary.totalCommits,
       totalFiles: summary.totalFiles,
       significanceScore: summary.totalSignificance,
       changeLevel: summary.changeLevel,
       categories: summary.categories,
-      
+
       // Enhanced commits data
       topCommits: summary.topCommits.slice(0, 10).map(commit => ({
         hash: commit.hash.substring(0, 8),
@@ -195,7 +195,7 @@ class TemplateGenerator {
         date: commit.date,
         fileCount: commit.fileCount
       })),
-      
+
       // Category analysis
       categoryAnalysis: Object.entries(summary.categories).map(([category, data]) => ({
         category: category.charAt(0).toUpperCase() + category.slice(1),
@@ -212,17 +212,17 @@ class TemplateGenerator {
           notes: ''
         }))
       })),
-      
+
       // Template placeholders for manual completion
       highImpactAreas: this.generatePlaceholderImpactAreas('high'),
       mediumImpactAreas: this.generatePlaceholderImpactAreas('medium'),
       lowImpactAreas: this.generatePlaceholderImpactAreas('low'),
-      
+
       // Extraction candidates based on significance
       highPriorityExtractions: this.generateExtractionCandidates(analyzedCommits, 'high'),
       mediumPriorityExtractions: this.generateExtractionCandidates(analyzedCommits, 'medium'),
       lowPriorityExtractions: this.generateExtractionCandidates(analyzedCommits, 'low'),
-      
+
       // Placeholder sections
       immediateActions: [],
       deferredDecisions: [],
@@ -231,7 +231,7 @@ class TemplateGenerator {
       researchTasks: [],
       testingTasks: [],
       documentationTasks: [],
-      
+
       // Reference data
       documentationLinks: [
         {
@@ -240,7 +240,7 @@ class TemplateGenerator {
           description: 'Overall strategy document'
         }
       ],
-      
+
       // Session objectives (placeholder)
       sessionObjectives: [
         {
@@ -254,7 +254,7 @@ class TemplateGenerator {
           status: 'Pending'
         }
       ],
-      
+
       // Quality gates
       qualityGates: {
         completeCoverage: false,
@@ -263,18 +263,18 @@ class TemplateGenerator {
         risksIdentified: false,
         documentationComplete: false
       },
-      
+
       // Follow-up
       followupMilestones: [],
       nextReviewDate: 'TBD',
       progressCheckDate: 'TBD',
       integrationReviewDate: 'TBD',
-      
+
       // Meta
       completionTime: now.toISOString(),
       generationTime: now.toISOString(),
       templateVersion: '1.0.0',
-      
+
       // Process notes (placeholder)
       positives: ['Template generated successfully'],
       improvements: ['Manual completion required'],
@@ -299,7 +299,7 @@ class TemplateGenerator {
       docs: 'Documentation updates',
       test: 'Testing improvements and additions'
     };
-    
+
     return descriptions[category] || 'Miscellaneous changes';
   }
 
@@ -337,7 +337,7 @@ class TemplateGenerator {
       medium: { min: 5, max: 7 },
       low: { min: 1, max: 4 }
     };
-    
+
     const range = priorityRanges[priority];
     const candidates = commits
       .filter(commit => commit.significance >= range.min && commit.significance <= range.max)
@@ -353,7 +353,7 @@ class TemplateGenerator {
         risks: 'To be assessed',
         integrationStrategy: 'To be planned'
       }));
-    
+
     return candidates;
   }
 
@@ -362,22 +362,22 @@ class TemplateGenerator {
    */
   async generateFromTemplate(templateName, data, outputName) {
     console.log(`📝 Generating ${outputName} from ${templateName}...`);
-    
+
     try {
       // Read template file
       const templatePath = path.join(this.templatesDir, `${templateName}.md`);
       const templateContent = await fs.readFile(templatePath, 'utf8');
-      
+
       // Compile template
       const template = handlebars.compile(templateContent);
-      
+
       // Generate content
       const content = template(data);
-      
+
       // Write output file
       const outputPath = path.join(this.outputDir, `${outputName}.md`);
       await fs.writeFile(outputPath, content);
-      
+
       console.log(`✅ Generated: ${outputPath}`);
       return outputPath;
     } catch (error) {
@@ -391,19 +391,19 @@ class TemplateGenerator {
    */
   async generateSession(fromRef, toRef, options = {}) {
     console.log('🚀 Starting session template generation...');
-    
+
     try {
       // Get analysis data
       const analysisData = await this.getAnalysisData(fromRef, toRef);
-      
+
       // Create branch date
       const branchDate = options.branchDate || new Date().toISOString().split('T')[0];
-      
+
       // Create analysis branch if requested
       if (options.createBranch) {
         await this.createAnalysisBranch(branchDate);
       }
-      
+
       // Enhance data with template context
       const templateData = this.enhanceAnalysisData(analysisData, {
         ...options,
@@ -411,33 +411,33 @@ class TemplateGenerator {
         fromRef,
         toRef
       });
-      
+
       // Generate templates
       const outputs = {};
-      
+
       // Full analysis session - use consistent filename for latest
       outputs.fullAnalysis = await this.generateFromTemplate(
         'analysis-session',
         templateData,
         'latest-analysis'
       );
-      
+
       // Quick summary - use consistent filename for latest
       outputs.quickSummary = await this.generateFromTemplate(
         'quick-summary',
         templateData,
         'latest-summary'
       );
-      
+
       console.log('🎉 Session templates generated successfully!');
-      
+
       return {
         success: true,
         branchDate,
         outputs,
         analysisData: templateData
       };
-      
+
     } catch (error) {
       console.error('💥 Session generation failed:', error.message);
       return {
@@ -478,13 +478,13 @@ async function setupCLI() {
     .action(async (fromRef, toRef, options) => {
       const generator = new TemplateGenerator();
       await generator.initialize();
-      
+
       // Override output directory if specified
       if (options.output) {
         generator.outputDir = path.resolve(options.output);
         await fs.mkdir(generator.outputDir, { recursive: true });
       }
-      
+
       const sessionOptions = {
         createBranch: options.branch,
         branchDate: options.date || options.sessionDate,
@@ -498,9 +498,9 @@ async function setupCLI() {
         commitCount: options.commitCount ? parseInt(options.commitCount) : undefined,
         lastSessionDate: options.lastSession
       };
-      
+
       const result = await generator.generateSession(fromRef, toRef, sessionOptions);
-      
+
       if (options.json) {
         console.log(JSON.stringify(result, null, 2));
       } else if (result.success) {
@@ -524,7 +524,7 @@ async function setupCLI() {
       try {
         const files = await fs.readdir(generator.templatesDir);
         const templates = files.filter(f => f.endsWith('.md'));
-        
+
         console.log('📝 Available Templates:');
         templates.forEach(template => {
           console.log(`   • ${template.replace('.md', '')}`);

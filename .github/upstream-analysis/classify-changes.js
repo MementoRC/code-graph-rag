@@ -2,7 +2,7 @@
 
 /**
  * Automated Change Classification System
- * 
+ *
  * Intelligently classifies upstream changes by type and relevance to local codebase
  */
 
@@ -38,7 +38,7 @@ class ChangeClassifier {
    */
   async initialize() {
     console.log('🔧 Initializing change classifier...');
-    
+
     // Load main configuration
     const configPath = path.join(__dirname, 'config.yml');
     try {
@@ -68,14 +68,14 @@ class ChangeClassifier {
    */
   async loadClassificationConfig() {
     const classificationConfigPath = path.join(__dirname, 'classification-config.yml');
-    
+
     try {
       const configFile = await fs.readFile(classificationConfigPath, 'utf8');
       const classificationConfig = yaml.load(configFile);
-      
+
       this.classificationRules = classificationConfig.classification_rules;
       this.relevanceScorers = classificationConfig.relevance_scoring;
-      
+
       console.log('✅ Classification configuration loaded');
     } catch (error) {
       console.warn('⚠️ Classification config not found, using defaults');
@@ -173,13 +173,13 @@ class ChangeClassifier {
 
     // Initialize stemmer for keyword matching
     this.stemmer = natural.PorterStemmer;
-    
+
     // Initialize tokenizer
     this.tokenizer = new natural.WordTokenizer();
-    
+
     // Initialize sentiment analyzer (for change impact assessment)
     if (natural.SentimentAnalyzer && natural.PorterStemmer) {
-      this.sentimentAnalyzer = new natural.SentimentAnalyzer('English', 
+      this.sentimentAnalyzer = new natural.SentimentAnalyzer('English',
         natural.PorterStemmer, 'afinn');
     }
 
@@ -191,7 +191,7 @@ class ChangeClassifier {
    */
   async loadTrainingData() {
     const trainingDataPath = path.join(__dirname, 'training-data.json');
-    
+
     try {
       const trainingFile = await fs.readFile(trainingDataPath, 'utf8');
       this.trainingData = JSON.parse(trainingFile);
@@ -207,16 +207,16 @@ class ChangeClassifier {
    */
   classifyCommit(commit) {
     console.log(`🔍 Classifying commit: ${commit.hash.substring(0, 8)} - ${commit.subject}`);
-    
+
     const classifications = {};
     let bestMatch = { category: 'other', confidence: 0.0, scores: {} };
-    
+
     // Analyze each category
     for (const [category, rules] of Object.entries(this.classificationRules)) {
       const classification = this.analyzeCommitForCategory(commit, category, rules);
       classifications[category] = classification;
-      
-      if (classification.confidence > bestMatch.confidence && 
+
+      if (classification.confidence > bestMatch.confidence &&
           classification.confidence >= rules.confidence_threshold) {
         bestMatch = {
           category,
@@ -226,10 +226,10 @@ class ChangeClassifier {
         };
       }
     }
-    
+
     // Calculate relevance score
     const relevanceScore = this.calculateRelevanceScore(commit, bestMatch.category);
-    
+
     return {
       category: bestMatch.category,
       confidence: bestMatch.confidence,
@@ -256,42 +256,42 @@ class ChangeClassifier {
       negativeKeyword: 0,
       nlp: 0
     };
-    
+
     const reasons = [];
-    
+
     // Keyword analysis
     const subjectLower = commit.subject.toLowerCase();
-    const keywordMatches = rules.keywords.filter(keyword => 
+    const keywordMatches = rules.keywords.filter(keyword =>
       subjectLower.includes(keyword.toLowerCase())
     );
-    
+
     if (keywordMatches.length > 0) {
       scores.keyword = Math.min(keywordMatches.length / rules.keywords.length, 1.0);
       reasons.push(`Keywords: ${keywordMatches.join(', ')}`);
     }
-    
+
     // Negative keyword penalty
-    const negativeMatches = rules.negative_keywords.filter(keyword => 
+    const negativeMatches = rules.negative_keywords.filter(keyword =>
       subjectLower.includes(keyword.toLowerCase())
     );
-    
+
     if (negativeMatches.length > 0) {
       scores.negativeKeyword = -0.3 * negativeMatches.length;
       reasons.push(`Negative keywords: ${negativeMatches.join(', ')}`);
     }
-    
+
     // File pattern analysis
     if (commit.files && commit.files.length > 0) {
-      const matchingFiles = commit.files.filter(file => 
+      const matchingFiles = commit.files.filter(file =>
         this.matchesFilePatterns(file.path, rules.file_patterns)
       );
-      
+
       if (matchingFiles.length > 0) {
         scores.filePattern = matchingFiles.length / commit.files.length;
         reasons.push(`File patterns: ${matchingFiles.length}/${commit.files.length} files match`);
       }
     }
-    
+
     // NLP analysis (if available)
     if (natural && this.tokenizer) {
       scores.nlp = this.performNLPAnalysis(commit.subject, category);
@@ -299,7 +299,7 @@ class ChangeClassifier {
         reasons.push(`NLP analysis: ${scores.nlp.toFixed(2)} confidence`);
       }
     }
-    
+
     // Calculate weighted confidence
     const weights = {
       keyword: 0.4,
@@ -307,14 +307,14 @@ class ChangeClassifier {
       negativeKeyword: 1.0,  // Full penalty
       nlp: 0.3
     };
-    
-    const confidence = Math.max(0, 
+
+    const confidence = Math.max(0,
       (scores.keyword * weights.keyword) +
       (scores.filePattern * weights.filePattern) +
       (scores.negativeKeyword * weights.negativeKeyword) +
       (scores.nlp * weights.nlp)
     ) * rules.weight;
-    
+
     return {
       confidence: Math.min(confidence, 1.0),
       scores,
@@ -332,7 +332,7 @@ class ChangeClassifier {
         .replace(/\./g, '\\.')
         .replace(/\*/g, '.*')
         .replace(/\?/g, '.');
-      
+
       const regex = new RegExp(regexPattern, 'i');
       return regex.test(filePath);
     });
@@ -343,44 +343,44 @@ class ChangeClassifier {
    */
   performNLPAnalysis(subject, category) {
     if (!natural || !this.tokenizer) return 0;
-    
+
     try {
       // Tokenize and stem words
       const tokens = this.tokenizer.tokenize(subject.toLowerCase());
       const stemmedTokens = tokens.map(token => this.stemmer.stem(token));
-      
+
       // Get category keywords and stem them
       const categoryRules = this.classificationRules[category];
-      const stemmedKeywords = categoryRules.keywords.map(keyword => 
+      const stemmedKeywords = categoryRules.keywords.map(keyword =>
         this.stemmer.stem(keyword.toLowerCase())
       );
-      
+
       // Calculate similarity using Jaccard index
-      const intersection = stemmedTokens.filter(token => 
+      const intersection = stemmedTokens.filter(token =>
         stemmedKeywords.includes(token)
       );
-      
+
       const union = [...new Set([...stemmedTokens, ...stemmedKeywords])];
-      
+
       if (union.length === 0) return 0;
-      
+
       const similarity = intersection.length / union.length;
-      
+
       // Boost for compromise.js named entity recognition (if available)
       if (compromise) {
         const doc = compromise(subject);
         const entities = doc.match('#Noun').out('array');
-        
+
         // Check if entities match category context
-        const contextBoost = entities.some(entity => 
-          categoryRules.keywords.some(keyword => 
+        const contextBoost = entities.some(entity =>
+          categoryRules.keywords.some(keyword =>
             entity.toLowerCase().includes(keyword.toLowerCase())
           )
         ) ? 0.2 : 0;
-        
+
         return Math.min(similarity + contextBoost, 1.0);
       }
-      
+
       return similarity;
     } catch (error) {
       console.warn('⚠️ NLP analysis failed:', error.message);
@@ -394,19 +394,19 @@ class ChangeClassifier {
   calculateRelevanceScore(commit, category) {
     const scorers = this.relevanceScorers;
     let totalScore = 0;
-    
+
     // File overlap score
     const fileOverlapScore = this.calculateFileOverlapScore(commit, scorers.file_overlap);
     totalScore += fileOverlapScore * scorers.file_overlap.weight;
-    
+
     // Functionality impact score
     const functionalityScore = this.calculateFunctionalityImpactScore(commit, scorers.functionality_impact);
     totalScore += functionalityScore * scorers.functionality_impact.weight;
-    
+
     // Roadmap alignment score
     const roadmapScore = this.calculateRoadmapAlignmentScore(commit, category, scorers.roadmap_alignment);
     totalScore += roadmapScore * scorers.roadmap_alignment.weight;
-    
+
     return Math.min(totalScore, 1.0);
   }
 
@@ -415,21 +415,21 @@ class ChangeClassifier {
    */
   calculateFileOverlapScore(commit, config) {
     if (!commit.files || commit.files.length === 0) return 0;
-    
+
     const relevantFiles = commit.files.filter(file => {
       // Check extension relevance
-      const hasRelevantExtension = config.local_extensions.some(ext => 
+      const hasRelevantExtension = config.local_extensions.some(ext =>
         file.path.toLowerCase().endsWith(ext)
       );
-      
+
       // Check directory relevance
-      const inCoreDirectory = config.core_directories.some(dir => 
+      const inCoreDirectory = config.core_directories.some(dir =>
         file.path.toLowerCase().startsWith(dir.toLowerCase())
       );
-      
+
       return hasRelevantExtension || inCoreDirectory;
     });
-    
+
     return relevantFiles.length / commit.files.length;
   }
 
@@ -438,14 +438,14 @@ class ChangeClassifier {
    */
   calculateFunctionalityImpactScore(commit, config) {
     const subjectLower = commit.subject.toLowerCase();
-    
+
     // Check for core functionality keywords
-    const coreKeywordMatches = config.core_keywords.filter(keyword => 
+    const coreKeywordMatches = config.core_keywords.filter(keyword =>
       subjectLower.includes(keyword.toLowerCase())
     );
-    
+
     if (coreKeywordMatches.length === 0) return 0.1; // Baseline relevance
-    
+
     const baseScore = Math.min(coreKeywordMatches.length / config.core_keywords.length, 1.0);
     return baseScore * config.impact_multiplier;
   }
@@ -455,20 +455,20 @@ class ChangeClassifier {
    */
   calculateRoadmapAlignmentScore(commit, category, config) {
     const subjectLower = commit.subject.toLowerCase();
-    
+
     // Check for priority keywords
-    const priorityMatches = config.priority_keywords.filter(keyword => 
+    const priorityMatches = config.priority_keywords.filter(keyword =>
       subjectLower.includes(keyword.toLowerCase())
     );
-    
+
     let score = priorityMatches.length > 0 ? 0.8 : 0.3; // Base alignment
-    
+
     // Category-specific bonuses
     const highPriorityCategories = ['security', 'performance', 'bugfix'];
     if (highPriorityCategories.includes(category)) {
       score *= config.alignment_bonus;
     }
-    
+
     return Math.min(score, 1.0);
   }
 
@@ -485,15 +485,15 @@ class ChangeClassifier {
    */
   classifyCommits(commits) {
     console.log(`🔍 Classifying ${commits.length} commits...`);
-    
+
     const classifications = commits.map(commit => ({
       ...commit,
       classification: this.classifyCommit(commit)
     }));
-    
+
     // Generate batch statistics
     const stats = this.generateClassificationStats(classifications);
-    
+
     return {
       classifications,
       stats,
@@ -516,11 +516,11 @@ class ChangeClassifier {
       medium: 0,  // 0.4 - 0.7
       low: 0      // < 0.4
     };
-    
+
     classifications.forEach(({ classification }) => {
       // Category count
       categoryCount[classification.category] = (categoryCount[classification.category] || 0) + 1;
-      
+
       // Confidence distribution
       if (classification.confidence >= 0.8) {
         confidenceDistribution.high++;
@@ -529,7 +529,7 @@ class ChangeClassifier {
       } else {
         confidenceDistribution.low++;
       }
-      
+
       // Relevance distribution
       if (classification.relevance >= 0.7) {
         relevanceDistribution.high++;
@@ -539,7 +539,7 @@ class ChangeClassifier {
         relevanceDistribution.low++;
       }
     });
-    
+
     return {
       totalCommits: classifications.length,
       categoryCount,
@@ -562,12 +562,12 @@ class ChangeClassifier {
       timestamp: new Date().toISOString(),
       correct: expectedCategory === actualCategory
     };
-    
+
     this.feedbackData.push(feedback);
-    
+
     // Save feedback for future training
     this.saveFeedback();
-    
+
     console.log(`📝 Feedback recorded: ${commitHash} - Expected: ${expectedCategory}, Got: ${actualCategory}`);
   }
 
@@ -590,14 +590,14 @@ class ChangeClassifier {
     if (this.feedbackData.length === 0) {
       return { accuracy: 0, totalFeedback: 0, categoryAccuracy: {} };
     }
-    
+
     const correct = this.feedbackData.filter(f => f.correct).length;
     const accuracy = correct / this.feedbackData.length;
-    
+
     // Category-specific accuracy
     const categoryAccuracy = {};
     const categoryGroups = {};
-    
+
     this.feedbackData.forEach(feedback => {
       if (!categoryGroups[feedback.expectedCategory]) {
         categoryGroups[feedback.expectedCategory] = { total: 0, correct: 0 };
@@ -607,11 +607,11 @@ class ChangeClassifier {
         categoryGroups[feedback.expectedCategory].correct++;
       }
     });
-    
+
     for (const [category, data] of Object.entries(categoryGroups)) {
       categoryAccuracy[category] = data.correct / data.total;
     }
-    
+
     return {
       accuracy,
       totalFeedback: this.feedbackData.length,

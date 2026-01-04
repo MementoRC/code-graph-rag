@@ -44,7 +44,7 @@ def _try_load_from_submodule(lang_name: str) -> LanguageLoader:
 
                 if result.returncode != 0:
                     logger.debug(
-                        f"Failed to build {lang_name} bindings: stdout={result.stdout}, stderr={result.stderr}"
+                        f"Failed to build {lang_name} bindings: stdout={result.stdout}, stderr={result.stderr}",
                     )
                     return None
                 logger.debug(f"Successfully built {lang_name} bindings")
@@ -65,12 +65,12 @@ def _try_load_from_submodule(lang_name: str) -> LanguageLoader:
             for attr_name in language_attrs:
                 if hasattr(module, attr_name):
                     logger.debug(
-                        f"Successfully loaded {lang_name} from submodule bindings using {attr_name}"
+                        f"Successfully loaded {lang_name} from submodule bindings using {attr_name}",
                     )
                     return getattr(module, attr_name)  # type: ignore[no-any-return]
 
             logger.debug(
-                f"Module {module_name} imported but has no language attribute. Available: {dir(module)}"
+                f"Module {module_name} imported but has no language attribute. Available: {dir(module)}",
             )
 
         finally:
@@ -178,25 +178,28 @@ def load_parsers() -> tuple[dict[str, Parser], dict[str, Any]]:
                     [
                         f"({node_type}) @function"
                         for node_type in lang_config.function_node_types
-                    ]
+                    ],
                 )
                 class_patterns = " ".join(
                     [
                         f"({node_type}) @class"
                         for node_type in lang_config.class_node_types
-                    ]
+                    ],
                 )
                 call_patterns = " ".join(
                     [
                         f"({node_type}) @call"
                         for node_type in lang_config.call_node_types
-                    ]
+                    ],
                 )
 
+                # Use modern Query constructor instead of deprecated language.query()
+                from tree_sitter import Query
+
                 queries[lang_name] = {
-                    "functions": language.query(function_patterns),
-                    "classes": language.query(class_patterns),
-                    "calls": language.query(call_patterns) if call_patterns else None,
+                    "functions": Query(language, function_patterns),
+                    "classes": Query(language, class_patterns),
+                    "calls": Query(language, call_patterns) if call_patterns else None,
                     "config": lang_config,
                 }
 

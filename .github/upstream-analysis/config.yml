@@ -6,10 +6,10 @@
 detection:
   # Minimum number of commits to trigger analysis
   min_commits: 1
-  
+
   # Maximum commits to analyze in one batch (performance limit)
   max_commits: 100
-  
+
   # Days to look back for analysis context
   analysis_window_days: 30
 
@@ -33,7 +33,7 @@ significance:
     - "docker-compose.yml" # Docker compose
     - "README.md"     # Documentation
     - "CHANGELOG.md"  # Change documentation
-  
+
   # File patterns to ignore (low significance)
   ignore_files:
     - "*.log"         # Log files
@@ -44,7 +44,7 @@ significance:
     - "*.md"          # Most markdown (README is exception above)
     - "docs/**"       # Documentation directory
     - "examples/**"   # Example files
-  
+
   # Commit message keywords that indicate significance
   significant_keywords:
     - "breaking"      # Breaking changes
@@ -60,7 +60,7 @@ significance:
     - "database"      # Database changes
     - "migration"     # Migration scripts
     - "config"        # Configuration changes
-  
+
   # Keywords that reduce significance
   low_significance_keywords:
     - "docs"          # Documentation only
@@ -77,42 +77,42 @@ categories:
     keywords: ["feat", "feature", "add", "new"]
     weight: 8
     color: "#28a745"  # Green
-  
+
   bugfix:
     keywords: ["fix", "bug", "patch", "resolve"]
     weight: 7
     color: "#dc3545"  # Red
-  
+
   security:
     keywords: ["security", "vulnerability", "cve"]
     weight: 10
     color: "#fd7e14"  # Orange
-  
+
   performance:
     keywords: ["perf", "performance", "optimize", "speed"]
     weight: 6
     color: "#17a2b8"  # Info blue
-  
+
   breaking:
     keywords: ["breaking", "BREAKING"]
     weight: 10
     color: "#6f42c1"  # Purple
-  
+
   refactor:
     keywords: ["refactor", "restructure", "reorganize"]
     weight: 5
     color: "#6c757d"  # Gray
-  
+
   config:
     keywords: ["config", "configuration", "settings"]
     weight: 4
     color: "#ffc107"  # Yellow
-  
+
   docs:
     keywords: ["docs", "documentation", "readme"]
     weight: 2
     color: "#20c997"  # Teal
-  
+
   test:
     keywords: ["test", "testing", "spec"]
     weight: 3
@@ -133,7 +133,7 @@ notifications:
     title_template: "Upstream Analysis: {commit_count} commits ({date})"
     # Assignees for created issues (GitHub usernames)
     assignees: []
-  
+
   # Slack Notifications
   slack:
     enabled: false  # Set to true and configure webhook_url to enable
@@ -146,7 +146,7 @@ notifications:
     username: "Upstream Sync Bot"
     # Icon emoji for posts
     icon_emoji: ":arrow_up:"
-  
+
   # Email Notifications
   email:
     enabled: false  # Set to true and configure SMTP settings to enable
@@ -162,16 +162,16 @@ notifications:
 thresholds:
   # Total significance score that triggers notifications
   notification_threshold: 10
-  
+
   # Score above which changes are considered "major"
   major_change_threshold: 25
-  
+
   # Score above which changes are considered "critical"
   critical_change_threshold: 50
-  
+
   # Maximum files to include in detailed analysis
   max_files_detail: 20
-  
+
   # Maximum commits to show in notifications
   max_commits_summary: 10
 
@@ -179,9 +179,9 @@ thresholds:
 performance:
   # Timeout for GitHub API calls (seconds)
   api_timeout: 30
-  
+
   # Delay between API calls to avoid rate limiting (ms)
   api_delay: 100
-  
+
   # Maximum file size to include in diff analysis (bytes)
   max_file_size: 1048576  # 1MB

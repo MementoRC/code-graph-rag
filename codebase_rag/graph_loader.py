@@ -87,7 +87,7 @@ class GraphLoader:
 
         logger.info(
             f"Loaded {len(self._nodes)} nodes and "
-            f"{len(self._relationships)} relationships with indexes"
+            f"{len(self._relationships)} relationships with indexes",
         )
 
     def _build_property_index(self, property_name: str) -> None:
@@ -149,7 +149,7 @@ class GraphLoader:
     def get_relationships_for_node(self, node_id: int) -> list[GraphRelationship]:
         """Get all relationships (incoming and outgoing) for a node. O(1) lookup."""
         return self.get_outgoing_relationships(
-            node_id
+            node_id,
         ) + self.get_incoming_relationships(node_id)
 
     def get_outgoing_relationships(self, node_id: int) -> list[GraphRelationship]:

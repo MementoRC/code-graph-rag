@@ -72,11 +72,11 @@ _EDIT_REQUEST_KEYWORDS = frozenset(
         "write",
         "implement",
         "replace",
-    ]
+    ],
 )
 
 _EDIT_TOOLS = frozenset(
-    ["edit_file", "write_file", "file_editor", "file_writer", "create_file"]
+    ["edit_file", "write_file", "file_editor", "file_writer", "create_file"],
 )
 
 _EDIT_INDICATORS = frozenset(
@@ -98,16 +98,16 @@ _EDIT_INDICATORS = frozenset(
         "file modified",
         "file updated",
         "file created",
-    ]
+    ],
 )
 
 # Pre-compile regex patterns
 _FILE_MODIFICATION_PATTERNS = [
     re.compile(
-        r"(modified|updated|created|edited):\s*[\w/\\.-]+\.(py|js|ts|java|cpp|c|h|go|rs)"
+        r"(modified|updated|created|edited):\s*[\w/\\.-]+\.(py|js|ts|java|cpp|c|h|go|rs)",
     ),
     re.compile(
-        r"file\s+[\w/\\.-]+\.(py|js|ts|java|cpp|c|h|go|rs)\s+(modified|updated|created|edited)"
+        r"file\s+[\w/\\.-]+\.(py|js|ts|java|cpp|c|h|go|rs)\s+(modified|updated|created|edited)",
     ),
     re.compile(r"writing\s+to\s+[\w/\\.-]+\.(py|js|ts|java|cpp|c|h|go|rs)"),
 ]
@@ -166,7 +166,9 @@ def is_edit_operation_request(question: str) -> bool:
 
 
 async def _handle_rejection(
-    rag_agent: Any, message_history: list[Any], console: Console
+    rag_agent: Any,
+    message_history: list[Any],
+    console: Console,
 ) -> Any:
     """Handle user rejection of edits with agent acknowledgment."""
     rejection_message = "The user has rejected the changes that were made. Please acknowledge this and consider if any changes need to be reverted."
@@ -186,7 +188,7 @@ async def _handle_rejection(
                 rejection_markdown,
                 title="[bold yellow]Response to Rejection[/bold yellow]",
                 border_style="yellow",
-            )
+            ),
         )
         message_history.extend(rejection_response.new_messages())
 
@@ -249,7 +251,8 @@ def _create_configuration_table(
     orchestrator_model = settings.active_orchestrator_model
     orchestrator_provider = detect_provider_from_model(orchestrator_model)
     table.add_row(
-        "Orchestrator Model", f"{orchestrator_model} ({orchestrator_provider})"
+        "Orchestrator Model",
+        f"{orchestrator_model} ({orchestrator_provider})",
     )
 
     cypher_model = settings.active_cypher_model
@@ -283,7 +286,7 @@ async def run_optimization_loop(
     # Initialize session logging
     init_session_log(project_root)
     console.print(
-        f"[bold green]Starting {language} optimization session...[/bold green]"
+        f"[bold green]Starting {language} optimization session...[/bold green]",
     )
     document_info = (
         f" using the reference document: {reference_document}"
@@ -296,7 +299,7 @@ async def run_optimization_loop(
             f" You'll be asked to approve each suggestion before implementation."
             f" Type 'exit' or 'quit' to end the session.[/bold yellow]",
             border_style="yellow",
-        )
+        ),
     )
 
     # Initial optimization analysis
@@ -306,7 +309,7 @@ async def run_optimization_loop(
     ]
     if reference_document:
         instructions.append(
-            f"Use the analyze_document tool to reference best practices from {reference_document}"
+            f"Use the analyze_document tool to reference best practices from {reference_document}",
         )
 
     instructions.extend(
@@ -315,7 +318,7 @@ async def run_optimization_loop(
             "Propose specific, actionable optimizations with file references",
             "IMPORTANT: Do not make any changes yet - just propose them and wait for approval",
             "After approval, use your file editing tools to implement the changes",
-        ]
+        ],
     )
 
     numbered_instructions = "\n".join(
@@ -340,7 +343,8 @@ Remember: Propose changes first, wait for my approval, then implement.
             if not first_run:
                 # Ask for user input on subsequent iterations
                 question = await asyncio.to_thread(
-                    get_multiline_input, "[bold cyan]Your response[/bold cyan]"
+                    get_multiline_input,
+                    "[bold cyan]Your response[/bold cyan]",
                 )
 
             if question.lower() in ["exit", "quit"]:
@@ -360,16 +364,18 @@ Remember: Propose changes first, wait for my approval, then implement.
 
             # Handle images in the question
             question_with_context = _handle_chat_images(
-                question_with_context, project_root
+                question_with_context,
+                project_root,
             )
 
             with console.status(
-                "[bold green]Agent is analyzing codebase... (Press Ctrl+C to cancel)[/bold green]"
+                "[bold green]Agent is analyzing codebase... (Press Ctrl+C to cancel)[/bold green]",
             ):
                 response = await run_with_cancellation(
                     console,
                     rag_agent.run(
-                        question_with_context, message_history=message_history
+                        question_with_context,
+                        message_history=message_history,
                     ),
                 )
 
@@ -385,27 +391,27 @@ Remember: Propose changes first, wait for my approval, then implement.
                     markdown_response,
                     title="[bold green]Optimization Agent[/bold green]",
                     border_style="green",
-                )
+                ),
             )
 
             # Check if confirmation is needed for edit operations
             if confirm_edits_globally and is_edit_operation_response(response.output):
                 console.print(
-                    "\n[bold yellow]⚠️  This optimization has performed file modifications.[/bold yellow]"
+                    "\n[bold yellow]⚠️  This optimization has performed file modifications.[/bold yellow]",
                 )
 
                 if not Confirm.ask(
-                    "[bold cyan]Do you want to keep these optimizations?[/bold cyan]"
+                    "[bold cyan]Do you want to keep these optimizations?[/bold cyan]",
                 ):
                     console.print(
-                        "[bold red]❌ Optimizations rejected by user.[/bold red]"
+                        "[bold red]❌ Optimizations rejected by user.[/bold red]",
                     )
                     await _handle_rejection(rag_agent, message_history, console)
                     first_run = False
                     continue
                 else:
                     console.print(
-                        "[bold green]✅ Optimizations approved by user.[/bold green]"
+                        "[bold green]✅ Optimizations approved by user.[/bold green]",
                     )
 
             # Log assistant response
@@ -423,7 +429,9 @@ Remember: Propose changes first, wait for my approval, then implement.
 
 
 async def run_with_cancellation(
-    console: Console, coro: Any, timeout: float | None = None
+    console: Console,
+    coro: Any,
+    timeout: float | None = None,
 ) -> Any:
     """Run a coroutine with proper Ctrl+C cancellation that doesn't exit the program."""
     task = asyncio.create_task(coro)
@@ -437,7 +445,7 @@ async def run_with_cancellation(
         except asyncio.CancelledError:
             pass
         console.print(
-            f"\n[bold yellow]Operation timed out after {timeout} seconds.[/bold yellow]"
+            f"\n[bold yellow]Operation timed out after {timeout} seconds.[/bold yellow]",
         )
         return {"cancelled": True, "timeout": True}
     except (asyncio.CancelledError, KeyboardInterrupt):
@@ -508,14 +516,15 @@ def _handle_chat_images(question: str, project_root: Path) -> str:
             for variant in path_variants:
                 if variant in updated_question:
                     updated_question = updated_question.replace(
-                        variant, str(new_relative_path)
+                        variant,
+                        str(new_relative_path),
                     )
                     replaced = True
                     break
 
             if not replaced:
                 logger.warning(
-                    f"Could not find original path in question for replacement: {original_path_str}"
+                    f"Could not find original path in question for replacement: {original_path_str}",
                 )
 
             logger.info(f"Copied image to temporary path: {new_relative_path}")
@@ -550,8 +559,8 @@ def get_multiline_input(prompt_text: str = "Ask a question") -> str:
     # Display the colored prompt first
     print_formatted_text(
         HTML(
-            f"<ansigreen><b>{clean_prompt}</b></ansigreen> <ansiyellow>(Press Ctrl+J to submit, Enter for new line)</ansiyellow>: "
-        )
+            f"<ansigreen><b>{clean_prompt}</b></ansigreen> <ansiyellow>(Press Ctrl+J to submit, Enter for new line)</ansiyellow>: ",
+        ),
     )
 
     # Use simple prompt without formatting to avoid alignment issues
@@ -568,7 +577,9 @@ def get_multiline_input(prompt_text: str = "Ask a question") -> str:
 
 
 async def run_chat_loop(
-    rag_agent: Any, message_history: list[Any], project_root: Path
+    rag_agent: Any,
+    message_history: list[Any],
+    project_root: Path,
 ) -> None:
     """Runs the main chat loop with proper edit confirmation."""
     global session_cancelled
@@ -580,7 +591,8 @@ async def run_chat_loop(
         try:
             # Get user input
             question = await asyncio.to_thread(
-                get_multiline_input, "[bold cyan]Ask a question[/bold cyan]"
+                get_multiline_input,
+                "[bold cyan]Ask a question[/bold cyan]",
             )
 
             if question.lower() in ["exit", "quit"]:
@@ -600,28 +612,30 @@ async def run_chat_loop(
 
             # Handle images in the question
             question_with_context = _handle_chat_images(
-                question_with_context, project_root
+                question_with_context,
+                project_root,
             )
 
             # Check if this might be an edit operation and warn user upfront
             might_edit = is_edit_operation_request(question)
             if confirm_edits_globally and might_edit:
                 console.print(
-                    "\n[bold yellow]⚠️  This request might result in file modifications.[/bold yellow]"
+                    "\n[bold yellow]⚠️  This request might result in file modifications.[/bold yellow]",
                 )
                 if not Confirm.ask(
-                    "[bold cyan]Do you want to proceed with this request?[/bold cyan]"
+                    "[bold cyan]Do you want to proceed with this request?[/bold cyan]",
                 ):
                     console.print("[bold red]❌ Request cancelled by user.[/bold red]")
                     continue
 
             with console.status(
-                "[bold green]Thinking... (Press Ctrl+C to cancel)[/bold green]"
+                "[bold green]Thinking... (Press Ctrl+C to cancel)[/bold green]",
             ):
                 response = await run_with_cancellation(
                     console,
                     rag_agent.run(
-                        question_with_context, message_history=message_history
+                        question_with_context,
+                        message_history=message_history,
                     ),
                 )
 
@@ -637,24 +651,24 @@ async def run_chat_loop(
                     markdown_response,
                     title="[bold green]Assistant[/bold green]",
                     border_style="green",
-                )
+                ),
             )
 
             # Check if the response actually contains edit operations
             if confirm_edits_globally and is_edit_operation_response(response.output):
                 console.print(
-                    "\n[bold yellow]⚠️  The assistant has performed file modifications.[/bold yellow]"
+                    "\n[bold yellow]⚠️  The assistant has performed file modifications.[/bold yellow]",
                 )
 
                 if not Confirm.ask(
-                    "[bold cyan]Do you want to keep these changes?[/bold cyan]"
+                    "[bold cyan]Do you want to keep these changes?[/bold cyan]",
                 ):
                     console.print("[bold red]❌ User rejected the changes.[/bold red]")
                     await _handle_rejection(rag_agent, message_history, console)
                     continue
                 else:
                     console.print(
-                        "[bold green]✅ Changes accepted by user.[/bold green]"
+                        "[bold green]✅ Changes accepted by user.[/bold green]",
                     )
 
             # Log assistant response
@@ -708,10 +722,10 @@ def _export_graph_to_file(ingestor: MemgraphIngestor, output: str) -> bool:
             json.dump(graph_data, f, indent=2, ensure_ascii=False)
 
         console.print(
-            f"[bold green]Graph exported successfully to: {output_path.absolute()}[/bold green]"
+            f"[bold green]Graph exported successfully to: {output_path.absolute()}[/bold green]",
         )
         console.print(
-            f"[bold cyan]Export contains {graph_data['metadata']['total_nodes']} nodes and {graph_data['metadata']['total_relationships']} relationships[/bold cyan]"
+            f"[bold cyan]Export contains {graph_data['metadata']['total_nodes']} nodes and {graph_data['metadata']['total_relationships']} relationships[/bold cyan]",
         )
         return True
 
@@ -732,7 +746,8 @@ def _initialize_services_and_agent(repo_path: str, ingestor: MemgraphIngestor) -
     file_writer = FileWriter(project_root=repo_path)
     file_editor = FileEditor(project_root=repo_path)
     shell_commander = ShellCommander(
-        project_root=repo_path, timeout=settings.SHELL_COMMAND_TIMEOUT
+        project_root=repo_path,
+        timeout=settings.SHELL_COMMAND_TIMEOUT,
     )
     directory_lister = DirectoryLister(project_root=repo_path)
     document_analyzer = DocumentAnalyzer(project_root=repo_path)
@@ -756,7 +771,7 @@ def _initialize_services_and_agent(repo_path: str, ingestor: MemgraphIngestor) -
             shell_command_tool,
             directory_lister_tool,
             document_analyzer_tool,
-        ]
+        ],
     )
     return rag_agent
 
@@ -769,14 +784,15 @@ async def main_async(repo_path: str) -> None:
     console.print(table)
 
     with MemgraphIngestor(
-        host=settings.MEMGRAPH_HOST, port=settings.MEMGRAPH_PORT
+        host=settings.MEMGRAPH_HOST,
+        port=settings.MEMGRAPH_PORT,
     ) as ingestor:
         console.print("[bold green]Successfully connected to Memgraph.[/bold green]")
         console.print(
             Panel(
                 "[bold yellow]Ask questions about your codebase graph. Type 'exit' or 'quit' to end.[/bold yellow]",
                 border_style="yellow",
-            )
+            ),
         )
 
         rag_agent = _initialize_services_and_agent(repo_path, ingestor)
@@ -786,7 +802,9 @@ async def main_async(repo_path: str) -> None:
 @app.command()
 def start(
     repo_path: str | None = typer.Option(
-        None, "--repo-path", help="Path to the target repository for code retrieval"
+        None,
+        "--repo-path",
+        help="Path to the target repository for code retrieval",
     ),
     update_graph: bool = typer.Option(
         False,
@@ -805,10 +823,14 @@ def start(
         help="Export graph to JSON file after updating (requires --update-graph)",
     ),
     orchestrator_model: str | None = typer.Option(
-        None, "--orchestrator-model", help="Specify the orchestrator model ID"
+        None,
+        "--orchestrator-model",
+        help="Specify the orchestrator model ID",
     ),
     cypher_model: str | None = typer.Option(
-        None, "--cypher-model", help="Specify the Cypher generator model ID"
+        None,
+        "--cypher-model",
+        help="Specify the Cypher generator model ID",
     ),
     no_confirm: bool = typer.Option(
         False,
@@ -822,10 +844,10 @@ def start(
     # Check if graph dependencies are available
     if not HAS_GRAPH_DEPENDENCIES:
         console.print(
-            "[bold red]Error: Graph dependencies (mgclient) not available.[/bold red]"
+            "[bold red]Error: Graph dependencies (mgclient) not available.[/bold red]",
         )
         console.print(
-            "This command requires the full runtime environment with database connectivity."
+            "This command requires the full runtime environment with database connectivity.",
         )
         console.print("Try installing with: pixi run -e runtime start ...")
         raise typer.Exit(1)
@@ -838,7 +860,7 @@ def start(
     # Validate output option usage
     if output and not update_graph:
         console.print(
-            "[bold red]Error: --output/-o option requires --update-graph to be specified.[/bold red]"
+            "[bold red]Error: --output/-o option requires --update-graph to be specified.[/bold red]",
         )
         raise typer.Exit(1)
 
@@ -847,11 +869,12 @@ def start(
     if update_graph:
         repo_to_update = Path(target_repo_path)
         console.print(
-            f"[bold green]Updating knowledge graph for: {repo_to_update}[/bold green]"
+            f"[bold green]Updating knowledge graph for: {repo_to_update}[/bold green]",
         )
 
         with MemgraphIngestor(
-            host=settings.MEMGRAPH_HOST, port=settings.MEMGRAPH_PORT
+            host=settings.MEMGRAPH_HOST,
+            port=settings.MEMGRAPH_PORT,
         ) as ingestor:
             if clean:
                 console.print("[bold yellow]Cleaning database...[/bold yellow]")
@@ -884,10 +907,15 @@ def start(
 @app.command()
 def export(
     output: str = typer.Option(
-        ..., "-o", "--output", help="Output file path for the exported graph"
+        ...,
+        "-o",
+        "--output",
+        help="Output file path for the exported graph",
     ),
     format_json: bool = typer.Option(
-        True, "--json/--no-json", help="Export in JSON format"
+        True,
+        "--json/--no-json",
+        help="Export in JSON format",
     ),
 ) -> None:
     """Export the current knowledge graph to a file."""
@@ -895,17 +923,17 @@ def export(
     # Check if graph dependencies are available
     if not HAS_GRAPH_DEPENDENCIES:
         console.print(
-            "[bold red]Error: Graph dependencies (mgclient) not available.[/bold red]"
+            "[bold red]Error: Graph dependencies (mgclient) not available.[/bold red]",
         )
         console.print(
-            "This command requires the full runtime environment with database connectivity."
+            "This command requires the full runtime environment with database connectivity.",
         )
         console.print("Try installing with: pixi run -e runtime export ...")
         raise typer.Exit(1)
 
     if not format_json:
         console.print(
-            "[bold red]Error: Currently only JSON format is supported.[/bold red]"
+            "[bold red]Error: Currently only JSON format is supported.[/bold red]",
         )
         raise typer.Exit(1)
 
@@ -913,7 +941,8 @@ def export(
 
     try:
         with MemgraphIngestor(
-            host=settings.MEMGRAPH_HOST, port=settings.MEMGRAPH_PORT
+            host=settings.MEMGRAPH_HOST,
+            port=settings.MEMGRAPH_PORT,
         ) as ingestor:
             console.print("[bold cyan]Exporting graph data...[/bold cyan]")
             if not _export_graph_to_file(ingestor, output):
@@ -938,23 +967,30 @@ async def main_optimize_async(
     _update_model_settings(orchestrator_model, cypher_model)
 
     console.print(
-        f"[bold cyan]Initializing optimization session for {language} codebase: {project_root}[/bold cyan]"
+        f"[bold cyan]Initializing optimization session for {language} codebase: {project_root}[/bold cyan]",
     )
 
     # Display configuration with language included
     table = _create_configuration_table(
-        str(project_root), "Optimization Session Configuration", language
+        str(project_root),
+        "Optimization Session Configuration",
+        language,
     )
     console.print(table)
 
     with MemgraphIngestor(
-        host=settings.MEMGRAPH_HOST, port=settings.MEMGRAPH_PORT
+        host=settings.MEMGRAPH_HOST,
+        port=settings.MEMGRAPH_PORT,
     ) as ingestor:
         console.print("[bold green]Successfully connected to Memgraph.[/bold green]")
 
         rag_agent = _initialize_services_and_agent(target_repo_path, ingestor)
         await run_optimization_loop(
-            rag_agent, [], project_root, language, reference_document
+            rag_agent,
+            [],
+            project_root,
+            language,
+            reference_document,
         )
 
 
@@ -965,7 +1001,9 @@ def optimize(
         help="Programming language to optimize for (e.g., python, java, javascript, cpp)",
     ),
     repo_path: str | None = typer.Option(
-        None, "--repo-path", help="Path to the repository to optimize"
+        None,
+        "--repo-path",
+        help="Path to the repository to optimize",
     ),
     reference_document: str | None = typer.Option(
         None,
@@ -973,10 +1011,14 @@ def optimize(
         help="Path to reference document/book for optimization guidance",
     ),
     orchestrator_model: str | None = typer.Option(
-        None, "--orchestrator-model", help="Specify the orchestrator model ID"
+        None,
+        "--orchestrator-model",
+        help="Specify the orchestrator model ID",
     ),
     cypher_model: str | None = typer.Option(
-        None, "--cypher-model", help="Specify the Cypher generator model ID"
+        None,
+        "--cypher-model",
+        help="Specify the Cypher generator model ID",
     ),
     no_confirm: bool = typer.Option(
         False,
@@ -990,10 +1032,10 @@ def optimize(
     # Check if graph dependencies are available
     if not HAS_GRAPH_DEPENDENCIES:
         console.print(
-            "[bold red]Error: Graph dependencies (mgclient) not available.[/bold red]"
+            "[bold red]Error: Graph dependencies (mgclient) not available.[/bold red]",
         )
         console.print(
-            "This command requires the full runtime environment with database connectivity."
+            "This command requires the full runtime environment with database connectivity.",
         )
         console.print("Try installing with: pixi run -e runtime optimize ...")
         raise typer.Exit(1)
@@ -1011,7 +1053,7 @@ def optimize(
                 reference_document,
                 orchestrator_model,
                 cypher_model,
-            )
+            ),
         )
     except KeyboardInterrupt:
         console.print("\n[bold red]Optimization session terminated by user.[/bold red]")

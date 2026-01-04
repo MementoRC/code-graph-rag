@@ -47,7 +47,7 @@ This ensures you always have a clear, current analysis while preserving historic
 - `latest-analysis.md` - Always the current analysis
 - `latest-summary.md` - Always the current summary
 
-### Archive Files  
+### Archive Files
 - `YYYYMMDD-HHMMSS-[original-filename].md` - Timestamped archives
 - `session-YYYY-MM-DD-HHMMSS-final.json` - Completed session data
 - `session-YYYY-MM-DD-HHMMSS-issues.json` - GitHub issues created
