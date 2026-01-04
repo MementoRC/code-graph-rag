@@ -122,11 +122,11 @@ jobs:
           cache: false
           manifest-path: pyproject.toml
           locked: false
-          environments: quality
+          environments: smoke-test
 
       - name: Set environment variable (Linux)
         if: matrix.os == 'ubuntu-latest'
-        run: echo "PIXI_ENV=quality" >> $GITHUB_ENV
+        run: echo "PIXI_ENV=smoke-test" >> $GITHUB_ENV
 
       - name: Setup pixi (Windows/macOS - resolve fresh)
         if: matrix.os != 'ubuntu-latest'
@@ -136,16 +136,16 @@ jobs:
           cache: false
           manifest-path: pyproject.toml
           locked: false
-          environments: quality
+          environments: smoke-test
 
       - name: Set environment variable (Windows)
         if: matrix.os == 'windows-latest'
         shell: pwsh
-        run: echo "PIXI_ENV=quality" >> $env:GITHUB_ENV
+        run: echo "PIXI_ENV=smoke-test" >> $env:GITHUB_ENV
 
       - name: Set environment variable (macOS)
         if: matrix.os == 'macos-latest'
-        run: echo "PIXI_ENV=quality" >> $GITHUB_ENV
+        run: echo "PIXI_ENV=smoke-test" >> $GITHUB_ENV
 
       # ============================================================
       # PRE-TEST VALIDATION (Linux integration/e2e only)
@@ -285,14 +285,14 @@ jobs:
           cache: false
           manifest-path: pyproject.toml
           locked: false
-          environments: quality
+          environments: smoke-test
 
       - name: Wait for Memgraph
         run: timeout 30 bash -c 'until nc -z localhost 7687; do sleep 1; done'
 
       - name: Run benchmarks
         run: |
-          pixi run -e quality benchmark --benchmark-json=benchmark-results.json || echo "⚠️ Benchmarks completed with variations"
+          pixi run -e smoke-test benchmark --benchmark-json=benchmark-results.json || echo "⚠️ Benchmarks completed with variations"
         env:
           MEMGRAPH_HOST: localhost
           MEMGRAPH_PORT: 7687
