@@ -76,15 +76,15 @@ jobs:
       # Includes conda authentication and improved error handling
       # =============================================================================
       
-      - name: "🚀 TIER 1: Setup pixi (primary method with enhanced caching)"
+      - name: "🚀 TIER 1: Setup pixi (primary method - cache disabled)"
         id: setup-pixi-primary
         continue-on-error: true
         uses: prefix-dev/setup-pixi@v0.8.1
         with:
           pixi-version: ${{ env.PIXI_VERSION }}
-          cache: true
-          cache-write: ${{ github.event_name != 'pull_request' }}
+          cache: false  # Disabled due to GitHub cache 400 errors
           manifest-path: pyproject.toml
+          locked: false  # Allow fresh resolution
           
       - name: "🔧 TIER 2: Manual pixi installation (enhanced fallback)"
         id: setup-pixi-manual
@@ -337,9 +337,9 @@ jobs:
         uses: prefix-dev/setup-pixi@v0.8.1
         with:
           pixi-version: ${{ env.PIXI_VERSION }}
-          cache: true
-          cache-write: ${{ github.event_name != 'pull_request' }}
+          cache: false  # Disabled due to GitHub cache 400 errors
           manifest-path: pyproject.toml
+          locked: false  # Allow fresh resolution
           
       - name: "🔧 PIXI Fallback Installation (if needed)"
         if: steps.setup-pixi-comprehensive.outcome == 'failure'
