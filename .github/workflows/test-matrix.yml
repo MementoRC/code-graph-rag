@@ -112,15 +112,16 @@ jobs:
           echo "✅ Platform modified for macOS CI resolution"
 
       # ============================================================
-      # PIXI SETUP: Linux uses lock, others resolve fresh
+      # PIXI SETUP: All platforms resolve fresh (locked: false)
       # ============================================================
-      - name: Setup pixi (Linux - use lock file)
+      - name: Setup pixi (Linux)
         if: matrix.os == 'ubuntu-latest'
         uses: prefix-dev/setup-pixi@v0.8.1
         with:
           pixi-version: ${{ env.PIXI_VERSION }}
           cache: false
           manifest-path: pyproject.toml
+          locked: false
           environments: quality
 
       - name: Set environment variable (Linux)
@@ -283,6 +284,7 @@ jobs:
           pixi-version: ${{ env.PIXI_VERSION }}
           cache: false
           manifest-path: pyproject.toml
+          locked: false
           environments: quality
 
       - name: Wait for Memgraph
