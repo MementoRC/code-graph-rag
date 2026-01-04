@@ -119,8 +119,7 @@ jobs:
         uses: prefix-dev/setup-pixi@v0.8.1
         with:
           pixi-version: ${{ env.PIXI_VERSION }}
-          cache: true
-          cache-write: ${{ github.event_name != 'pull_request' }}
+          cache: false
           manifest-path: pyproject.toml
           environments: quality
 
@@ -282,7 +281,7 @@ jobs:
         uses: prefix-dev/setup-pixi@v0.8.1
         with:
           pixi-version: ${{ env.PIXI_VERSION }}
-          cache: true
+          cache: false
           manifest-path: pyproject.toml
           environments: quality
 
