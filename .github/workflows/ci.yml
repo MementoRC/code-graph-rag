@@ -71,139 +71,69 @@ jobs:
           echo "Current user: $(git config --get user.name) <$(git config --get user.email)>"
 
       # =============================================================================
-      # ENHANCED 3-TIER PIXI INSTALLATION STRATEGY
-      # Addresses authentication, caching, and timeout issues for >80% success rate
-      # Includes conda authentication and improved error handling
+      # SIMPLIFIED PIXI INSTALLATION (matching working pr-checks.yml pattern)
       # =============================================================================
-      
-      - name: "🚀 TIER 1: Setup pixi (primary method - cache disabled)"
-        id: setup-pixi-primary
-        continue-on-error: true
-        uses: prefix-dev/setup-pixi@v0.8.1
-        with:
-          pixi-version: ${{ env.PIXI_VERSION }}
-          cache: false  # Disabled due to GitHub cache 400 errors
-          manifest-path: pyproject.toml
-          locked: false  # Allow fresh resolution
-          
-      - name: "🔧 TIER 2: Manual pixi installation (enhanced fallback)"
-        id: setup-pixi-manual
-        if: steps.setup-pixi-primary.outcome == 'failure'
-        continue-on-error: true
+
+      - name: "🚀 Install pixi with retry"
         run: |
-          echo "⚠️ TIER 1 failed - attempting TIER 2: Enhanced manual installation"
-          
-          # Clear any corrupted cache and prepare environment
-          rm -rf ~/.pixi || true
-          mkdir -p ~/.pixi/bin
-          export PIXI_HOME=~/.pixi
-          
-          # Configure conda authentication
-          mkdir -p ~/.conda
-          echo "channels:\n  - conda-forge\n  - defaults" > ~/.condarc
-          echo "ssl_verify: true" >> ~/.condarc
-          echo "channel_priority: flexible" >> ~/.condarc
-          
-          # Enhanced retry with multiple endpoints and improved timeout
-          for attempt in 1 2 3; do
-            echo "Attempt $attempt/3: Enhanced manual pixi installation..."
-            
-            # Try multiple download sources with extended timeout
-            if timeout 480s curl -fsSL --retry 3 --retry-delay 10 https://pixi.sh/install.sh | timeout 480s bash -s -- --version ${{ env.PIXI_VERSION }}; then
-              echo "✅ Manual installation successful on attempt $attempt"
+          echo "🚀 Installing pixi with enhanced reliability"
+
+          install_with_retry() {
+            local attempts=3
+            local delay=2
+
+            for attempt in $(seq 1 $attempts); do
+              echo "📦 Installation attempt $attempt/$attempts"
+
+              if curl -fsSL --connect-timeout 30 --retry 3 https://pixi.sh/install.sh | bash -s -- --version ${{ env.PIXI_VERSION }}; then
+                echo "$HOME/.pixi/bin" >> $GITHUB_PATH
+                export PATH="$HOME/.pixi/bin:$PATH"
+
+                if command -v pixi >/dev/null 2>&1 && pixi --version; then
+                  echo "✅ pixi installed successfully: $(pixi --version)"
+                  return 0
+                fi
+              fi
+
+              if [ $attempt -lt $attempts ]; then
+                echo "⚠️ Attempt $attempt failed, retrying in ${delay}s"
+                sleep $delay
+                delay=$((delay * 2))
+              fi
+            done
+
+            return 1
+          }
+
+          # Manual download fallback
+          manual_install() {
+            echo "📥 Attempting manual binary download..."
+            local download_url="https://github.com/prefix-dev/pixi/releases/download/${{ env.PIXI_VERSION }}/pixi-x86_64-unknown-linux-musl"
+
+            mkdir -p "$HOME/.pixi/bin"
+
+            if curl -fsSL --connect-timeout 30 --retry 3 -o "$HOME/.pixi/bin/pixi" "$download_url"; then
+              chmod +x "$HOME/.pixi/bin/pixi"
               echo "$HOME/.pixi/bin" >> $GITHUB_PATH
               export PATH="$HOME/.pixi/bin:$PATH"
-              
-              # Verify installation
+
               if pixi --version; then
-                echo "✅ PIXI installation verified"
-                exit 0
+                echo "✅ Manual installation successful"
+                return 0
               fi
             fi
-            
-            echo "❌ Attempt $attempt failed, cleaning cache and retrying in 15 seconds..."
-            rm -rf ~/.pixi/tmp ~/.pixi/cache || true
-            sleep 15
-          done
-          
-          echo "❌ TIER 2 failed after 3 attempts"
-          exit 1
-          
-      - name: "📦 TIER 3: Binary download (emergency fallback)"
-        id: setup-pixi-binary
-        if: steps.setup-pixi-primary.outcome == 'failure' && steps.setup-pixi-manual.outcome == 'failure'
-        run: |
-          echo "🚨 TIER 2 failed - attempting TIER 3: Emergency binary download"
-          
-          # Direct binary download with comprehensive error handling
-          PIXI_URL="https://github.com/prefix-dev/pixi/releases/download/${{ env.PIXI_VERSION }}/pixi-x86_64-unknown-linux-gnu"
-          PIXI_HOME="$HOME/.pixi"
-          PIXI_BIN="$PIXI_HOME/bin"
-          
-          mkdir -p "$PIXI_BIN"
-          
-          for attempt in 1 2 3; do
-            echo "Emergency attempt $attempt/3: Direct binary download..."
-            
-            if timeout 120s curl -L "$PIXI_URL" -o "$PIXI_BIN/pixi" && chmod +x "$PIXI_BIN/pixi"; then
-              echo "✅ Binary download successful on attempt $attempt"
-              echo "$PIXI_BIN" >> $GITHUB_PATH
-              export PATH="$PIXI_BIN:$PATH"
-              
-              # Verify emergency installation
-              if "$PIXI_BIN/pixi" --version; then
-                echo "✅ Emergency PIXI installation verified"
-                echo "PIXI_INSTALLATION_METHOD=emergency-binary" >> $GITHUB_ENV
-                exit 0
-              fi
-            fi
-            
-            echo "❌ Emergency attempt $attempt failed, retrying in 15 seconds..."
-            sleep 15
-          done
-          
-          echo "🚨 CRITICAL: All 3 tiers of PIXI installation failed"
-          echo "📋 Diagnostics:"
-          echo "  - Network connectivity: $(curl -s --max-time 10 https://github.com >/dev/null && echo 'OK' || echo 'FAILED')"
-          echo "  - Disk space: $(df -h . | tail -1)"
-          echo "  - Available memory: $(free -h | grep '^Mem:' || echo 'unknown')"
-          exit 1
-          
-      - name: "🔍 PIXI Installation Validation & System Diagnostics"
-        run: |
-          echo "🔍 Validating PIXI installation and performing system diagnostics..."
-          
-          # System resource check
-          echo "📊 System Resources:"
-          echo "  Memory: $(free -h | grep '^Mem:' | awk '{print $3"/"$2}' || echo 'unknown')"
-          echo "  Disk: $(df -h . | tail -1 | awk '{print $3"/"$2" ("$5" used)'}' || echo 'unknown')"
-          echo "  Load: $(uptime | cut -d':' -f4- || echo 'unknown')"
-          
-          # Network connectivity check
-          echo "🌐 Network Connectivity:"
-          timeout 10s curl -s --head https://conda.anaconda.org >/dev/null && echo "  ✅ conda.anaconda.org: OK" || echo "  ❌ conda.anaconda.org: FAILED"
-          timeout 10s curl -s --head https://github.com >/dev/null && echo "  ✅ github.com: OK" || echo "  ❌ github.com: FAILED"
-          
-          # Verify PIXI is accessible
-          if ! command -v pixi >/dev/null 2>&1; then
-            echo "❌ CRITICAL: PIXI command not found in PATH"
-            echo "Current PATH: $PATH"
-            ls -la ~/.pixi/bin/ 2>/dev/null || echo "No ~/.pixi/bin directory found"
+
+            return 1
+          }
+
+          if install_with_retry; then
+            echo "✅ Standard installation completed"
+          elif manual_install; then
+            echo "✅ Manual installation completed"
+          else
+            echo "❌ All installation methods failed"
             exit 1
           fi
-          
-          echo "✅ PIXI command found: $(which pixi)"
-          echo "✅ PIXI version: $(pixi --version)"
-          
-          # Test basic PIXI functionality with enhanced timeout
-          echo "🧪 Testing PIXI functionality..."
-          if timeout 60s pixi info --json >/dev/null 2>&1; then
-            echo "✅ PIXI basic functionality verified"
-          else
-            echo "⚠️ PIXI info command slow/failed, but continuing..."
-          fi
-          
-          echo "Installation method: ${PIXI_INSTALLATION_METHOD:-primary-action}"
 
       - name: "📦 Enhanced Environment Installation with Auto-Repair"
         run: |
@@ -331,22 +261,30 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
-      - name: "🚀 Setup PIXI with Enhanced Reliability"
-        id: setup-pixi-comprehensive
-        continue-on-error: true
-        uses: prefix-dev/setup-pixi@v0.8.1
-        with:
-          pixi-version: ${{ env.PIXI_VERSION }}
-          cache: false  # Disabled due to GitHub cache 400 errors
-          manifest-path: pyproject.toml
-          locked: false  # Allow fresh resolution
-          
-      - name: "🔧 PIXI Fallback Installation (if needed)"
-        if: steps.setup-pixi-comprehensive.outcome == 'failure'
+      - name: "🚀 Install pixi with retry"
         run: |
-          echo "⚠️ Primary PIXI setup failed, applying fallback strategy..."
-          curl -fsSL https://pixi.sh/install.sh | bash -s -- --version ${{ env.PIXI_VERSION }}
-          echo "$HOME/.pixi/bin" >> $GITHUB_PATH
+          echo "🚀 Installing pixi for comprehensive testing"
+
+          install_with_retry() {
+            for attempt in 1 2 3; do
+              echo "📦 Installation attempt $attempt/3"
+              if curl -fsSL --connect-timeout 30 --retry 3 https://pixi.sh/install.sh | bash -s -- --version ${{ env.PIXI_VERSION }}; then
+                echo "$HOME/.pixi/bin" >> $GITHUB_PATH
+                export PATH="$HOME/.pixi/bin:$PATH"
+                if command -v pixi >/dev/null 2>&1 && pixi --version; then
+                  echo "✅ pixi installed: $(pixi --version)"
+                  return 0
+                fi
+              fi
+              [ $attempt -lt 3 ] && sleep 2
+            done
+            return 1
+          }
+
+          if ! install_with_retry; then
+            echo "❌ pixi installation failed"
+            exit 1
+          fi
 
       - name: "📦 Enhanced Environment Installation"
         run: |
